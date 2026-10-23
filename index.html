@@ -1792,7 +1792,8 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   const foc3= stage===3 ? focus3() : null;   // 3 面: 世界の見どころ (② の像) を 画面に入れる (10/12 社長: 像の周りを らせん状に のぼる)
   if(satE || foc3){ sat2+=(1-sat2)*Math.min(1, dt*1.2); satPos2.copy(satE ? satE.mesh.position : foc3); } else if(stage===3) sat2+=(0-sat2)*Math.min(1, dt*1.2); else sat2=0;   /* 3 面は なめらかに戻す (ワープの輪の前で 前を向く) */
   const satW= camMode2==='watch' ? sat2 : 0;   /* 見守るカメラだけ (おばけに合わせるカメラは そのまま、Codex 指摘 10/2) */
-  const backT=(CAM_BACK_LOW+(CAM_BACK-CAM_BACK_LOW)*gf+kick*CAM_KICK_BACK+CAM2_BACK*k2)*(1+0.6*satW), upT=(CAM_UP_LOW+(CAM_UP-CAM_UP_LOW)*gf+kick*CAM_KICK_UP+CAM2_UP*k2)*(1+0.5*satW), latT=-laneX*0.5*(stage===2 ? Math.max(0, 1-Math.abs(G.b)*1.5) : 1);   // 2 面: 断面が曲がっている所では 横へずらさない (パイプの外へ出ないように)
+  const pw=Math.min(1, Math.max(0, (1-camera.aspect)/0.5));   /* 縦長の画面ほど 1 (縦横比 1 以上 = 0、0.5 以下 = 1)。縦持ちでは 横の幅が狭く、空の広いレーン (6 m) へ移ると おばけが 画面の外へ出た (10/23 社長) → カメラも おばけと一緒に 横へ動く */
+  const backT=(CAM_BACK_LOW+(CAM_BACK-CAM_BACK_LOW)*gf+kick*CAM_KICK_BACK+CAM2_BACK*k2)*(1+0.6*satW), upT=(CAM_UP_LOW+(CAM_UP-CAM_UP_LOW)*gf+kick*CAM_KICK_UP+CAM2_UP*k2)*(1+0.5*satW), latT=laneX*(0.9*pw-0.5*(1-pw))*(stage===2 ? Math.max(0, 1-Math.abs(G.b)*1.5) : 1);   // 2 面: 断面が曲がっている所では 横へずらさない (パイプの外へ出ないように)
   if(!camSm.init){ camSm.back=backT; camSm.up=upT; camSm.lat=latT; camSm.init=true; camUp.copy(G.u); camera.fov=FOV_MIN; camera.far= stage>=2 ? CAM_FAR2 : 8000; }   // 始まりは 即座に付け直す
   camSm.back+=(backT-camSm.back)*k; camSm.up+=(upT-camSm.up)*k; camSm.lat+=(latT-camSm.lat)*k;
   const aheadS=s+CAM_AHEAD_LOW+(CAM_AHEAD-CAM_AHEAD_LOW)*gf+spR*16;
@@ -1802,14 +1803,14 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   } else {   // 1 面・2 面の見守る: カメラは中心線の上 (パイプなら 軸のあたり)。2 面は おばけのいる側を 少し見る
     frameAt(Math.max(0, s-camSm.back), CB);
     camera.position.copy(CB.p).addScaledVector(CB.u, camSm.up).addScaledVector(CB.r, camSm.lat);
-    if(stage>=2) railPoint(aheadS, laneX*0.6, C); else frameAt(aheadS, C);
+    if(stage>=2) railPoint(aheadS, laneX*(0.6+0.3*pw), C); else frameAt(aheadS, C);
     camUp.lerp(G.u,k).normalize(); camera.up.copy(camUp);
     if(stage>=2 && satW>0.001){ _scF.copy(C.p).sub(camera.position).projectOnPlane(camUp).normalize(); _scS.copy(satPos2).sub(camera.position).projectOnPlane(camUp).normalize(); const th=Math.acos(Math.min(1, Math.max(-1, _scF.dot(_scS)))), sg=Math.sign(_scV.crossVectors(_scF, _scS).dot(camUp))||1, ph=satW*Math.min(SAT2_TURN, th*0.5);   /* 土星の向きへ 最大 45° (土星までの角度の半分) */
       _scQ.setFromAxisAngle(camUp, sg*ph); camera.position.sub(gp).applyQuaternion(_scQ).add(gp); _scV.copy(C.p).sub(gp).applyQuaternion(_scQ).add(gp);   /* カメラと見る所を まとめて おばけ (左右のレーンでも その位置) の周りに回す → いつもの構図のまま 向きだけ土星の側へ (おばけは いつもの位置に映る、Codex 指摘 10/2) */
       if(stage===3){ _scF.copy(_scV).sub(camera.position).normalize(); _scS.copy(satPos2).sub(camera.position).normalize(); const el=Math.asin(Math.min(1, Math.max(-1, _scS.dot(camUp))))-Math.asin(Math.min(1, Math.max(-1, _scF.dot(camUp)))), pa=satW*Math.min(PITCH3, Math.max(0, el*0.5));   /* 3 面: 見どころが 上にあれば 見上げる (上下の角度の半分、最大 18°。10/12 社長: 正面から 像を見上げるように)。これも おばけの周りに回す */
         if(pa>1e-4){ _scS.crossVectors(_scF, camUp).normalize(); _scQ.setFromAxisAngle(_scS, pa); camera.position.sub(gp).applyQuaternion(_scQ).add(gp); _scV.sub(gp).applyQuaternion(_scQ).add(gp); } }
       camera.lookAt(_scV); }
-    else camera.lookAt(stage>=2 ? C.p : C.p.clone().addScaledVector(G.r, laneX*0.5));
+    else camera.lookAt(stage>=2 ? C.p : C.p.clone().addScaledVector(G.r, laneX*(0.5+0.4*pw)));
   }
   camera.fov += ((FOV_LOW+(FOV_MIN-FOV_LOW)*gf+FOV_KICK*kick+FOV_SPEED*spR+FOV2*k2+10*satW)-camera.fov)*k; camera.updateProjectionMatrix();
   if(stage===1){ scene.fog.far=Math.min(AHEAD_MAX*0.9, 700+v*3); scene.fog.near=scene.fog.far*0.18; }   // 速いほど 遠くまで見える (作ってある範囲まで。FINISH 後は 上の分岐で別扱い)
