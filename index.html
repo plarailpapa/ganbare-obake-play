@@ -1473,8 +1473,11 @@ function renderWorlds3(dt){   // 毎コマ (描く直前、カメラが決まっ
 /* ==================== BGM (Web Audio: iPhone でも音量を扱えるように 音の通り道を自分で作る) ==================== */
 let actx=null, bgmSegs=[], bgmReady=false, bgmMissing=0, bgmSrcs=[], bgmGain=null, bgmT0=0, bgmPosBase=0, bgmOn=false, bgmEnded=false, bgmFail=false, bgmWanted=false, stageT=0;
 let bgmTracks=BGM_TRACKS, bgmLoadId=0; const bgmBufCache=new Map();   // いまの面の曲 / 読み直しの番号 (古い読み込みの結果を捨てる) / 読んだ曲の置き場 (同じ曲を 2 度読まない)
+const AUDIOLOG=Q.has('audiolog'); let alogEl=null;   /* 確かめ用 ?audiolog=1: 音の様子を 画面の左上に 文字で (iPhone で 調べる、10/23) */
+function alog(m){ if(!AUDIOLOG) return; if(!alogEl){ alogEl=document.createElement('pre'); alogEl.style.cssText='position:fixed;left:4px;top:60px;z-index:99;max-width:92vw;max-height:55vh;overflow:hidden;font:11px/1.35 monospace;color:#fff;background:rgba(0,0,0,.7);padding:4px 6px;margin:0;pointer-events:none;white-space:pre-wrap'; document.body.appendChild(alogEl); } alogEl.textContent+=(performance.now()/1000).toFixed(1)+' '+m+'\n'; }
 function bgmPrepare(){   // 音の出口と タブ切り替えの見張り (1 回だけ)。曲は bgmLoad で読む
   try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(err){ console.error('BGM', err); bgmFail=true; return; }
+  alog('版 10/23-c  音 '+actx.state+'  '+actx.sampleRate+' Hz'); actx.onstatechange=()=>alog('音 → '+actx.state);
   document.addEventListener('visibilitychange', ()=>{
     if(!actx) return;
     if(document.hidden){ if(bgmOn || state==='opening') actx.suspend().catch(()=>{}); }   /* 導入の声も 一緒に止める (10/19) */
@@ -1502,7 +1505,7 @@ function bgmLoad(tracks){   // 面の曲を読む (面を切り替えるたび)�
     if(bgmWanted && !document.hidden && state==='run') bgmPlay();
   });
 }
-function bgmBuf(src){ if(!bgmBufCache.has(src)) bgmBufCache.set(src, fetch(src).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }).then(ab=>new Promise((ok,ng)=>actx.decodeAudioData(ab, ok, ng))).catch(err=>{ bgmBufCache.delete(src); throw err; })); return bgmBufCache.get(src); }   // 曲を読む (同じ曲は 1 度だけ)。失敗は置き場に残さない (次に面を切り替えた時に読み直せる、Codex 指摘 10/1)
+function bgmBuf(src){ if(!bgmBufCache.has(src)) bgmBufCache.set(src, fetch(src).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }).then(ab=>new Promise((ok,ng)=>actx.decodeAudioData(ab, ok, ng))).then(b=>{ alog('読めた '+src.replace('bgm/','')); return b; }).catch(err=>{ alog('読めない '+src.replace('bgm/','')+' '+(err && (err.name+' '+err.message) || err)); bgmBufCache.delete(src); throw err; })); return bgmBufCache.get(src); }   // 曲を読む (同じ曲は 1 度だけ)。失敗は置き場に残さない (次に面を切り替えた時に読み直せる、Codex 指摘 10/1)
 /* 天国の会話の曲 (1・2・3 面のはじめ、10/21 社長: モーツァルト「きらきら星変奏曲」・毎回 同じ)。主題〜第 3 変奏 (2:54) を くり返す。会話の声が 聞こえるよう 小さめに */
 const HEAVEN_BGM = {src:'bgm/mozart-k265-renzi.mp3', vol:0.35, credit:'音楽: モーツァルト「きらきら星変奏曲」K.265 ／ 演奏: Simone Renzi (CC BY 3.0)'};
 let heaven=null;   // 鳴らしている 天国の曲 { src, g }
@@ -1510,7 +1513,8 @@ function heavenPlay(){   // 読めるまでは 無音で待ち、読めたら �
   if(op) op.musicCredit(HEAVEN_BGM.credit);
   if(!actx || heaven) return;
   const h=heaven={src:null, g:actx.createGain()}; h.g.gain.value=0; h.g.connect(actx.destination);
-  bgmBuf(HEAVEN_BGM.src).then(buf=>{ if(heaven!==h) return; const s=actx.createBufferSource(), t0=actx.currentTime; s.buffer=buf; s.loop=true; s.connect(h.g); s.start(t0); h.src=s; h.g.gain.setValueAtTime(0, t0); h.g.gain.linearRampToValueAtTime(HEAVEN_BGM.vol, t0+1.5); }).catch(err=>console.error('BGM', HEAVEN_BGM.src, err));
+  alog('天国の曲を 呼ぶ (音 '+actx.state+')');
+  bgmBuf(HEAVEN_BGM.src).then(buf=>{ if(heaven!==h){ alog('天国の曲: もう いらない'); return; } const s=actx.createBufferSource(), t0=actx.currentTime; alog('天国の曲を 鳴らす (音 '+actx.state+')'); s.buffer=buf; s.loop=true; s.connect(h.g); s.start(t0); h.src=s; h.g.gain.setValueAtTime(0, t0); h.g.gain.linearRampToValueAtTime(HEAVEN_BGM.vol, t0+1.5); }).catch(err=>console.error('BGM', HEAVEN_BGM.src, err));
 }
 function heavenStop(fade){   // 出発で ふわっと消す (読み込み中なら 鳴らさずに終わる)
   const h=heaven; heaven=null; if(!h) return;
@@ -1547,7 +1551,7 @@ function bgmHalt(){ bgmCut(); bgmEnded=true; bgmWanted=false; }
 function bgmDropLast(){ const s=bgmSrcs[bgmSrcs.length-1]; if(s && s.isLast){ s.onended=null; try{ s.stop(); }catch(_){} bgmSrcs.pop(); } }   // 予約ずみの 最後の曲を 鳴らさない (3 面で 天の川へ 入った時の オルゴール、Codex 指摘 10/21)
 function bgmFade(sec){ if(!actx || !bgmGain) return; const t0=actx.currentTime; bgmGain.gain.cancelScheduledValues(t0); bgmGain.gain.setValueAtTime(bgmGain.gain.value, t0); bgmGain.gain.linearRampToValueAtTime(0, t0+sec); }   // 面の曲を ふわっと消す (止めるのは bgmHalt。3 面で 天の川へ 入った時)
 function bgmSeek(){ bgmCut(); bgmPlay(); }
-function audioResume(){ if(actx && actx.state!=='running') actx.resume().catch(()=>{}); }
+function audioResume(){ if(actx && actx.state!=='running'){ alog('許可を求める ('+actx.state+')'); actx.resume().catch(e=>alog('許可 NG '+e)); } }
 function bgmRunning(){ return bgmOn && actx.state==='running'; }
 function stageLen(){ if(!bgmReady || !bgmSegs.length) return NO_BGM_LEN; const l=bgmSegs[bgmSegs.length-1]; return l.at+l.len; }
 function songRemaining(){ return bgmEnded ? 0 : Math.max(0, stageLen()-stageT); }
