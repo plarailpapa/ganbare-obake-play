@@ -25,6 +25,11 @@ export function ctrlLen(vm){ return Math.max(CTRL_MIN, vm*CTRL_SEC); }   // 制�
 /* 惑星イベント: 近づく (まっすぐ) → そばを飛ぶ弧 (惑星の中心の周りの円) → 離れる (まっすぐ)。惑星は おばけから見て 下・上・左・右 のどれか (10/2 社長: 全部「下」で同じに見えた) */
 const APP_SEC=4, DEP_SEC=2, GAP_SEC=1.5, FAST_START=0.8, ORBIT_MIN=2.7;   // 近づく (遠くの点から 4 秒) / 離れる / 次までの最低の間 (秒)。速さが惑星の 80% で 専用コースへ (10/5 社長)。ORBIT_MIN = 専用コースを 最低 何秒 回るか (始まった時の速さで 2.7 秒ぶん = その後 加速するので 実際は 約 2 秒)。10/26 社長: 2 面が 5 分 → 3 分半になったので 短く (前は 近づく 9 秒・間 4.5 秒・回る 5.5 秒 = 惑星 1 つに 最低 約 20 秒かかり、速さが足りても 演出の行列で 水星まで届かなかった)
 export const PREVIEW2=0.6;   // 惑星が 遠くに見え始める速さ (公転速度の 60%、10/5 社長)。80% で 専用コース、100% で 抜く
+export function approachDist(P, vm){   // 専用コースで 惑星へ近づく まっすぐの長さ (m)。作り手 (startRingRun・startCloudDive・普通の弧) と同じ数え方。見え始めの遠くの惑星も この先に置く (index.html、近づく秒を変えても ずれないように、Codex 指摘 10/26)
+  const L=ctrlLen(vm); let nA=Math.max(3, Math.round(APP_SEC*vm/L));
+  if(P.course==='dive') nA=Math.max(nA, Math.max(1, Math.round(CD.lev*vm/L))+Math.ceil((CD.depth+CD.margin)/(L*Math.sin(CD.dive))));   /* 海王星は 雲へ潜る深さぶん 伸びる */
+  return nA*L;
+}
 const SIZE_DIV=35, HOVER2=3000;   // 惑星の大きさ = 本物の半径 ÷ 35 (10/2 社長: 本物どおりの比率。木星 ≒ 2,000 km が 遠景の描画距離 5,000 km に収まる上限) / そばを飛ぶ高さ (m、全惑星で同じ → 小さい星ほど足元に丸く見える)
 export function planetR(def){ return def.rkm*1000/SIZE_DIV; }   // ゲームの半径 (m)
 export const PLANET_SEG=128;   // 惑星の球の分割 (横)。レールを隠す見えない球も 同じ分割・同じ向きにして ふちを揃える (木星では 分割の角の凹みが km 単位になるため、Codex 指摘 10/2)
