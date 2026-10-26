@@ -1325,7 +1325,8 @@ function updateRivals(dtMove){
     const gap=r.s-s;
     if(!r.passed){
       const p= sky ? Math.min(1, Math.max(0, (v-r.ms*PLANE_SPAWN_RATIO)/(r.ms*(1-PLANE_SPAWN_RATIO)))) : 0, want=r.lead+(Math.min(r.lead, SKY_NEAR+r.len*0.5)-r.lead)*p;   /* 待つ距離 (空だけ 速さが相手に近づくほど 近く) */
-      let tv= v<r.ms ? Math.max(v-Math.max(1, r.ms*0.08), Math.min(r.ms, v+(want-gap)*0.1)) : sky ? Math.min(r.ms, v-Math.max(1, r.ms*0.08)) : r.ms;   // 抜かれる前は 見える距離に付き合う。おばけが相手の速さを超えたら 本物の速さで (空は すぐ近くにいるので 相手の 8% ぶん 速く追い抜く = 2 秒ほど)   /* 10/26 に「超えたら 1.5 秒で並ぶ」方式を試したが 社長判断で元に戻した (地上は 一気に まとめて抜けて 楽しくない) */
+      const fk= sky ? 0.8 : 0.1, fc= sky ? 0.15 : 0.08;   /* 待つ距離への 寄り方 (空は 1〜2 秒で寄る = 踏むたびに 20 m ほど近づいて見える。0.1 だと 10 秒かかり 超えた時に まだ 200 m 先だった、Codex 指摘) と 寄る速さの上限 (相手の速さの割合) */
+      let tv= v<r.ms ? Math.max(v-Math.max(1, r.ms*fc), Math.min(r.ms, v+(want-gap)*fk)) : sky ? Math.min(r.ms, v-Math.max(1, r.ms*fc)) : r.ms;   // 抜かれる前は 見える距離に付き合う。おばけが相手の速さを超えたら 本物の速さで (空は 約 100 m 先から 相手の 15% ぶん 速く追い抜く = 1〜2 秒)   /* 10/26 に「超えたら 1.5 秒で並ぶ」方式を試したが 社長判断で元に戻した (地上は 一気に まとめて抜けて 楽しくない) */
       if(r.climbTrigger){ const rem=songRemaining(); if(rem<CATCHUP_SEC){ const closing=(gap+20)/Math.max(3, rem-30); tv=Math.min(tv, v-Math.max(8, closing)); } }   // 飛行機: 曲が終わりそうなら ゆずる (残り 30 秒は見せ場に)
       r.v+=(tv-r.v)*Math.min(1, dtMove*2);
       if(!r.met && gap<r.len+8) r.met=true;
