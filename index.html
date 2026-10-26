@@ -746,6 +746,7 @@ function updateIce2(){
   if(!e) return;
   ice=ice.filter(o=>o.s>s-300);   // 通り過ぎたものは 使い回しへ
   const vm=Math.max(1, moveSpeed(v)), stop=Math.min(courseEnd-5, s+vm*ICE_AHEAD, e.arc1!=null ? e.arc1+vm : Infinity), step=Math.max(30, vm*0.008), N=e.up;   // 約 80 m ごと (秒速 10 km の時)
+  if(iceNext<s) iceNext=s;   /* コマ落ちで 並べる位置が おばけの後ろに 取り残されたら 前へ (通った所に 作らない、Codex 指摘 10/26) */
   let made=0;   /* 1 コマに ICE_PER_FRAME 個まで (輪を走り始める時に 先の 5 秒ぶん 約 600 個を 1 コマで作って カクついた、10/26 社長) */
   while(iceNext<stop && ice.length<ICE_MAX && made++<ICE_PER_FRAME){ frameAt(iceNext, IF); const w=laneWAt(iceNext);
     const hp=_iA.copy(IF.p).sub(e.center).dot(N), near=Math.random()<0.15, side=Math.random()<0.5 ? -1 : 1;   // hp = コースの 環の面からの高さ
@@ -1481,7 +1482,7 @@ function updateSmall2(ds, dt){   // ds = この コマで おばけが進んだ�
     if(fin){}   // 曲の終わり (FINISH) は 抜いた判定をせず 今の間のまま一緒に飛ぶ (止まると おばけだけが追い越していく、Codex 指摘 10/7)
     else if(r.passed) r.s-=Math.max(L.after||0, Math.min(SMALL2_REL_MAX, Math.max(SMALL2_REL_MIN, vm-moveSpeed(r.ms))))*dt;   // 抜いたあとは 後ろへ離れる (大きい準惑星は 見えなくなるまで 速めに)
     else if(v<r.ms){ const fr=Math.min(1, (r.ms-v)/(r.ms-r.msShow)), want= L.planet ? L.pace*Math.pow(L.gap/L.pace, fr) : L.pace+(L.gap-L.pace)*fr;   /* 準惑星は 輪ごとに 同じ割合で近づく (遠くの点から だんだん大きく、10/7 社長) */ r.s+=(want-gap)*(1-Math.exp(-0.8*dt)); }   /* 寄せ方は 行き過ぎない形 (コマ落ちで dt が大きくても 目標を越えない、Codex 指摘 10/7) */   // 届くまでは 前を飛ぶ (輪をくぐるたび 間が詰まる)
-    else if(L.planet || L.quick){ if(r.passDrift==null) r.passDrift=Math.max(L.drift, Math.max(0, gap)/SMALL2_QUICK_SEC); r.s-=(L.planet ? r.passDrift : Math.min(r.passDrift, vm*0.8))*dt; }   /* 準惑星 (冥王星・ケレス・エリス) は 止まって見せる間なしに 約 1 秒で 頭上を通り過ぎて抜ける (10/26 社長。ボイジャーは 並んで 1 秒止まる 今のまま。quick を付けた相手も 同じ動き) */
+    else if(L.planet || L.quick){ if(r.passDrift==null) r.passDrift=Math.max(L.drift, Math.max(0, gap)/SMALL2_QUICK_SEC); r.s-=Math.min(Math.max(0, r.s-s), (L.planet ? r.passDrift : Math.min(r.passDrift, vm*0.8))*dt); }   /* 1 コマで おばけを 越えない (抜くコマは 真上で止め、次のコマから 後ろへ離れる。コマ落ちで 離れる姿が出ずに消えないように、Codex 指摘 10/26) */   /* 準惑星 (冥王星・ケレス・エリス) は 止まって見せる間なしに 約 1 秒で 頭上を通り過ぎて抜ける (10/26 社長。ボイジャーは 並んで 1 秒止まる 今のまま。quick を付けた相手も 同じ動き) */
     else if(r.paceT<(L.paceSec??SMALL2_PACE_SEC) || gap>L.pace+L.tol){ r.s+=Math.max(-L.close*dt, (L.pace-gap)*(1-Math.exp(-(L.catch||0.8)*dt)));   /* 速さを超えていても まだ遠い時は まず並ぶ所まで寄る (並走なしの準惑星も。10/7 社長: 冥王星の速さを とっくに超えても 追いつけない = 3,000 km 先から 下がる速さで来ていた) */ if(gap<=L.pace+L.tol) r.paceT+=dt; }   // 届いたら 前の上に並んで 一緒に飛ぶ (tol = 並んだとみなす幅)
     else r.s-=(L.planet ? L.drift : Math.min(L.drift, vm*0.8))*dt;   // ゆっくり下がって おばけの真上を越える (近くを飛ぶ ハレー彗星・ボイジャーは 下がる速さを 前へ飛ぶ速さの 8 割まで = 後ろ向きに飛ばない、?real=0 の時、Codex 指摘 10/26。遠くの準惑星 (エリス・冥王星・ケレス) には かけない: かけたら エリスが 1 分近く 抜けなかった、10/26 社長)
     if(!fin && !r.passed && r.s<=s){ r.passed=true; passed2.add(r.def.name); pop('「'+r.def.name+'」を ぬいた！'); recomputeRung2(); }   // 真上に並んだ瞬間
