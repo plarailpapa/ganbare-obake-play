@@ -163,7 +163,7 @@ const BGM_TRACKS2 = [   /* 10/26 社長 (間延び → 3 分〜3 分 30 秒、B 
 ];
 const BGM_TRACKS3 = [   // 3 面: 仮の曲 = サティ「ジムノペディ」第 1 番 (3:04、設計書 7 章の候補。曲は 作ってから決める、10/7 社長)。世界の長さは 曲の長さに合わせて伸び縮みする
   {src:'bgm/satie-gymnopedie1.mp3', fadeIn:0, vol:1.0, credit:'サティ「ジムノペディ」第 1 番 ／ 演奏: Robin Alciatore (Musopen、パブリックドメイン)'},
-  {src:'bgm/twinkle-musicbox-konstantin.mp3', startAt:S3.MUSIC3.gates[S3.MUSIC3.gates.length-1]+0.75, rise:14, vol:0.6, spurt:Infinity, credit:'きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)'},   // ⑤ 子ども部屋 (10/21 社長: 最後の輪を くぐって 1 拍 (オルゴールの 4 分音符 0.75 秒) おいてから、ほんとに ごく小さい音で始めて 14 秒かけて 少しずつ 大きく =「？？？の世界」は はじめ 何か分からない。ジムノペディの 消えていく和音と 少し重なる)。startAt = ステージの時計で 始める秒 (前の曲の 続きでなく)。元の 2:26 の 1 回目と 4 回目 (終わり) を つないだ 1:14。spurt = Infinity: 3 面は「ラストスパート！」を出さない
+  {src:'bgm/twinkle-musicbox-short.mp3', startAt:S3.MUSIC3.gates[S3.MUSIC3.gates.length-1]+0.75, rise:14, vol:0.6, spurt:Infinity, credit:'きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)'}   /* 10/26 社長 A 案: 1 分 14 秒 → 約 38 秒 (きらきら星 1 回分 + 曲の本当の終わり方。子ども部屋は エンディングの一部。3 面ぜんぶで 約 3 分 34 秒) */,   // ⑤ 子ども部屋 (10/21 社長: 最後の輪を くぐって 1 拍 (オルゴールの 4 分音符 0.75 秒) おいてから、ほんとに ごく小さい音で始めて 14 秒かけて 少しずつ 大きく =「？？？の世界」は はじめ 何か分からない。ジムノペディの 消えていく和音と 少し重なる)。startAt = ステージの時計で 始める秒 (前の曲の 続きでなく)。元の 2:26 の 1 回目と 4 回目 (終わり) を つないだ 1:14。spurt = Infinity: 3 面は「ラストスパート！」を出さない
 ];
 const BGM_SETS = {1:BGM_TRACKS, 2:BGM_TRACKS2, 3:BGM_TRACKS3};
 const RISE_FLOOR = 0.005, BGM_GAP = 0.5, TRIM_LEVEL = 0.02, NO_TRACK_LEN = 120, BGM_VOL = 0.7, BGM_FADE = 2.0, NO_BGM_LEN = 300;
