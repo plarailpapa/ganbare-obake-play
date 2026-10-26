@@ -1469,7 +1469,7 @@ function updateSmall2(ds, dt){   // ds = この コマで おばけが進んだ�
     else if(r.passed) r.s-=Math.max(L.after||0, Math.min(SMALL2_REL_MAX, Math.max(SMALL2_REL_MIN, vm-moveSpeed(r.ms))))*dt;   // 抜いたあとは 後ろへ離れる (大きい準惑星は 見えなくなるまで 速めに)
     else if(v<r.ms){ const fr=Math.min(1, (r.ms-v)/(r.ms-r.msShow)), want= L.planet ? L.pace*Math.pow(L.gap/L.pace, fr) : L.pace+(L.gap-L.pace)*fr;   /* 準惑星は 輪ごとに 同じ割合で近づく (遠くの点から だんだん大きく、10/7 社長) */ r.s+=(want-gap)*(1-Math.exp(-0.8*dt)); }   /* 寄せ方は 行き過ぎない形 (コマ落ちで dt が大きくても 目標を越えない、Codex 指摘 10/7) */   // 届くまでは 前を飛ぶ (輪をくぐるたび 間が詰まる)
     else if(r.paceT<(L.paceSec??SMALL2_PACE_SEC) || gap>L.pace+L.tol){ r.s+=Math.max(-L.close*dt, (L.pace-gap)*(1-Math.exp(-(L.catch||0.8)*dt)));   /* 速さを超えていても まだ遠い時は まず並ぶ所まで寄る (並走なしの準惑星も。10/7 社長: 冥王星の速さを とっくに超えても 追いつけない = 3,000 km 先から 下がる速さで来ていた) */ if(gap<=L.pace+L.tol) r.paceT+=dt; }   // 届いたら 前の上に並んで 一緒に飛ぶ (tol = 並んだとみなす幅)
-    else r.s-=Math.min(L.drift, vm*0.8)*dt;   // ゆっくり下がって おばけの真上を越える (下がる速さは 前へ飛ぶ速さの 8 割まで = 後ろ向きに飛ばない。?real=0 の時の ハレー彗星、Codex 指摘 10/26)
+    else r.s-=(L.planet ? L.drift : Math.min(L.drift, vm*0.8))*dt;   // ゆっくり下がって おばけの真上を越える (近くを飛ぶ ハレー彗星・ボイジャーは 下がる速さを 前へ飛ぶ速さの 8 割まで = 後ろ向きに飛ばない、?real=0 の時、Codex 指摘 10/26。遠くの準惑星 (エリス・冥王星・ケレス) には かけない: かけたら エリスが 1 分近く 抜けなかった、10/26 社長)
     if(!fin && !r.passed && r.s<=s){ r.passed=true; passed2.add(r.def.name); pop('「'+r.def.name+'」を ぬいた！'); recomputeRung2(); }   // 真上に並んだ瞬間
     if(r.passed && s-r.s>(L.away||300)){ r.active=false; r.mesh.visible=false; continue; }   // 後ろへ離れたら 片づける
     if(L.planet){ frameAt(s, PF); r.mesh.position.copy(PF.p).addScaledVector(PF.t, r.s-s).addScaledVector(PF.u, L.up).addScaledVector(PF.r, L.side||0); faceSmall2(r.mesh, L.planet, PF.u); }   // 準惑星は 何百 km 先 (コースはまだ無い) → おばけの所の向きで まっすぐ先に置き、見せる所を カメラへ
