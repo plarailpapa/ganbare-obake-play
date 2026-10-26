@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { ctrlLen } from './stage2.js';   // 制御点の間隔は 2 面と同じ決め方 (速さに応じて)
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';   // 星座の神々の像 (模型)
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';   // 神殿の部品を 1 つの形にまとめる
-import { nurseryWorld } from './nursery3.js';   // ⑤ 子ども部屋 (10/22)
+import { nurseryWorld, nurseryPath } from './nursery3.js';   // ⑤ 子ども部屋 (10/22) と その コース (10/27)
 
 export const V3_START = 108000/3.6;   // 速度計の始まり (m/s) = 2 面の目標 地球の公転 (107,200) の きりのいい数 (10/26 社長。前は 水星の 170,500)。数字は スコアのように上がり続けてよい (設計書 2.1)
 export const V3_MOVE = 150;           // おばけが 実際に進む速さ (m/s、ずっと一定)。速度計の数字とは切り離す (F-ZERO 方式: 神殿や像を じっくり見せる、2.1、仮)
@@ -42,7 +42,8 @@ export const WORLDS3=[
     cosmos:{glb:'assets/gods/india-cosmos.glb', place:[[0.2546, 0.9728, -0.2546, -0.7854, 0.38], [-0.2546, 0.9708, -0.2546, 0.7854, 0.38], [-0.2546, 0.9728, 0.2546, 2.3562, 0.38], [0.2546, 0.9708, 0.2546, 3.927, 0.38], [0.34, 1.9372, 0, -1.5708, 0.3], [0, 1.9372, -0.34, 0, 0.3], [-0.34, 1.9372, 0, 1.5708, 0.3], [0, 1.9372, 0.34, 3.1416, 0.3]]},   // 塔の模型 (assets-warehouse/codex-work/india.py: turtle・elephant・land・sun) と 象 8 頭の置き方 [x, y, z, 向き, 大きさ] (india.py の PLACE。下の 4 頭 = 大地を支える、上の 4 頭 = 雲と山を支える)
     rival:{name:'ガルーダ'}},
   {key:'east',     name:'悟空と日本の神々', kana:'ごくうと にほんの かみがみ', sec:35, legs:[[999,0,0]], sky:{top:'#2a2010', bot:'#c89040', band:0}, rival:{name:'孫悟空'}},   /* ④ 仏教の世界 (悟空・お釈迦様) と 高天原 (日本の神々) を 1 つに (10/12 社長)。名前は 仮 (世界を作る時に決める) */
-  {key:'nursery',  name:'？？？の世界', sec:60, legs:[[999,0,0]], sky:{top:'#0d0718', bot:'#1c1030', band:0, stars:false}, look:'nursery'},   /* ⑤ 子ども部屋 (名前は 伏せる、10/21 社長)。最後の輪を 時速 830,000 km 以上で くぐった時だけ。足りなければ 代わりに ① と同じ 天の川 (index.html の lost3) */
+  {key:'nursery',  name:'？？？の世界', sec:60, legs:[[999,0,0]], sky:{top:'#0d0718', bot:'#1c1030', band:0, stars:false}, look:'nursery',
+    path:{type:'nursery', times:{climb:18, merry:23, down:26.5, bed:30}}},   /* ドアの前から 床 (積み木の 門と 塔・おもちゃの そば) → ベッドの 壁側の脚を 駆け上がる → メリーを 3/4 周 → ベッドの中へ (10/26・10/27 社長)。times = 子ども部屋の始まりから 各印に 着く秒 (設計書 2 章の表。区間ごとに 速さを決める) */   /* ⑤ 子ども部屋 (名前は 伏せる、10/21 社長)。最後の輪を 時速 830,000 km 以上で くぐった時だけ。足りなければ 代わりに ① と同じ 天の川 (index.html の lost3) */
 ];
 export const MUSIC3={   /* 3 面の曲の時刻表 (設計書 2026-10-12-ganbare-obake-stage3-music-sync-design.md)。仮の曲 = ジムノペディ第 1 番。時刻 = ステージの時計 (秒、1 曲目の頭の無音を切った所 = 0)。notes = 加速の輪を置く 右手の音 (社長の耳で記録 ?tap=1 → 録音の打鍵に合わせた 75 個)。gates = 世界の切り替え (世界の数 − 1。87.1 = 旋律の休みの まん中、ほかは 音の時刻)。曲を変えたら ?tap=1 で 記録し直す */
   notes:[10.58, 12.74, 14.79, 17.03, 19.41, 21.59, 23.87, 26.32, 28.84, 30.93, 32.93, 35.07, 37.12, 39.28, 41.4, 43.6, 46.14, 48.53, 50.5, 52.45, 54.62, 57.01, 59.15, 61.18, 63.17, 65.44, 67.73, 69.99, 72.11, 74.31, 76.26, 78.31, 80.45, 81.3, 82.39, 85.18, 89.01, 91.44, 93.83, 96.21, 98.7, 100.79, 102.8, 104.93, 107.16, 109.32, 111.61, 113.79, 116.22, 118.25, 120.26, 122.35, 124.5, 126.59, 128.76, 130.8, 133.18, 135.5, 137.49, 139.48, 141.62, 144.01, 146.15, 148.25, 150.27, 152.45, 154.62, 156.69, 159.55, 161.91, 163.91, 166.14, 167.8, 169.36, 170.1],
@@ -52,10 +53,12 @@ export function planWorlds(runSec, startWi, vm, music, startS){   // 世界ご�
   const n=WORLDS3.length, G= music && music.gates.length===n-1 && music.gates[n-2]<runSec ? music.gates : null, k=Math.max(0.3, runSec/WORLDS3.reduce((a,w)=>a+w.sec, 0)), t0=[0];
   for(let i=1;i<n;i++) t0.push(G ? G[i-1] : t0[i-1]+WORLDS3[i-1].sec*k);
   let s0=0;
-  const plan=WORLDS3.slice(startWi).map((def,j)=>{ const i=startWi+j, T=Math.max(1, (i<n-1 ? t0[i+1] : Math.max(runSec, t0[i]+1))-t0[i]), move= def.path ? pathFor(def.path).len/Math.max(5, T-GATE_CALM) : vm, lead= j===0 ? startS : 0, o={def, wi:i, pi:j, s0, t0:t0[i], move, sA:s0+lead, len:lead+T*move}; s0+=o.len; return o; });
+  const plan=WORLDS3.slice(startWi).map((def,j)=>{ const i=startWi+j, T=Math.max(1, (i<n-1 ? t0[i+1] : Math.max(runSec, t0[i]+1))-t0[i]), move= def.path && !def.path.times ? pathFor(def.path).len/Math.max(5, T-GATE_CALM) : vm, lead= j===0 ? startS : 0, o={def, wi:i, pi:j, s0, t0:t0[i], move, sA:s0+lead, len:lead+T*move}; s0+=o.len; return o; });
   plan.music=!!G; return plan; }
 export function rowAt3(plan, t){ let r=plan[0]; for(const o of plan) if(t>=o.t0) r=o; return r; }   // 時刻 t (ステージの時計) の世界 (並びの行)
-export function sAt3(plan, t){ const r=rowAt3(plan, t); return r.sA+r.move*(t-r.t0); }   // 時刻 t の おばけの位置 (コース上の m、設計書 3.3)。世界が変わる輪 (行の s0) を ちょうど切り替えの時刻に通る
+export function sAt3(plan, t, plain){ const r=rowAt3(plan, t), H=r.def.path; return H && H.times && !plain ? Math.max(r.sA, r.s0+timedS(pathFor(H).marks, H.times, t-r.t0)) : r.sA+r.move*(t-r.t0); }   /* 子ども部屋 (times の ある行) は 印ごとに 着く時刻で 進み、最後の印 (ベッド) で 止まる。plain = 足りなくて 天の川へ 入った時 (いつもの 一定の速さ = 10/21 のまま) */
+function timedS(mk, tm, u){ let t0=0, s0=0; for(const k in tm){ const t1=tm[k], s1=mk[k]; if(u<t1) return s0+(s1-s0)*Math.max(0, u-t0)/(t1-t0); t0=t1; s0=s1; } return s0; }   // 印と印の間は 一定の速さ
+export function pathMarks3(r){ return r.def.path && r.def.path.times ? pathFor(r.def.path).marks : null; }   // 確かめ用 (?errlog=1 の 印を通った時刻)   // 時刻 t の おばけの位置 (コース上の m、設計書 3.3)。世界が変わる輪 (行の s0) を ちょうど切り替えの時刻に通る
 export function tAt3(plan, s){ let r=plan[0]; for(const o of plan) if(s>=o.sA) r=o; return r.t0+(s-r.sA)/r.move; }   // 逆: 位置 s を おばけが通る時刻 (確かめ用の記録、Codex 指摘 10/12: 速さの違う世界をまたいでも 正しく)
 /* ② のコース (10/12 社長: 正面から 像を見上げて近づき、らせん状に のぼり、翼を越えて 顔の高さで ワープ)。入口 (原点、+Z へ) から 像の中心 (0, 0, dz) へ まっすぐ → 右へ曲がって らせんに 外から入る → 左回りに のぼる → 顔の高さで 水平 (この先は nextCtrl3 が まっすぐ 輪へ)
    半径 = 各点で 上下 clear 以内の 体から 3 次元で clear 離れる 最小の半径 (sect の 8 方向を 扇形とみなす)。角度の向きに「最大 → 平均 2 回」で なめらかにしても 必ず その半径以上。体へ寄る・膨らむ傾きは beta まで
@@ -124,7 +127,7 @@ function serpentPath(H){ if(pathCache.has(H)) return pathCache.get(H);
   const T={len:cum[pts.length-1], S, yaw, gpos:toRoot(new THREE.Vector3()), body:{P, U, Tg, r:rr, s:sA},   // 全長 / 模型の 1 (m) / 塔を回す角度 / 塔の中心 (世界の入口の座標) / 大蛇の体 (模型の単位)
     at(sl, o){ const s=Math.max(0, Math.min(T.len, sl)), i=find(s); return o.copy(pts[i]).lerp(pts[i+1], frac(s, i)); }};   // 道のり sl の位置。レールの上は 世界の入口の上 (真上に向く所が無いので upAt なし)
   pathCache.set(H, T); return T; }
-function pathFor(H){ return H.type==='serpent' ? serpentPath(H) : statuePath(H); }   // 形の決まったコース (② の像のらせん / ③ の大蛇)
+function pathFor(H){ return H.type==='serpent' ? serpentPath(H) : H.type==='nursery' ? nurseryPath() : statuePath(H); }   // 形の決まったコース (② の像のらせん / ③ の大蛇 / ⑤ 子ども部屋)
 
 /* 3 面のコースの作り手 (2 面と同じ「亀」の進み方)。世界の中は legs どおりに曲がり、世界の終わり (= ワープの輪) の前後 GATE_CALM 秒は まっすぐ。世界の終わりを越えた点に 印 'at' (ev.at = 輪のコース上の距離。index.html が 区間を作る時に入れる) */
 const _sp=new THREE.Vector3(), _sx=new THREE.Vector3(), _sy=new THREE.Vector3(), _su=new THREE.Vector3(), _sm=new THREE.Matrix4();
