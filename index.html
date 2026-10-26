@@ -360,9 +360,9 @@ async function loadSceneProps(){
 
 /* 相手の動物 (動き付き GLB、1 体ずつ描くので InstancedMesh にしない): 読み込めたら 手作りの姿と入れ替え、AnimationMixer で走らせる。失敗した相手は 手作りのまま */
 function prewarmRivals(){   // 形・色・動く仕組み (骨) を 描く部分へ 先に渡す。小さな 見えない画面に 1 回だけ 全員を描く
-  const hid=rivals.filter(r=>!r.mesh.visible), rt=new THREE.WebGLRenderTarget(8, 8);
-  for(const r of hid) r.mesh.visible=true;
-  try{ renderer.setRenderTarget(rt); renderer.render(scene, camera); }catch(e){ console.warn('相手の下ごしらえ', e); } finally { renderer.setRenderTarget(null); for(const r of hid) r.mesh.visible=false; rt.dispose(); }
+  const hid=rivals.filter(r=>!r.mesh.visible), rt=new THREE.WebGLRenderTarget(8, 8), culled=[];
+  for(const r of hid){ r.mesh.visible=true; r.mesh.traverse(o=>{ if(o.isMesh && o.frustumCulled){ culled.push(o); o.frustumCulled=false; } }); }   /* カメラの外の物も 描く (読み込みに失敗した時の 代わりの模型など、Codex 指摘 10/26) */
+  try{ renderer.setRenderTarget(null); renderer.compile(scene, camera); /* 本番の画面向けの描き方も 先に準備 (小さな画面とは 色の出し方が違い 別に作られる、Codex 指摘 10/26) */ renderer.setRenderTarget(rt); renderer.render(scene, camera); }catch(e){ console.warn('相手の下ごしらえ', e); } finally { renderer.setRenderTarget(null); for(const r of hid) r.mesh.visible=false; for(const o of culled) o.frustumCulled=true; rt.dispose(); }
 }
 async function loadRivalModels(){
   const loader=new GLTFLoader(kitManager), box=new THREE.Box3();
