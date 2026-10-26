@@ -14,6 +14,7 @@
   #speed .u{font-size:15px;opacity:.9} #kmh{font-size:44px;font-weight:bold;line-height:1}
   #gain{display:block;font-size:16px;font-weight:bold;color:#c8f4ff;opacity:0;margin-top:2px;min-height:18px}   /* 加速した時だけ 右上に小さく +○ */
   #gain.on{animation:gain .8s ease-out}
+  #gain .cb{font-size:13px;color:#ffd98a;margin-left:5px}
   @keyframes gain{0%{opacity:0;transform:translateY(6px) scale(1.2)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
   #combo{display:block;font-size:13px;color:#ffd98a;opacity:.85;min-height:16px}   /* 3 連続以上のときだけ 控えめに */
   #speed.result{top:42%;transform:scale(1.35)}
@@ -98,6 +99,7 @@ const LANES = 3, LANE_W = 1.6, LANE_W_SKY = 6.0;   // レールの本数と間�
 const V0 = 1.5;                         // 走り出しの速さ (m/s)
 const BOOST_MODE = 'step';              // 加速のしかた。'step' = 踏むごとに +1, +2, +3 … km/h (踏んだ枚数ぶん増える。9/8 社長採用: フルコンボ ≒ X-15) / 'ratio' = +0.8 m/s + いまの速さの 6% (複利)
 const STEP_KMH = 1;                     // step 方式の刻み (km/h)。n 枚目で +n km/h (10/26 社長: これで大丈夫。板を 100 枚にする方で 合わせる → 52 枚 = 約半分で 時速 1,360 km、全部で 約 5,150 km)
+const COMBO_B1 = 10, COMBO_B2 = 20;      // 1 面の コンボ ボーナス: 10 連続から 1 枚ごとに +1 km/h、20 連続から +2 km/h (10/26 社長 B 案。全部つなげて 約 +170 km/h)
 const BOOST_BASE = 0.8, BOOST_RATE = 0.06;   // ratio 方式の数字
 const PLATE_SEC = 2.0, PLATE_SEC1 = 1.8, PLATE_SEC1_START = 2.0, PLATE_GAP1 = 5;   // 加速板・輪の間隔 (秒): 2 面 = 2 秒ごと。1 面 = 走り出し 2 秒 → 時速 60 km で 1.8 秒ごと、最短 5 m (10/26 社長: 1 面を 3 分 23 秒にして 板を 100 枚・走り出しの加速が足りない → 前の 4.5 秒 → 2 秒・最短 8 m では 84 枚で 時速 60 km まで 40 秒、今は 101 枚・25 秒)
 const FINISH_LEAD = 5, BLAST_RATE = 3, PLATE_QUIET = 9;   // PLATE_QUIET: FINISH の この秒数前から 加速レーンを新しく置かない (上に伸びる光の柱が 飛び去りの演出を隠すため、9/15 社長)。板は最大 PLATE_AHEAD_SEC (8) 秒先まで置くので、9 秒なら FINISH 時に残る板がなくなる (途中で消すのは不自然 = 社長判断で不採用)。PLATE_AHEAD_SEC は下で定義 (ここでは参照できない)   // 曲の終わりの 5 秒前に FINISH (時速が右中央へ・打ち上げ開始)。曲の最後の「ジャン」で ピカーン + 一気に加速 (毎秒 e^3 倍) して画面の上へ消える
@@ -1590,7 +1592,7 @@ let finalV=0, flashed=false;   // FINISH の瞬間の速さ (記録)。打ち上
 const layerAnn={strato:false, ozone:false, plasma:false};   // 高さの境目の一言を出したか
 function updateLadderHUD(){ const L=ladderNow(), H=hudRungs(); [...ladderEl.children].forEach((el,i)=>el.classList.toggle('on', i<=rung)); const nx= rung+1<H ? L[rung+1] : null; $('target').textContent= nx ? 'つぎの あいて: '+nx.name+(nx.kmh ? ' じそく '+nx.kmh.toLocaleString('ja-JP')+' km' : '') : 'ぜんぶ ぬいた！'; }
 function pop(text, small){ const d=document.createElement('div'); d.className='pop'+(small?' small':''); d.textContent=text; $('pops').appendChild(d); setTimeout(()=>d.remove(), 1500); }
-function showGain(add){ const g=$('gain'); g.textContent='+'+fmtKmh(add)+' km/h'; g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
+function showGain(add, cb=0){ const g=$('gain'); g.innerHTML='+'+fmtKmh(add-cb/3.6)+' km/h'+(cb ? '<span class="cb">＋'+cb+' ボーナス</span>' : '');   /* コンボ ボーナスは 別に 小さく黄色で */ g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
 let combo=0;
 let titleOpening=false;   // タイトルに もどった後は どの入口から始めても 導入から (10/20)
 function beginRun(){ if((OPENING_ON || titleOpening) && !openingSeen) beginOpening(titleOpening ? 0 : OP_FROM); else startRun(); }   // 題名のタップ: 1 面の入口なら 先に導入 (10/19)
@@ -1717,10 +1719,11 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
       let add= stage===3 ? v*S3.BOOST3_RATE : stage===2 ? v*(v<S2.PLANETS2[0].ms ? BOOST2_EARLY : BOOST2_RATE) : BOOST_MODE==='step' ? hits*STEP_KMH/3.6 : BOOST_BASE+v*BOOST_RATE;   // 2 面: いまの速さの 3.04% (海王星までは 7.6%、倍々)。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
       if(stage===1 && lastTrackStarted() && !planeRival.passed) add*=CATCHUP_RATE;   // 最後の曲に入っても飛行機を抜けていなければ 追い風 (1 面)
       if(boosterOn) add*=BOOSTER_MUL[stage];   // 救済の やり直し: ブースターで ガンガン加速 (10/20)
+      const cb= stage===1 ? (combo+1>=COMBO_B2 ? 2 : combo+1>=COMBO_B1 ? 1 : 0) : 0; add+=cb/3.6;   // コンボ ボーナス (この板で 何連続目か)
       if(b.ring){ placePlate(b, 1); ringBurstStart(b.lane); if(stage===3) sparkBurst3(b); }   // 2 面: くぐった輪は消え、おばけの周りに 光の輪が広がる
       v+=add;   // くぐったら その場で加速 (2 面も ためない、10/5 社長: くぐっても反応がないのはいけない)
       camKick=Math.min(1, camKick+CAM_KICK_ADD); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false);   // 上限なし (インフレは最後まで)。踏んだ瞬間に 次の相手が前方に見えてくる
-      combo++; showGain(add); if(combo%10===0) pop(combo+' れんぞく！', true); }   // 加速は右上に小さく。連続は 10 ごとに一言だけ (踏めなくても何も言わない)
+      combo++; showGain(add, cb); if(combo%10===0) pop(combo+' れんぞく！', true); }   // 加速は右上に小さく。連続は 10 ごとに一言だけ (踏めなくても何も言わない)
       else if(!b.hit && !b.missed && b.s<s-3){ b.missed=true; combo=0; } }
     $('combo').textContent= combo>=3 ? combo+' れんぞく' : '';
     if(stage===2){ updatePlanets2(dtMove, dt); updateSmall2(s-sPrev, dtMove); }   // 惑星イベント (追い風・ぬいた・ギアアップ) / 姿のある小物
