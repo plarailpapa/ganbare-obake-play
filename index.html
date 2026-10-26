@@ -105,6 +105,7 @@ const PLATE_SEC = 2.0, PLATE_SEC1 = 1.8, PLATE_SEC1_START = 2.0, PLATE_GAP1 = 5;
 const FINISH_LEAD = 5, BLAST_RATE = 3, PLATE_QUIET = 9;   // PLATE_QUIET: FINISH の この秒数前から 加速レーンを新しく置かない (上に伸びる光の柱が 飛び去りの演出を隠すため、9/15 社長)。板は最大 PLATE_AHEAD_SEC (8) 秒先まで置くので、9 秒なら FINISH 時に残る板がなくなる (途中で消すのは不自然 = 社長判断で不採用)。PLATE_AHEAD_SEC は下で定義 (ここでは参照できない)   // 曲の終わりの 5 秒前に FINISH (時速が右中央へ・打ち上げ開始)。曲の最後の「ジャン」で ピカーン + 一気に加速 (毎秒 e^3 倍) して画面の上へ消える
 function plateSec(vv){ if(stage!==1) return PLATE_SEC; const e=Math.min(1, Math.max(0, (vv-V0)/(60/3.6-V0))); return PLATE_SEC1_START+(PLATE_SEC1-PLATE_SEC1_START)*e; }   // 走り出し (V0) で 4.5 秒 → 時速 60 km で 2 秒
 const PLATE_AHEAD_SEC = 8, PLATE_AHEAD_MIN = 40, PLATE_FIRST = 40;   // 板は おばけの少し先 (この秒数ぶん・最低この距離) に敷いていく。最初の板の位置 (スタート地点 30 m の 10 m 先)
+const PLATE_AHEAD_N = 4;   // 1 面: 前に置いておく板は いつも この枚数。間隔は「n 枚目で +n km/h」の決まりどおりに 先の速さを見込む (10/26 社長: スタート直後は 多すぎ・少し加速すると 少なすぎ → 勢いを 倍々で見込んでいたのが原因。7〜8 枚 → 1〜3 枚 と ばらついていた)
 const PLATE_POOL = 64;                  // 板の使い回しの枚数
 const MARK_SCALE_V = 50, MARK_SCALE_MAX = 6, BEAM_H = 20;   // 速いほど 加速板/ボックスを大きく (1 + 速さ/50 倍、最大 6 倍)。空では ボックス + 光の柱 (高さ 20 m × 倍率)
 const LAUNCH_PITCH = 75*Math.PI/180, LAUNCH_RAMP = 600, LAUNCH_ACC = 40;   // FINISH 後: レールは 600 m かけて 75° まで立ち上がり 宇宙へ。おばけは 毎秒 +40 m/s で飛び去る
@@ -1152,16 +1153,18 @@ function placeNotes3(vm){   // vm = 画面の流れの速さ (輪の大きさ、
     plates.push(b); setMarkColor(b, false); note3++; placed=true; }
   return placed; }
 function ensurePlates(s, v, dt){
-  const ahead=Math.max(PLATE_AHEAD_MIN, distAfter(v, growth, PLATE_AHEAD_SEC)), limit=Math.min(s+ahead, courseEnd-5); let dirty=false;   // コースがある範囲にだけ敷く
+  const step1= stage===1 && BOOST_MODE==='step', ahead=Math.max(PLATE_AHEAD_MIN, distAfter(v, growth, PLATE_AHEAD_SEC)), limit= step1 ? courseEnd-5 : Math.min(s+ahead, courseEnd-5); let dirty=false;   // コースがある範囲にだけ敷く (1 面は 前に PLATE_AHEAD_N 枚まで)
+  let k= step1 ? plates.reduce((n, o)=>n+(!o.hit && !o.missed ? 1 : 0), 0) : 0;   /* 1 面: まだ踏んでいない (前にある) 板の枚数 */
   if(stage===3 && plan3.music){ if(placeNotes3(v)) dirty=true; } else   // 3 面: 曲の時刻表が使える時は 音ごと (使えない時は これまでどおりの間隔)
-  while(nextPlate<limit && freeIdx.length && state!=='finish' && !ov2 && songRemaining()>FINISH_LEAD+PLATE_QUIET){   // 曲の終わりが近い / FINISH 後は 新しい板を置かない (9/15)
+  while(nextPlate<limit && (!step1 || k<PLATE_AHEAD_N) && freeIdx.length && state!=='finish' && !ov2 && songRemaining()>FINISH_LEAD+PLATE_QUIET){   // 曲の終わりが近い / FINISH 後は 新しい板を置かない (9/15)
     const sg=segFor(nextPlate); if(sg.noPlates){ nextPlate=sg.s1+6; continue; }
     if(stage===3){ const gt=gates3.find(o=>Math.abs(nextPlate-(o.at ?? courseEnd))<GATE3_CLEAR*v); if(gt){ nextPlate=(gt.at ?? courseEnd)+GATE3_CLEAR*v+1; continue; } }   // 3 面: ワープの輪の前後には 加速の輪を置かない (v = 画面の流れの速さ。位置がまだ決まっていない入口は コースの先端のすぐ先)。+1 m = 境目を確実に越える (速さが端数だと 足し引きの丸めで「まだ近い」と判定され 同じ所を回り続けて 固まった、10/12)   // 上昇の見せ場には 板を置かない (操作なしで景色を楽しむ)
     const tau=timeToReach(v, growth, Math.max(0, nextPlate-s));   // この板に着く時刻 → その PLATE_SEC 秒後の位置が 次の板
     const ring= stage===2 || sg.phase!=='ground';   // 輪 = 2 面と 1 面の空 (10/1 社長: 空の加速ボックスも 2 面と同じ輪に)。地上は板
     const b={s:nextPlate, lane:(Math.random()*LANES)|0, hit:false, idx:freeIdx.pop(), age:0, grow: ring ? Math.min(0.6, tau*0.5) : 0.6, box:false, ring, sc:Math.min(MARK_SCALE_MAX, 1+v/MARK_SCALE_V)};   // 板は 速いほど大きく (最大 6 倍)。grow = 出てくる時に育つ秒数 (輪は 着くまでの半分まで = 近い輪は すぐ完成の大きさ、Codex 指摘 10/1)
     plates.push(b); setMarkColor(b,false); dirty=true;
-    nextPlate=Math.max(nextPlate+(stage===1 ? PLATE_GAP1 : 8), s+distAfter(v, growth, tau+plateSec(v)));   // 最短 8 m (1 面は 5 m)。間隔の秒数は 速さで変わる (序盤ゆるめ)
+    if(step1){ k++; const vp=v+(k*hits+k*(k+1)/2)*STEP_KMH/3.6; nextPlate+=Math.max(PLATE_GAP1, vp*plateSec(vp)); }   /* 1 面: 前の k 枚を 全部踏んだ後の速さ × 間隔の秒数 (最短 5 m) */
+    else nextPlate=Math.max(nextPlate+(stage===1 ? PLATE_GAP1 : 8), s+distAfter(v, growth, tau+plateSec(v)));   // 最短 8 m (1 面は 5 m)。間隔の秒数は 速さで変わる (序盤ゆるめ)
   }
   for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; b.age+=dt;
     if(b.s<s-60){ hidePlate(b.idx); freeIdx.push(b.idx); plates.splice(i,1); dirty=true; continue; }   // 通り過ぎた板は 使い回しへ
