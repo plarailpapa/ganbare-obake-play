@@ -1020,7 +1020,7 @@ function startClimb(s, v){   // 飛行機を抜いた合図: 見えている先�
 function resetCourse(){
   for(const seg of segs) disposeSegment(seg); segs=[]; tail=[]; tailMeta=[]; courseEnd=0;
   Object.assign(gen, {x:0, z:0, yaw:0, turn:0, turnDir:0, turnAmp:1, left:0, alt:0.45, s:0, phase: stage>=2 ? 'space' : 'ground', nextTie:6, climbStart:0, climbY0:0, skyStart:0, launchStart:0, wavePh:0, stratoOn:false, stratoStart:0});
-  if(stage===3){ plan3=S3.planWorlds(stageLen()-FINISH_LEAD, WORLD_Q, S3.V3_MOVE, bgmReady && !bgmFail ? S3.MUSIC3 : null, START_S); gen2=S3.makeGen3(plan3); clearPlanets2(); resetWorlds3(); hotAirZones=[]; clearStartGate(); ensureCourse(0, moveSpeed(v), true); return; }   // 3 面: 世界の並びを 曲の長さに合わせて決め、始まりの世界の景色を作る (10/8)   /* 曲の時刻表が使える時は 世界の切り替えも 曲の時刻 (10/12) */
+  if(stage===3){ plan3=S3.planWorlds(stageLen()-FINISH_LEAD, WORLD_Q, S3.V3_MOVE, bgmReady && !bgmFail ? S3.MUSIC3 : null, START_S); gen2=S3.makeGen3(plan3); clearPlanets2(); resetWorlds3(); if(plan3[0]) plan3[0].org=S2.ctrlLen(moveSpeed(v)); /* 最初の世界の 道の原点の コース上の位置 (最初の 3 点の 持ち越し分、Codex 指摘 10/27: ?world=5 で 印が 30 ずれた) */ hotAirZones=[]; clearStartGate(); ensureCourse(0, moveSpeed(v), true); return; }   // 3 面: 世界の並びを 曲の長さに合わせて決め、始まりの世界の景色を作る (10/8)   /* 曲の時刻表が使える時は 世界の切り替えも 曲の時刻 (10/12) */
   if(stage===2){ gen2=S2.makeGen2(); clearPlanets2(); if(PLANET_Q>=0){ gen2.next=PLANET_Q; for(const o of S2.LADDER2) if(o.ms<v) passed2.add(o.name); const prev=S2.PLANETS2[PLANET_Q-1]; if(prev) dist2=dist2From=warpFromD=warpToD=prev.dist; recomputeRung2(); }   /* 試し ?planet=N: それより遅い相手は 抜いたことにする */ hotAirZones=[]; clearStartGate(); ensureCourse(0, moveSpeed(v), true); return; }   // 2 面: スタートゲート・熱気球なし。先作りの距離も いまの速さで
   ensureCourse(0, V0, true);
   buildStartGate();
@@ -1711,7 +1711,7 @@ function finishRun(){   // 曲の終わり 5 秒前: 結果を用意し、時速
   spaceDark0=parseFloat($('space').style.opacity)||0; launchS=s; ghostGlow.visible=true; shadow.visible=false;   // 空の暗さは ここから 6 秒で 1 へ (update で)
 }
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
-function resetRun(){ bgmStop(); $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
+function resetRun(){ bgmStop(); ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
 const EARTH2_KMH = S2.PLANETS2.find(p=>p.name==='地球').kmh, GOAL3_KMH = 830000;   // 2 面の合格 = 地球の公転 (時速 107,200)、3 面の「おいぬいた」= 太陽系の公転
 function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め言葉・ボタン・足りない時の 神様
@@ -1778,8 +1778,8 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   if(stage===2){ updateWarp2(dtReal); if(state==='finish') cleanupPlanets2(); updatePreview2(dt); updatePlanetVisuals2(dt); if(state!=="run") updateIce2(); updateWisps2(dtReal); if(state!=='title') updateDist2(); }   // ワープの時計 / FINISH 中も惑星を片づける・近づく見た目を動かす (Codex 指摘 10/1) / 太陽までの距離の表示
   if(state==='run'){
     if(stage>=2){ const vm0=moveSpeed(v); ensureCourse(s+vm0*dtMove, vm0); ensurePlates(s, vm0, 0); }   // 2 面: 進む前に 行き先までのコースと その間の輪を作っておく (本物の速さでは 1 コマで数百 m〜1 km、コマ落ちでは もっと進み、作る前に通り過ぎてしまうため、Codex 指摘 10/1)
-    const vm=moveSpeed(v), sPrev=s; s= stage===3 ? Math.max(s, S3.sAt3(plan3, stageT, lost3On)) : s+vm*dtMove;   // 2 面は 画面の流れの速さで進む (時速は本物)。3 面は 曲の時計から決める (曲とずれない、設計書 3.3。後ろへは戻さない)
-    if(stage===3 && ERRLOG && nurseryOn3()){ const r=plan3[pi3], mk=S3.pathMarks3(r); if(mk){ r.logged ??= {}; for(const k in mk) if(!r.logged[k] && r.s0+mk[k]<=s){ r.logged[k]=true; logSend({mark:k, t:+(stageT-r.t0).toFixed(3)}); } } }   /* 確かめ用 ?errlog=1: 子ども部屋の 印 (駆け上がり・メリー・ベッド) を 通った時刻 (始まりから 秒) */
+    const vm=moveSpeed(v), sPrev=s; s= stage===3 ? Math.max(s, S3.sAt3(plan3, stageT, lost3On || (pass3===null && v*3.6<GOAL3_KMH))) : s+vm*dtMove;   // 2 面は 画面の流れの速さで進む (時速は本物)。3 面は 曲の時計から決める (曲とずれない、設計書 3.3。後ろへは戻さない)
+    if(stage===3 && ERRLOG && nurseryOn3()){ const r=plan3[pi3], mk=S3.pathMarks3(r); if(mk){ r.logged ??= {}; for(const k in mk) if(!r.logged[k] && (r.org ?? r.s0)+mk[k]<=s){ r.logged[k]=true; logSend({mark:k, t:+(stageT-r.t0).toFixed(3)}); } } }   /* 確かめ用 ?errlog=1: 子ども部屋の 印 (駆け上がり・メリー・ベッド) を 通った時刻 (始まりから 秒) */
     if(stage===3 && ERRLOG){ for(const b of plates) if(b.ring && !b.logged && b.s>sPrev && b.s<=s){ b.logged=true; logSend({ring:+S3.tAt3(plan3, b.s).toFixed(3)}); } for(const g of gates3) if(g.at!=null && !g.logged && g.at>sPrev && g.at<=s){ g.logged=true; logSend({gate:+S3.tAt3(plan3, g.at).toFixed(3)}); } }   /* 確かめ用 ?errlog=1: 輪・世界が変わる輪を 通った時刻 (設計書 5 章、曲の時刻表と照合) */
     ensureCourse(s, vm);                                      // 先を作る (片づけは 板の判定のあと)
     if(stage===2) updateIce2();   /* 土星の輪の石は おばけが このコマ進んだ後に並べる (進む前だと ひどいコマ落ちで 並べた石が 全部 後ろになった、Codex 指摘 10/26) */
