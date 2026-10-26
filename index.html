@@ -734,7 +734,7 @@ function updateWisps2(dt){
   wispMesh.count=wisps.length; wispMesh.visible=wisps.length>0; wispMesh.instanceMatrix.needsUpdate=true;
 }
 /* 土星の環の 氷の塊 (10/2 社長: 近づいたら 氷のかけらの集まり)。景色だけ (当たり判定なし)。走る区間の 先の数秒ぶんだけ置いて 使い回す。レールと環の間にも浮かべて 高さを分かりやすく (環に張り付いて見えた、10/2 社長) */
-const ICE_MAX=900, ICE_AHEAD=5, ICE_COLS=[0xf0f4f8, 0xc8d4e0, 0xd8ccb8, 0xe6eef6].map(c=>new THREE.Color(c));   // 最大の数 / 先の何秒ぶん置くか / 色 (白・青みの灰色・うすい茶)
+const ICE_MAX=900, ICE_PER_FRAME=60, ICE_AHEAD=5, ICE_COLS=[0xf0f4f8, 0xc8d4e0, 0xd8ccb8, 0xe6eef6].map(c=>new THREE.Color(c));   // 最大の数 / 先の何秒ぶん置くか / 色 (白・青みの灰色・うすい茶)
 const iceMesh=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.85, metalness:0, flatShading:true}), ICE_MAX);
 iceMesh.count=0; iceMesh.visible=false; iceMesh.frustumCulled=false; scene.add(iceMesh);
 let ice=[], iceEv=null, iceNext=0; const iceOrigin=new THREE.Vector3(), IF=mkFrame(), _iM=new THREE.Matrix4(), _iP=new THREE.Vector3(), _iA=new THREE.Vector3(), _iE=new THREE.Euler();
@@ -746,7 +746,8 @@ function updateIce2(){
   if(!e) return;
   ice=ice.filter(o=>o.s>s-300);   // 通り過ぎたものは 使い回しへ
   const vm=Math.max(1, moveSpeed(v)), stop=Math.min(courseEnd-5, s+vm*ICE_AHEAD, e.arc1!=null ? e.arc1+vm : Infinity), step=Math.max(30, vm*0.008), N=e.up;   // 約 80 m ごと (秒速 10 km の時)
-  while(iceNext<stop && ice.length<ICE_MAX){ frameAt(iceNext, IF); const w=laneWAt(iceNext);
+  let made=0;   /* 1 コマに ICE_PER_FRAME 個まで (輪を走り始める時に 先の 5 秒ぶん 約 600 個を 1 コマで作って カクついた、10/26 社長) */
+  while(iceNext<stop && ice.length<ICE_MAX && made++<ICE_PER_FRAME){ frameAt(iceNext, IF); const w=laneWAt(iceNext);
     const hp=_iA.copy(IF.p).sub(e.center).dot(N), near=Math.random()<0.15, side=Math.random()<0.5 ? -1 : 1;   // hp = コースの 環の面からの高さ
     const size= near ? 3+Math.random()*12 : 3+Math.random()*37, lat= near ? w*1.5+1.2*size+Math.random()*50 : w*1.5+1.2*size+Math.pow(Math.random(), 1.5)*1475, ht= near ? hp-30+Math.random()*50 : 1.2*size+Math.random()*Math.max(1, e.ringH-20-2.4*size);   /* 余白は 伸ばして回した後の張り出し (最大 約 1.2 倍) で取る (環の面にめり込まない・レールの帯に入らない、Codex 指摘 10/2) */   // 15% = コースのすぐ脇 (かすめる。レールの外側)、残りは 両脇の遠く・環の面の上
     ice.push({s:iceNext, p:IF.p.clone().addScaledVector(N, ht-hp).addScaledVector(IF.r, side*lat), q:new THREE.Quaternion().setFromEuler(_iE.set(Math.random()*6.28, Math.random()*6.28, Math.random()*6.28)), sc:new THREE.Vector3(size, size*(0.5+Math.random()*0.5), size*(0.6+Math.random()*0.6)), c:ICE_COLS[(Math.random()*ICE_COLS.length)|0]});
@@ -1394,18 +1395,20 @@ function updateRivals(dtMove){
 
 /* 2 面の小物の姿 (10/6 作業④): 姿のある小物は おばけが その速さの 9 割になったら コースの上の先に黙って現れ、速さに届くまでは 前を飛び (輪をくぐるたび 間が詰まる)、届いたら おばけの前の上に並んで しばらく一緒に飛び、ゆっくり下がって おばけの真上を越えた瞬間に「ぬいた！」(社長: 一瞬だと見えない・真上がいい)。姿のない小物 (読み込み前・失敗も) は 今までどおり 速さで */
 const SMALL2_LOOKS={   // up = コースの真上の高さ / gap = 現れる先の距離 / pace = 並んで飛ぶ所 (おばけの前。真上だと カメラの上にはみ出して見えない) / close = そこへ寄る速さの上限 (m/秒) / drift = 下がって真上を越える速さ (m/秒) / tol = 並んだとみなす幅 / catch = 遠い時に並ぶ所へ寄る勢い (1/秒、既定 0.8) / paceSec = 並んで飛ぶ秒 (なければ 3 秒。準惑星は 大きくて 一瞬でも何かわかるので 0、10/7 社長)。距離は すべて m
-  'ボイジャー1号':{glb:'craft/voyager.glb', up:18, gap:400, pace:25, close:300, drift:30, tol:1},   // NASA の模型 (NASA VTAD、本物の大きさ: お皿 3.7 m・磁力計の棒 13 m)。模型の +Y = お皿の向き、+Z = 棒の向き。高さ = 輪のてっぺん 最大 約 14 m + お皿の半径 約 4 m の上
+  'ボイジャー1号':{glb:'craft/voyager.glb', up:18, gap:400, pace:25, close:300, drift:30, tol:1, quick:1},   // NASA の模型 (NASA VTAD、本物の大きさ: お皿 3.7 m・磁力計の棒 13 m)。模型の +Y = お皿の向き、+Z = 棒の向き。高さ = 輪のてっぺん 最大 約 14 m + お皿の半径 約 4 m の上
   'ハレー彗星':{make:mkHalley, up:500, gap:6000, pace:1500, close:1200, drift:800, tol:60, fadeIn:4},   // 核は 本物 15 km の ÷35 = 約 430 m なので 高く・遠くに並ぶ。fadeIn = 現れる時に ふわっと濃くなる秒 (10/7 社長: 急に現れたように見える = 尾 25 km が 現れた瞬間に おばけの上まで届くため)
   'エリス':{planet:{u:0.19, lat:20}, fill:0.85, up:25000, side:-60000, gap:3000000, pace:130000, close:1000000, drift:40000, after:40000, away:150000, tol:3000, fadeIn:0.5, paceSec:0, catch:1.5, showKmh:8000},   // 準惑星 (10/7): 本物の写真がない (望遠鏡では点) ので Solar System Scope の想像図の地図 (CC BY 4.0、惑星と同じ所)。見せる所 = 明るい白と黒っぽい地域の境。太陽系で いちばん白く光る星のひとつ → 冥王星より明るめ (fill)。左上を通る (side = 右 +、社長: 冥王星と同じ出方・位置だと変)。速さは 本物 12,300 より早めの 8,000 で現れ 10,000 で抜く (冥王星・海王星と詰まらないように、社長)
   'ケレス':{planet:{u:0.6625, lat:19.8}, up:-10000, side:-25000, gap:1500000, pace:55000, close:1000000, drift:20000, after:20000, away:70000, tol:1500, fadeIn:0.5, paceSec:0, catch:1.5, showKmh:53000},   // 準惑星 (10/7): NASA の模型 (NASA VTAD、探査機ドーンの写真) から 地図だけ取り出し (planets/2k_ceres.jpg)。半径 470 km ÷35 = 13 km と小ぶりなので 近くを通る。見せる所 = 白く光る点 (オッカトル・クレーターの塩、北緯 19.8°)。左下を通る。小惑星帯 (火星と木星の間) にあるので 木星の後・ボイジャーの前に (10/7 社長 A 案: 本物 64,400 だと ボイジャーの後で詰まる → 53,000 で現れ 56,000 で抜く)
   '冥王星':{planet:{u:0, lat:15}, up:25000, side:55000, gap:3000000, pace:130000, close:1000000, drift:40000, after:40000, away:150000, tol:3000, fadeIn:0.5, paceSec:0, catch:1.5, showKmh:11000},   // 右上を通る。3,000 km 先の点から だんだん大きく (10/7 社長: ふわっと現れるのは変 → 遠くから来る)   // 準惑星 (10/7): 惑星と同じ作り (半径 1,188 km ÷35 = 34 km) を 遠景に。planet = 見せる所 (地図の横位置 u・緯度 = ハート)。showKmh = 現れる速さ、抜く速さは stage2.js の SMALL2 の at (10/7 社長 A 案: 本物 17,100 km/h だと 海王星の専用コース (15,680 km/h〜) の最中になるので 手前で抜く。15,000 → 14,000 = 渋滞感を減らす、10/7 社長)。after = 抜いたあと離れる速さ、away = 片づける後ろの距離
 };
 const SMALL2_SHOW=0.9, SMALL2_FILL=0.6, SMALL2_PLANET_FILL=0.7, SMALL2_PACE_SEC=1, SMALL2_REL_MIN=60, SMALL2_REL_MAX=250;   // 現れる速さ (割合) / 影の側の明るさ (太陽が前にあり 後ろからは影の側しか見えないため。10/6 社長: もっと明るく) / 準惑星の夜の側の明るさ (模様ごと) / 一緒に飛ぶ秒 / 抜いたあと離れる速さ (m/秒、見た目の都合で この範囲に)   /* 10/26 社長: 2 面を 3 分半にしたので 一緒に飛ぶ 3 → 1 秒、ボイジャーの 下がる速さ 10 → 30 m/秒 (約 0.8 秒)・ハレー彗星 400 → 800 m/秒 (約 2 秒) */
+const SMALL2_QUICK_SEC = 1;   // 準惑星・ボイジャー (quick) は 速さが追いついたら この秒数で 頭上を通り過ぎる (10/26 社長: 抜く前に 止まって見せるのは 無くていい)
 const small2=[], small2Names=new Set();
-let occWarm=false;
+let occWarm=false, iceWarm=false;
 function prep2Step(){   // 2 面の前 (走っていない間) に 1 コマ 1 つずつ: 惑星を作る・模様を当てる・見えない所で描く → 準惑星などの小物も 見えない所で描く (出てくる時の カクつき防止、10/26 社長)
   if(!S2.prebuildPlanet(warmFar2)) return;
-  if(!occWarm){ occWarm=true; warmFar2(new THREE.Mesh(OCC_GEO, occluderMat), scene); return; }   /* 奥行き用の球 (使い回しの形) も 1 回 */
+  if(!occWarm){ occWarm=true; warmFar2(new THREE.Mesh(OCC_GEO, occluderMat), scene); return; }
+  if(!iceWarm && !iceEv){ iceWarm=true; const c0=iceMesh.count; iceMesh.count=1; iceMesh.setMatrixAt(0, _iM.identity()); iceMesh.setColorAt(0, ICE_COLS[0]); iceMesh.instanceMatrix.needsUpdate=true; iceMesh.instanceColor.needsUpdate=true; warmFar2(iceMesh, scene); iceMesh.count=c0; return; }   /* 土星の輪の石 (まとめて描く部品) も 1 回 (初めて出る時の 描き方の準備で カクついた、10/26 社長) */   /* 奥行き用の球 (使い回しの形) も 1 回 */
   for(const r of small2){ if(r.warmed) continue; const g=r.mesh.children[0], tk=g && g.userData.tick, pd=g && g.userData.pending;
     if(r.L.planet && pd && pd.length){ const n=pd.length; S2.updatePlanetTex(g); if(pd.length<n) return; continue; }   /* 準惑星の模様は 届いてから (まだなら 次の小物へ) */
     if(tk) tk(0, 1); warmFar2(r.mesh, r.L.planet ? farScene : scene); if(tk) tk(0, 0); r.warmed=true; return; } }   /* tick で 模様と 光らせる模様を 先に差し替え (差し替えると 描き方が変わるため) → 描いて → 見えない濃さへ戻す */
@@ -1467,17 +1470,18 @@ function mkHalley(){   // ハレー彗星 (10/7 社長: 尾あり。本物は 2 
   g.userData.tick=(dt, k)=>{ core.rotation.z+=dt*0.05; core.rotation.y+=dt*0.02; for(const tx of tails) tx.offset.x-=dt*0.15; for(const [m, op] of fades) m.opacity=op*k; core.material.depthWrite=k>=1; };   /* 核は 濃くなりきるまで 奥行きを書かない (薄い核が 光の雲を隠して 欠けて見えないように、Codex 指摘 10/7) */   // 核は ゆっくり回り、尾の むらと筋は 後ろへ流れる。k = 現れてからの濃さ
   return g;
 }
-function resetSmall2(){ for(const r of small2){ r.active=false; r.passed=false; r.mesh.visible=false; } }
+function resetSmall2(){ for(const r of small2){ r.active=false; r.passed=false; r.passDrift=null; r.mesh.visible=false; } }
 function updateSmall2(ds, dt){   // ds = この コマで おばけが進んだ距離 (m)、dt = 秒
   const vm=moveSpeed(v), hold=events2.length>0 || warp2>=0, fin=state==='finish';
   for(const r of small2){
     if(hold){ if(r.active){ r.active=false; r.mesh.visible=false; } continue; }   // 惑星の専用コース・特別カメラ・ワープの間は 隠す (抜く前なら 終わってから 先に出直す、Codex 指摘 10/7)
     if(!r.active){ if(fin || r.passed || passed2.has(r.def.name) || v<r.msShow || small2.some(o=>o!==r && o.active && !o.passed)) continue;   /* 小物は 1 つずつ (前の小物を抜き終わってから 次が現れる、10/7 エリスと冥王星) */
-      r.active=true; r.s=s+r.L.gap-ds; r.paceT=0; r.fade=0; r.mesh.visible=true; }
+      r.active=true; r.s=s+r.L.gap-ds; r.paceT=0; r.fade=0; r.passDrift=null; r.mesh.visible=true; }
     const L=r.L; r.s+=ds; const gap=r.s-s;   // まず おばけと同じだけ進めてから 間を測る (おばけだけ先に進んだ所で測ると 並ぶ位置が 1 コマ分 先へずれる = 時速 6 万 km で 約 300 m、Codex 指摘 10/7)
     if(fin){}   // 曲の終わり (FINISH) は 抜いた判定をせず 今の間のまま一緒に飛ぶ (止まると おばけだけが追い越していく、Codex 指摘 10/7)
     else if(r.passed) r.s-=Math.max(L.after||0, Math.min(SMALL2_REL_MAX, Math.max(SMALL2_REL_MIN, vm-moveSpeed(r.ms))))*dt;   // 抜いたあとは 後ろへ離れる (大きい準惑星は 見えなくなるまで 速めに)
     else if(v<r.ms){ const fr=Math.min(1, (r.ms-v)/(r.ms-r.msShow)), want= L.planet ? L.pace*Math.pow(L.gap/L.pace, fr) : L.pace+(L.gap-L.pace)*fr;   /* 準惑星は 輪ごとに 同じ割合で近づく (遠くの点から だんだん大きく、10/7 社長) */ r.s+=(want-gap)*(1-Math.exp(-0.8*dt)); }   /* 寄せ方は 行き過ぎない形 (コマ落ちで dt が大きくても 目標を越えない、Codex 指摘 10/7) */   // 届くまでは 前を飛ぶ (輪をくぐるたび 間が詰まる)
+    else if(L.planet || L.quick){ if(r.passDrift==null) r.passDrift=Math.max(L.drift, Math.max(0, gap)/SMALL2_QUICK_SEC); r.s-=(L.planet ? r.passDrift : Math.min(r.passDrift, vm*0.8))*dt; }   /* 準惑星・ボイジャーは 止まって見せる間なしに 約 1 秒で 頭上を通り過ぎて抜ける (10/26 社長) */
     else if(r.paceT<(L.paceSec??SMALL2_PACE_SEC) || gap>L.pace+L.tol){ r.s+=Math.max(-L.close*dt, (L.pace-gap)*(1-Math.exp(-(L.catch||0.8)*dt)));   /* 速さを超えていても まだ遠い時は まず並ぶ所まで寄る (並走なしの準惑星も。10/7 社長: 冥王星の速さを とっくに超えても 追いつけない = 3,000 km 先から 下がる速さで来ていた) */ if(gap<=L.pace+L.tol) r.paceT+=dt; }   // 届いたら 前の上に並んで 一緒に飛ぶ (tol = 並んだとみなす幅)
     else r.s-=(L.planet ? L.drift : Math.min(L.drift, vm*0.8))*dt;   // ゆっくり下がって おばけの真上を越える (近くを飛ぶ ハレー彗星・ボイジャーは 下がる速さを 前へ飛ぶ速さの 8 割まで = 後ろ向きに飛ばない、?real=0 の時、Codex 指摘 10/26。遠くの準惑星 (エリス・冥王星・ケレス) には かけない: かけたら エリスが 1 分近く 抜けなかった、10/26 社長)
     if(!fin && !r.passed && r.s<=s){ r.passed=true; passed2.add(r.def.name); pop('「'+r.def.name+'」を ぬいた！'); recomputeRung2(); }   // 真上に並んだ瞬間
