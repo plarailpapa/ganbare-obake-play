@@ -128,6 +128,7 @@ const STRATO_ALT = 4000, OZONE_ALT = 7000, SPACE_ALT = 12000;   // ゲーム内�
 const PLASMA_V = 1700, PLASMA_ALT = 13000;      // 大気の中を これより速く (≒ マッハ 5) 飛ぶと 空気が焼けてプラズマが光る。大気の外 (SPACE_ALT 以上) では消える
 const TURN_RATE = 0.095;                // 見た目の曲がる速さ (rad/秒)。速いほどカーブをゆるくして これを一定に保つ (目がちらつかない)
 const PLANE_V = LADDER[AIRPLANE_RUNG].ms, PLANE_SPAWN_RATIO = 0.6, PLANE_LEAD = 300;   // 飛行機: 本物の速さ 250 m/s。その 6 割の速さになったら 300 m 先に現れる
+const SKY_NEAR = 60;   // 空 (上昇から先) の相手は 板を踏んで速くなるほど 近くで待つ: 相手の 6 割の速さ = lead → 同じ速さ = 機体の後ろの端が この距離 (10/26 社長: 空は 踏んでも 近づかなくて ストレス。地上は これまでどおり)
 const CLIMB_LEN = 1500, CLIMB_RISE = 350;   // 見せ場「上昇」区間: 1,500 m かけて 350 m 上がる大きな曲線 (板なし・操作なし)
 const CATCHUP_RATE = 1.6, CATCHUP_SEC = 45;  // 曲の最後の曲に入っても飛行機を抜けていなければ 加速 1.6 倍の追い風。残り 45 秒を切ったら 飛行機が少しゆずる
 const TIE_GAP = 12;                     // 枕木の間隔 (m)
@@ -1318,11 +1319,13 @@ function trySpawnRival(force){   // いま出せる相手 (速さが 6 割に達
 function updateRivals(dtMove){
   for(let i=0;i<LADDER.length;i++){ if(!rivalByRung[i] && !announced[i] && v>=LADDER[i].ms){ announced[i]=true; if(i<HUD_RUNGS) pop('「'+LADDER[i].name+'」を ぬいた！'); recomputeRung(); } }   // 姿のない相手 (自転など) は 速さで
   if(planeRival && !planeRival.active && !planeRival.passed && songRemaining()<CATCHUP_SEC+15) trySpawnRival(true);   // 飛行機は 曲の終わりが近ければ 速さが足りなくても出す
+  const sky= segFor(s).phase!=='ground';
   for(const r of rivals){
     if(!r.active) continue;
     const gap=r.s-s;
     if(!r.passed){
-      let tv= v<r.ms ? Math.max(v-Math.max(1, r.ms*0.08), Math.min(r.ms, v+(r.lead-gap)*0.1)) : r.ms;   // 抜かれる前は 見える距離に付き合う。おばけが相手の速さを超えたら 本物の速さで   /* 10/26 に「超えたら 1.5 秒で並ぶ」方式を試したが 社長判断で元に戻した (地上は 一気に まとめて抜けて 楽しくない・空は 近づかなくて ストレス)。ライバルが増えた後で 見え方を 考え直す */
+      const p= sky ? Math.min(1, Math.max(0, (v-r.ms*PLANE_SPAWN_RATIO)/(r.ms*(1-PLANE_SPAWN_RATIO)))) : 0, want=r.lead+(Math.min(r.lead, SKY_NEAR+r.len*0.5)-r.lead)*p;   /* 待つ距離 (空だけ 速さが相手に近づくほど 近く) */
+      let tv= v<r.ms ? Math.max(v-Math.max(1, r.ms*0.08), Math.min(r.ms, v+(want-gap)*0.1)) : sky ? Math.min(r.ms, v-Math.max(1, r.ms*0.08)) : r.ms;   // 抜かれる前は 見える距離に付き合う。おばけが相手の速さを超えたら 本物の速さで (空は すぐ近くにいるので 相手の 8% ぶん 速く追い抜く = 2 秒ほど)   /* 10/26 に「超えたら 1.5 秒で並ぶ」方式を試したが 社長判断で元に戻した (地上は 一気に まとめて抜けて 楽しくない) */
       if(r.climbTrigger){ const rem=songRemaining(); if(rem<CATCHUP_SEC){ const closing=(gap+20)/Math.max(3, rem-30); tv=Math.min(tv, v-Math.max(8, closing)); } }   // 飛行機: 曲が終わりそうなら ゆずる (残り 30 秒は見せ場に)
       r.v+=(tv-r.v)*Math.min(1, dtMove*2);
       if(!r.met && gap<r.len+8) r.met=true;
