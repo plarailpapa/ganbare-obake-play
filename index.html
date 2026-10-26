@@ -97,11 +97,11 @@ import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会�
 const LANES = 3, LANE_W = 1.6, LANE_W_SKY = 6.0;   // レールの本数と間隔 (m)。空では間隔を広げる (上昇区間でなめらかに 1.6 → 6.0)
 const V0 = 1.5;                         // 走り出しの速さ (m/s)
 const BOOST_MODE = 'step';              // 加速のしかた。'step' = 踏むごとに +1, +2, +3 … km/h (踏んだ枚数ぶん増える。9/8 社長採用: フルコンボ ≒ X-15) / 'ratio' = +0.8 m/s + いまの速さの 6% (複利)
-const STEP_KMH = 1.6;                   // step 方式の刻み (km/h)。n 枚目で +1.6n km/h (10/26: 1 面を 3 分 23 秒に縮めた = 板が 約 110 → 88 枚。前と同じ「半分ほど踏めば 時速 1,360 km」・全部踏んだ最高速度も ほぼ同じ になるよう 1 → 1.6)
+const STEP_KMH = 1;                     // step 方式の刻み (km/h)。n 枚目で +n km/h (10/26 社長: これで大丈夫。板を 100 枚にする方で 合わせる → 52 枚 = 約半分で 時速 1,360 km、全部で 約 5,150 km)
 const BOOST_BASE = 0.8, BOOST_RATE = 0.06;   // ratio 方式の数字
-const PLATE_SEC = 2.0, PLATE_SEC_START = 4.5;   // 加速板の間隔 (秒): 走り出しは 4.5 秒ごと → 時速 60 km で 2 秒ごと (序盤の土のステージを長く楽しむ)。最短 8 m
+const PLATE_SEC = 2.0, PLATE_SEC1 = 1.8, PLATE_SEC1_START = 2.0, PLATE_GAP1 = 5;   // 加速板・輪の間隔 (秒): 2 面 = 2 秒ごと。1 面 = 走り出し 2 秒 → 時速 60 km で 1.8 秒ごと、最短 5 m (10/26 社長: 1 面を 3 分 23 秒にして 板を 100 枚・走り出しの加速が足りない → 前の 4.5 秒 → 2 秒・最短 8 m では 84 枚で 時速 60 km まで 40 秒、今は 101 枚・25 秒)
 const FINISH_LEAD = 5, BLAST_RATE = 3, PLATE_QUIET = 9;   // PLATE_QUIET: FINISH の この秒数前から 加速レーンを新しく置かない (上に伸びる光の柱が 飛び去りの演出を隠すため、9/15 社長)。板は最大 PLATE_AHEAD_SEC (8) 秒先まで置くので、9 秒なら FINISH 時に残る板がなくなる (途中で消すのは不自然 = 社長判断で不採用)。PLATE_AHEAD_SEC は下で定義 (ここでは参照できない)   // 曲の終わりの 5 秒前に FINISH (時速が右中央へ・打ち上げ開始)。曲の最後の「ジャン」で ピカーン + 一気に加速 (毎秒 e^3 倍) して画面の上へ消える
-function plateSec(vv){ const e=Math.min(1, Math.max(0, (vv-V0)/(60/3.6-V0))); return PLATE_SEC_START+(PLATE_SEC-PLATE_SEC_START)*e; }   // 走り出し (V0) で 4.5 秒 → 時速 60 km で 2 秒
+function plateSec(vv){ if(stage!==1) return PLATE_SEC; const e=Math.min(1, Math.max(0, (vv-V0)/(60/3.6-V0))); return PLATE_SEC1_START+(PLATE_SEC1-PLATE_SEC1_START)*e; }   // 走り出し (V0) で 4.5 秒 → 時速 60 km で 2 秒
 const PLATE_AHEAD_SEC = 8, PLATE_AHEAD_MIN = 40, PLATE_FIRST = 40;   // 板は おばけの少し先 (この秒数ぶん・最低この距離) に敷いていく。最初の板の位置 (スタート地点 30 m の 10 m 先)
 const PLATE_POOL = 64;                  // 板の使い回しの枚数
 const MARK_SCALE_V = 50, MARK_SCALE_MAX = 6, BEAM_H = 20;   // 速いほど 加速板/ボックスを大きく (1 + 速さ/50 倍、最大 6 倍)。空では ボックス + 光の柱 (高さ 20 m × 倍率)
@@ -1149,7 +1149,7 @@ function ensurePlates(s, v, dt){
     const ring= stage===2 || sg.phase!=='ground';   // 輪 = 2 面と 1 面の空 (10/1 社長: 空の加速ボックスも 2 面と同じ輪に)。地上は板
     const b={s:nextPlate, lane:(Math.random()*LANES)|0, hit:false, idx:freeIdx.pop(), age:0, grow: ring ? Math.min(0.6, tau*0.5) : 0.6, box:false, ring, sc:Math.min(MARK_SCALE_MAX, 1+v/MARK_SCALE_V)};   // 板は 速いほど大きく (最大 6 倍)。grow = 出てくる時に育つ秒数 (輪は 着くまでの半分まで = 近い輪は すぐ完成の大きさ、Codex 指摘 10/1)
     plates.push(b); setMarkColor(b,false); dirty=true;
-    nextPlate=Math.max(nextPlate+8, s+distAfter(v, growth, tau+plateSec(v)));   // 最短 8 m。間隔の秒数は 速さで変わる (序盤ゆるめ)
+    nextPlate=Math.max(nextPlate+(stage===1 ? PLATE_GAP1 : 8), s+distAfter(v, growth, tau+plateSec(v)));   // 最短 8 m (1 面は 5 m)。間隔の秒数は 速さで変わる (序盤ゆるめ)
   }
   for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; b.age+=dt;
     if(b.s<s-60){ hidePlate(b.idx); freeIdx.push(b.idx); plates.splice(i,1); dirty=true; continue; }   // 通り過ぎた板は 使い回しへ
