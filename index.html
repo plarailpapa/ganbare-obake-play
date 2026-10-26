@@ -384,6 +384,7 @@ async function loadRivalModels(){
     if(r.glbUp!=null) r.up=r.glbUp;   // 手作りの姿は 飛ぶ高さを形に含めていた (ハト 2.5 m など) → GLB は足元原点なので 高さを指定し直す
     const limbs=['legL','legR','armL','armR'].map(n=>sc.getObjectByName(n)); if(limbs.every(Boolean)) r.limbs=limbs;   // 脚・腕が別部品の形 (走る人) は 走った距離に合わせて振る (updateRivals)。読み込んだ形 (sc) の中から探す (r.mesh に足すのはこの後、Codex 指摘)
     r.mesh.add(r.post ? r.post(sc) : sc); r.len=(box.max.z-box.min.z)*r.scale; r.bounce=r.bounce && !r.mixer;   // 長さは 本物の形から。動きのある形は 跳ねる演出を止める (動きのない生き物は 跳ねたまま)。post = 読み込んだ形から編隊などを組む
+    if(r.name==='ミサイル') r.flames=[addFlame(sc, 0, 0.48, -3.0, 0.9, 3.2)]; else if(r.name==='スペースシャトル') setupShuttle(r, sc);   /* 噴射口の炎・シャトルの切り離し (10/26 社長)。ミサイルは 模型の中で 長さ 6 m (6 倍で見せる) のお尻から */
     if(!r.fly && (r.len>8 || (box.max.x-box.min.x)*r.scale>2.2)){ const set=new Set(); sc.traverse(o=>{ if(!o.isMesh) return; for(const mt of (Array.isArray(o.material) ? o.material : [o.material])){ mt.transparent=true; set.add(mt); } }); r.fadeMats=[...set]; }   // 大きい地上の相手 (電車・新幹線・リニア・車など) は 追い抜く時に半透明に (9/12 社長: カメラが中に入って レールが見えない)
   }));
   for(const x of results) if(x.status==='rejected') console.warn('相手の動物を読み込めず (手作りのまま)', x.reason);
@@ -1277,9 +1278,9 @@ function formation5(jet){   // 読み込んだ機体 1 機 (実寸) から 5 機
   g.userData.fan={jets, cones, t:-1, puffT:0}; return g; }
 const _fp=new THREE.Vector3();
 function updateFan(r, gap, dt){ const g=r.mesh.children[0], fd=g && g.userData.fan; if(!fd) return;
-  if(fd.t<0){ if(gap<60 && (v>=r.ms || r.passed)) fd.t=0; else return; }   // 先頭が おばけの 60 m 先 (抜かれる 2〜3 秒前) に来たら開き始める (9/15 社長: 抜くタイミングより少し早く)   /* 10/26: 空の相手が 踏むたびに すぐ近くまで来て待つようになったので、速さが追いついて 本当に抜く時から (待っている間に 開き終わらないように、Codex 指摘) */
-  fd.t+=dt; const k=Math.min(1, fd.t/3.5), e=k*k*(3-2*k);
-  fd.jets.forEach((j,i)=>{ const a=FAN_ANG[i], [x,y,z]=FAN_POS[i]; j.position.set(x+Math.sin(a)*90*e, y+Math.cos(a)*90*e, z); j.rotation.z=a*0.8*e; });   // 3.5 秒で 90 m まで扇形に。機体は開く向きへ傾ける
+  if(fd.t<0){ if(gap<80 && (v>=r.ms*0.95 || r.passed)) fd.t=0; else return; }   /* 10/26 社長: 追い抜く直前に 扇形に → 速さが 95% に来て 80 m 先まで迫ったら 開き始める (抜く 1〜2 回前のくぐり)。開くのは 2.5 秒 */   // 先頭が おばけの 60 m 先 (抜かれる 2〜3 秒前) に来たら開き始める (9/15 社長: 抜くタイミングより少し早く)   /* 10/26: 空の相手が 踏むたびに すぐ近くまで来て待つようになったので、速さが追いついて 本当に抜く時から (待っている間に 開き終わらないように、Codex 指摘) */
+  fd.t+=dt; const k=Math.min(1, fd.t/2.5), e=k*k*(3-2*k);
+  fd.jets.forEach((j,i)=>{ const a=FAN_ANG[i], [x,y,z]=FAN_POS[i]; j.position.set(x+Math.sin(a)*90*e, y+Math.cos(a)*90*e, z); j.rotation.z=a*0.8*e; });   // 2.5 秒で 90 m まで扇形に。機体は開く向きへ傾ける
   for(const c of fd.cones) c.visible=false;   // 筒のスモークは消し、点の煙に切り替え
   fd.puffT+=dt; if(fd.t<5 && fd.puffT>=0.06){ fd.puffT-=0.06; for(const j of fd.jets){ _fp.set(j.position.x, j.position.y, j.position.z-6); g.localToWorld(_fp); puffEmit(_fp); } } }   // 5 秒間、0.06 秒ごとに 各機の機尾から煙
 function resetFan(r){ const g=r.mesh.children[0], fd=g && g.userData.fan; if(!fd) return; fd.t=-1; fd.puffT=0; fd.jets.forEach((j,i)=>{ j.position.set(...FAN_POS[i]); j.rotation.z=0; }); for(const c of fd.cones) c.visible=true; }
@@ -1334,12 +1335,31 @@ function pickRivalLane(spawnS){   // おばけのレーンと、近くにいる�
   return cands[(Math.random()*cands.length)|0];
 }
 function spawnRival(r){   // 相手は 前方の遠くに現れて 見えてくる (板を踏んで 相手の 6 割の速さになった瞬間)
-  r.active=true; r.entering=false; r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true;   // 「○○が みえてきた！」は 出さない (10/26 社長: 「おいぬいた！」が どんどん出るので 文字で いっぱいになる)
+  r.active=true; r.entering=false; r.loopT=null; resetShuttle(r); r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true;   // 「○○が みえてきた！」は 出さない (10/26 社長: 「おいぬいた！」が どんどん出るので 文字で いっぱいになる)
 }
 function trySpawnRival(force){   // いま出せる相手 (速さが 6 割 (空は 8 割) に達した・まだ出ていない) を 1 体だけ出す
   const R=spawnRatio(), r=rivals.find(o=>!o.active && !o.passed && (v>=o.ms*R || (force && o.climbTrigger)) && (!o.fly || o.up>=0 || highAt(s+o.lead*1.7, -o.up+20)));   /* レールの下を飛ぶ相手は 現れる所のレールが 十分高い時だけ (地上や 上昇の始めで 地面に埋まらないように、Codex 指摘 10/26) */
   if(r) spawnRival(r);
 }
+const LOOP_SEC = 2.0, LOOP_R = 14, _lq=new THREE.Quaternion(), _lx=new THREE.Vector3(1,0,0);   // せんとうきの 宙返り: 秒 / 輪の半径 (m) / 回す向き (機体の 横の軸)
+const FLAME_N = 4;   // 炎 = 噴射口の後ろに 光の玉を 4 つ 連ねて 毎コマ ゆらす (ミサイル・スペースシャトル、10/26 社長: 噴射口から 炎が勢いよく)。絵は おばけの背中のロケットの炎と同じ
+function addFlame(parent, x, y, z, size, len){ const map=boosterFx.userData.flame.material.map, f={sprites:[], x, y, z, size, len, op:1};   // parent の中の 噴射口 (x, y, z) から 後ろ (−z) へ。size = 玉の大きさ、len = 炎の長さ (parent の単位)
+  for(let i=0;i<FLAME_N;i++){ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map, color: i ? 0xffb050 : 0xffffff, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false})); sp.frustumCulled=false; parent.add(sp); f.sprites.push(sp); }
+  return f; }
+function flickFlame(f){ f.sprites.forEach((sp, i)=>{ const k=1-i/FLAME_N*0.6, j=0.8+0.4*Math.random(); sp.position.set(f.x, f.y, f.z-(i+0.4)*f.len/FLAME_N*j); sp.scale.setScalar(f.size*k*j); sp.material.opacity=f.op*(1-i/FLAME_N*0.5); sp.visible=f.op>0.01; }); }   // 先ほど大きく明るく、後ろほど小さく薄く。長さと大きさを 毎コマ ばらつかせる
+const _byName=(root, n)=>{ let f=null; root.traverse(o=>{ if(!f && o.name.replace(/_/g,' ')===n) f=o; }); return f; };   // 模型の部品を 名前で (読み込むと 空白が _ になる)
+function setupShuttle(r, sc){   // スペースシャトル: 炎 (オービター 3 つ・ブースター 2 本) と 切り離し (燃料タンク・ブースター) の準備。部品は模型の中の 別の部品 (shuttle.py)。位置は 模型の中の m
+  const body=_byName(sc, 'shuttle body'), t=_byName(sc, 'External tank'), m=_byName(sc, 'Booster minus x'), p=_byName(sc, 'Booster plus x'); if(!body || !t || !m || !p) return;
+  r.flames=[addFlame(body, 0, 11.9, -22.45, 2.6, 9), addFlame(body, -1.2, 10.4, -22.45, 2.6, 9), addFlame(body, 1.2, 10.4, -22.45, 2.6, 9)];
+  const fm=addFlame(m, 0, 0, -24.2, 5.5, 22), fp=addFlame(p, 0, 0, -24.2, 5.5, 22); r.flames.push(fm, fp);
+  r.sep={t, m, p, fm, fp, base:[t, m, p].map(o=>[o.position.clone(), o.quaternion.clone()]), T:null}; }
+function resetShuttle(r){ const S=r.sep; if(!S) return; S.T=null; [S.t, S.m, S.p].forEach((o, i)=>{ o.position.copy(S.base[i][0]); o.quaternion.copy(S.base[i][1]); o.visible=true; }); S.fm.op=S.fp.op=1; }
+function updateShuttle(r, dt){   // 抜かれる直前に 切り離す (10/26 社長): 速さが 96% に来たら ブースター 2 本が 外へ開きながら 後ろへ落ち (炎は 0.4 秒で消える)、0.7 秒遅れて 燃料タンクが 下へ離れて落ちる。4 秒で 見えなくする
+  const S=r.sep; if(!S) return; if(S.T==null){ if(!r.passed && v>=r.ms*0.96) S.T=0; else return; }
+  S.T+=dt; const t=S.T, t2=Math.max(0, t-0.7);
+  [[S.m, -1], [S.p, 1]].forEach(([o, sg], i)=>{ const b=S.base[i+1][0]; o.position.set(b.x+sg*(2*t+3*t*t), b.y-1.2*t*t, b.z-5*t*t); o.rotation.set(0.15*t, 0, sg*0.3*t); o.visible=t<4; });
+  S.fm.op=S.fp.op=Math.max(0, 1-t/0.4);
+  const b=S.base[0][0]; S.t.position.set(b.x, b.y-2*t2-2.5*t2*t2, b.z-4*t2*t2); S.t.rotation.set(0.12*t2, 0, 0); S.t.visible=t2<4; }
 function updateRivals(dtMove){
   for(let i=0;i<LADDER.length;i++){ if(!rivalByRung[i] && !announced[i] && v>=LADDER[i].ms){ announced[i]=true; if(i<HUD_RUNGS) pop('「'+LADDER[i].name+'」を ぬいた！'); recomputeRung(); } }   // 姿のない相手 (自転など) は 速さで
   if(planeRival && !planeRival.active && !planeRival.passed && songRemaining()<CATCHUP_SEC+15) trySpawnRival(true);   // 飛行機は 曲の終わりが近ければ 速さが足りなくても出す
@@ -1361,6 +1381,9 @@ function updateRivals(dtMove){
     frameAt(r.s, PF);
     const off= r.fly ? r.side : laneOff(r.lane, r.s), up= r.fly ? r.up+Math.sin(bob*0.7)*0.4 : r.up+(r.bounce ? Math.abs(Math.sin(r.s*0.9))*0.06 : 0);   // 飛ぶ相手は 決めた高さ、ほかは自分のレールの上 (動物は軽く跳ねる)   /* 空で 抜く時に おばけの横すれすれ・真上 (ブルーインパルス) へ寄る演出 (9/15) は 10/26 社長判断で やめた (クランク状に急に寄って 不自然。輪をくぐるたびに近づく流れのまま 自分の位置で抜かれる) */
     r.mesh.position.copy(PF.p).addScaledVector(PF.r, off).addScaledVector(PF.u, up); r.mesh.quaternion.setFromRotationMatrix(basisAt(PF));
+    if(r.name==='せんとうき'){ if(r.loopT==null && !r.passed && v>=r.ms*0.95) r.loopT=0;   /* 抜かれる直前に 宙返り (10/26 社長): 速さが 95% に来たら 2 秒で 縦に 1 回転。途中は 外側へ少し ふくらむ (レールの上を通らない) */
+      if(r.loopT!=null && r.loopT<LOOP_SEC){ r.loopT+=dtMove; const u=Math.min(1, r.loopT/LOOP_SEC), ph=2*Math.PI*u*u*(3-2*u); r.mesh.position.addScaledVector(PF.t, LOOP_R*Math.sin(ph)).addScaledVector(PF.u, LOOP_R*(1-Math.cos(ph))).addScaledVector(PF.r, Math.sign(r.side||-1)*4*Math.sin(Math.PI*u)); r.mesh.quaternion.multiply(_lq.setFromAxisAngle(_lx, -ph)); } }
+    if(r.flames) for(const f of r.flames) flickFlame(f); if(r.sep) updateShuttle(r, dtMove);   /* 噴射口の炎・シャトルの切り離し */
     if(r.name==='ブルーインパルス') updateFan(r, gap, dtMove);   // 抜かれる瞬間に扇形に開いて煙 (9/15)
     const rotor=r.mesh.getObjectByName('rotor'); if(rotor) rotor.rotation.y+=dtMove*25; const prop=r.mesh.getObjectByName('prop'); if(prop) prop.rotation.z+=dtMove*40;   // ヘリのローターとプロペラは回る
     if(r.mixer) r.mixer.update(dtMove*Math.min(1.6, Math.max(0.5, r.v/r.ms)));   // 走る動きの速さ = いまの速さ ÷ 本来の速さ (ゆっくり付き合う時は ゆっくり走る)
@@ -1645,7 +1668,7 @@ function diveStep(dt){
 }
 function startRun(){
   s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
-  for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
+  for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.loopT=null; resetShuttle(r); r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
   resetCourse(); resetPlates();
   $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; updateLadderHUD();
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
