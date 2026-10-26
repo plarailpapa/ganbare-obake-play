@@ -306,7 +306,7 @@ export function buildWorld(P, opts){   // P = planWorlds の 1 行、opts = {mob
   if(def.look==='castle') ticks.push(...castleWorld(scene, root, P, opts, out));   // ② 城の大広間 と 3 体の像 (10/12)
   if(def.look==='india') ticks.push(...indiaWorld(scene, root, P, opts, out));   // ③ 亀と象の塔 と 大蛇 (10/13)
   if(def.look==='nursery') ticks.push(...nurseryWorld(scene, root, P, opts, out));   // ⑤ 子ども部屋 (10/22。天井なしの 部屋の中、夜)
-  return {P, scene, bg, root, placed:false, focus:out.focus, nursery:out.nursery, overhead:out.overhead,
+  return {P, scene, bg, root, placed:false, focus:out.focus, nursery:out.nursery, frame:out.frame,
     tick(cam, dt){ bg.position.copy(cam.position); for(const f of ticks) f(cam, dt); },
     dispose(){ out.dead=true; scene.traverse(o=>{ if(o.isInstancedMesh) o.dispose(); if(o.geometry && !o.isSprite) o.geometry.dispose(); for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map) m.map.dispose(); m.dispose(); } }); } };   /* 光の板 (Sprite) の形は three.js 全体の共用なので 捨てない */
 }

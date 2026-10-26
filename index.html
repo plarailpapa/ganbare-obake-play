@@ -1971,7 +1971,7 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   updateCloud2(); renderer.setClearColor(cloudK2>0.02 ? CLOUD2_COL : 0x000000, cloudK2>0.02 ? 1 : 0); renderer.info.reset(); renderer.clear();   /* 海王星の雲の中は 深い青で塗る (ふだんは 透明 = 後ろの宇宙の色) */
   if(stage===2 && cloudK2<=0.02){ farCam.position.copy(camera.position); farCam.quaternion.copy(camera.quaternion); if(farCam.fov!==camera.fov || farCam.aspect!==camera.aspect){ farCam.fov=camera.fov; farCam.aspect=camera.aspect; farCam.updateProjectionMatrix(); }   // 遠景のカメラは 本物のカメラと同じ位置・向き (奥行きの範囲だけ違う)
     renderer.render(bgScene, farCam); renderer.render(farScene, farCam); renderer.clearDepth(); }   // 2 面: 背景 (星空・太陽) → 惑星 を先に描き、奥行きを消してから レール・おばけ・輪
-  if(ROOM_Q && stage===3){ const w=views3.get(pi3); if(w && w.placed && w.overhead) w.overhead(camera, camera.aspect); }   /* ?room=1: 子ども部屋の 真上 (上 = ドア) */
+  if(ROOM_Q && stage===3){ const w=views3.get(pi3); if(w && w.placed && w.frame) w.frame(camera, camera.aspect); }   /* ?room=1: 子ども部屋の 最後の 見下ろし (上 = ドア) */
   if(stage===3) renderWorlds3(Math.min(0.05, raw));   // 3 面: 世界の景色を レールより先に (奥行きは消さない)
   renderer.render(scene,camera);
   if(FPS_ON){ fpsN++; fpsT+=raw; if(raw>fpsWorst) fpsWorst=raw; if(fpsT>=0.5){ const ri=renderer.info.render; fpsEl.textContent=Math.round(fpsN/fpsT)+' fps ／ 最悪 '+Math.round(fpsWorst*1000)+' ms ／ 描画 '+ri.calls+' 回 ／ 三角 '+Math.round(ri.triangles/1000)+'k ／ 影 '+(SHADOWS?'あり':'なし')+' ／ 画素 '+renderer.getPixelRatio().toFixed(2)+'× ／ 形 '+renderer.info.memory.geometries+' 画像 '+renderer.info.memory.textures; fpsN=0; fpsT=0; fpsWorst=0; } }
