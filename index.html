@@ -105,7 +105,7 @@ const PLATE_SEC = 2.0, PLATE_SEC1 = 1.8, PLATE_SEC1_START = 2.0, PLATE_GAP1 = 5;
 const FINISH_LEAD = 5, BLAST_RATE = 3, PLATE_QUIET = 9;   // PLATE_QUIET: FINISH の この秒数前から 加速レーンを新しく置かない (上に伸びる光の柱が 飛び去りの演出を隠すため、9/15 社長)。板は最大 PLATE_AHEAD_SEC (8) 秒先まで置くので、9 秒なら FINISH 時に残る板がなくなる (途中で消すのは不自然 = 社長判断で不採用)。PLATE_AHEAD_SEC は下で定義 (ここでは参照できない)   // 曲の終わりの 5 秒前に FINISH (時速が右中央へ・打ち上げ開始)。曲の最後の「ジャン」で ピカーン + 一気に加速 (毎秒 e^3 倍) して画面の上へ消える
 function plateSec(vv){ if(stage!==1) return PLATE_SEC; const e=Math.min(1, Math.max(0, (vv-V0)/(60/3.6-V0))); return PLATE_SEC1_START+(PLATE_SEC1-PLATE_SEC1_START)*e; }   // 走り出し (V0) で 4.5 秒 → 時速 60 km で 2 秒
 const PLATE_AHEAD_SEC = 8, PLATE_AHEAD_MIN = 40, PLATE_FIRST = 40;   // 板は おばけの少し先 (この秒数ぶん・最低この距離) に敷いていく。最初の板の位置 (スタート地点 30 m の 10 m 先)
-const PLATE_AHEAD_N = 4;   // 1 面: 前に置いておく板は いつも この枚数。間隔は「n 枚目で +n km/h」の決まりどおりに 先の速さを見込む (10/26 社長: スタート直後は 多すぎ・少し加速すると 少なすぎ → 勢いを 倍々で見込んでいたのが原因。7〜8 枚 → 1〜3 枚 と ばらついていた)
+const PLATE_AHEAD_N = 4;   // 1 面: 前に置いておく板は いつも この枚数。間隔は「n 枚目で +n km/h」の決まりどおりに 先の速さを見込む (10/26 社長: スタート直後は 多すぎ・少し加速すると 少なすぎ → 勢いを 倍々で見込んでいたのが原因。7〜8 枚 → 1〜3 枚 と ばらついていた)。ゴールの 1 秒前までに 今の速さで着ける所にだけ置く (おばけの速さは下がらないので 必ず踏み終わる。踏み逃して遅い時に FINISH に板が残った、Codex 指摘)
 const PLATE_POOL = 64;                  // 板の使い回しの枚数
 const MARK_SCALE_V = 50, MARK_SCALE_MAX = 6, BEAM_H = 20;   // 速いほど 加速板/ボックスを大きく (1 + 速さ/50 倍、最大 6 倍)。空では ボックス + 光の柱 (高さ 20 m × 倍率)
 const LAUNCH_PITCH = 75*Math.PI/180, LAUNCH_RAMP = 600, LAUNCH_ACC = 40;   // FINISH 後: レールは 600 m かけて 75° まで立ち上がり 宇宙へ。おばけは 毎秒 +40 m/s で飛び去る
@@ -1156,7 +1156,7 @@ function ensurePlates(s, v, dt){
   const step1= stage===1 && BOOST_MODE==='step', ahead=Math.max(PLATE_AHEAD_MIN, distAfter(v, growth, PLATE_AHEAD_SEC)), limit= step1 ? courseEnd-5 : Math.min(s+ahead, courseEnd-5); let dirty=false;   // コースがある範囲にだけ敷く (1 面は 前に PLATE_AHEAD_N 枚まで)
   let k= step1 ? plates.reduce((n, o)=>n+(!o.hit && !o.missed ? 1 : 0), 0) : 0;   /* 1 面: まだ踏んでいない (前にある) 板の枚数 */
   if(stage===3 && plan3.music){ if(placeNotes3(v)) dirty=true; } else   // 3 面: 曲の時刻表が使える時は 音ごと (使えない時は これまでどおりの間隔)
-  while(nextPlate<limit && (!step1 || k<PLATE_AHEAD_N) && freeIdx.length && state!=='finish' && !ov2 && songRemaining()>FINISH_LEAD+PLATE_QUIET){   // 曲の終わりが近い / FINISH 後は 新しい板を置かない (9/15)
+  while(nextPlate<limit && (!step1 || (k<PLATE_AHEAD_N && (nextPlate-s)/Math.max(v, 0.1)<songRemaining()-FINISH_LEAD-1)) && freeIdx.length && state!=='finish' && !ov2 && songRemaining()>FINISH_LEAD+PLATE_QUIET){   // 曲の終わりが近い / FINISH 後は 新しい板を置かない (9/15)
     const sg=segFor(nextPlate); if(sg.noPlates){ nextPlate=sg.s1+6; continue; }
     if(stage===3){ const gt=gates3.find(o=>Math.abs(nextPlate-(o.at ?? courseEnd))<GATE3_CLEAR*v); if(gt){ nextPlate=(gt.at ?? courseEnd)+GATE3_CLEAR*v+1; continue; } }   // 3 面: ワープの輪の前後には 加速の輪を置かない (v = 画面の流れの速さ。位置がまだ決まっていない入口は コースの先端のすぐ先)。+1 m = 境目を確実に越える (速さが端数だと 足し引きの丸めで「まだ近い」と判定され 同じ所を回り続けて 固まった、10/12)   // 上昇の見せ場には 板を置かない (操作なしで景色を楽しむ)
     const tau=timeToReach(v, growth, Math.max(0, nextPlate-s));   // この板に着く時刻 → その PLATE_SEC 秒後の位置が 次の板
@@ -1311,7 +1311,8 @@ LADDER.forEach((L,i)=>{ const d=RIVAL_DEFS[L.name]; if(!d) return; const r={i, n
 const START_RIVAL_V = 50/3.6;   // この速さ以下の相手 (カメ・ニワトリ・走る人・スケボー・自転車・ロバ・いぬ・キツネ) は スタートと同時に走り出す (運動会のいっせいスタート)
 function lineUpStartRivals(){ let k=0; for(const r of rivals){ if(r.fly || r.ms>START_RIVAL_V) continue; r.active=true; r.s= k===0 ? START_S+12 : START_S+3+k*4.5+(k%2===0 ? 2.5 : 0); r.v=V0; r.lane= k%2===0 ? 0 : LANES-1; r.mesh.visible=true; k++; } }   // 先頭 (カメ) はスタートライン (アーチ、+12 m) の真上に (9/12 社長)。同じ車線の次の走者は 2.5 m ずらして重ならないように
 const planeRival=rivals.find(r=>r.climbTrigger);
-const PF=mkFrame();
+const PF=mkFrame(), HF=mkFrame();
+function highAt(ss, need){ frameAt(ss, HF); return HF.p.y>need; }   // その位置の レールの高さ (m) が need より上か
 function recomputeRung(){   // 速さの段 = 先頭から連続して達成した所まで (姿のある相手は 実際に抜いたか、姿のない相手は 速さで)
   let k=-1; for(let i=0;i<LADDER.length;i++){ const rv=rivalByRung[i]; if(!(rv ? rv.passed : v>=LADDER[i].ms)) break; k=i; }
   if(k!==rung){ rung=k; updateLadderHUD(); }
@@ -1325,7 +1326,7 @@ function spawnRival(r){   // 相手は 前方の遠くに現れて 見えてく�
   r.active=true; r.entering=false; r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true;   // 「○○が みえてきた！」は 出さない (10/26 社長: 「おいぬいた！」が どんどん出るので 文字で いっぱいになる)
 }
 function trySpawnRival(force){   // いま出せる相手 (速さが 6 割 (空は 8 割) に達した・まだ出ていない) を 1 体だけ出す
-  const R=spawnRatio(), r=rivals.find(o=>!o.active && !o.passed && (v>=o.ms*R || (force && o.climbTrigger)));
+  const R=spawnRatio(), r=rivals.find(o=>!o.active && !o.passed && (v>=o.ms*R || (force && o.climbTrigger)) && (o.up>=0 || highAt(s+o.lead*1.7, -o.up+20)));   /* レールの下を飛ぶ相手は 現れる所のレールが 十分高い時だけ (地上や 上昇の始めで 地面に埋まらないように、Codex 指摘 10/26) */
   if(r) spawnRival(r);
 }
 function updateRivals(dtMove){
