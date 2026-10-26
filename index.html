@@ -147,7 +147,10 @@ const AHEAD_MAX2 = 15000;               // 2 面は 先のコースを 15 km ま
 const FOV2 = 14, CAM2_BACK = 3, CAM2_UP = 0.8;   // 2 面の速さの演出 (10/1 社長): 速さの「桁」が上がるほど 視野 +14°・カメラ 3 m 後ろ・0.8 m 上へ (自転 → 地球の公転 で 0 → 最大。社長: 最大は公転を抜いた時)
 const K2_TOP = Math.log(S2.LADDER2.find(o=>o.name==='地球').ms/S2.V2_START);
 const FIRST_RING2 = 5;   // 2 面の 最初の輪 = 走り出して この秒数の所 (10/5 社長: スタートと同時に ミスしないように)
-const BOOST2_RATE = 0.0454, BOOST2_EARLY = 0.115;   /* 10/26: 2 面を 3 分 25 秒に縮めた (B 案) = 輪が 約 138 → 93 個。前と同じ「約 3 分の 2 くぐれば 地球の公転」になるよう 倍率を 対数で 1.483 倍 (3.04% → 4.54%、7.6% → 11.5%) */   // 2 面の加速: 踏むたびに いまの速さの 3.04% (倍々に伸びる。1 面の足し算では 17 万 km に届かない)。海王星に追いつくまでは 7.6% (10/5 社長: 腕前のレース・取れた割合 90% でも水星に届く。新しい流れ = 60% で見え始め・80% で専用コース・公転速度まで回る・前の惑星の後で次・最初の 5 秒は輪なし での Codex の計算: 全部 = 水星 4:16、95% = 4:25、90% = 4:39、80% = 金星まで、70% = 火星まで)
+const STEP2_FIRST = 500, STEP2_ADD = 50;   // 2 面の加速 (km/h): 1 個目の輪で +500、くぐるたびに +50 ずつ増える (+500, +550, +600 …)。10/26 社長: 速さ = スコアなので 定量の増加に (前は 今の速さの 4.54%・海王星までは 11.5% の倍々)。全部くぐると 海王星 19 個目・地球 55 個目・水星 72 個目
+const COMBO2_STEP = 50;   // 2 面の コンボ ボーナス (km/h): 10 連続ごとに その瞬間に 1 回、10 連続 +50・20 連続 +100・30 連続 +150・40 連続 +200 … (10/26 社長)
+function stepAdd(h){ return stage===2 ? (STEP2_FIRST+STEP2_ADD*(h-1))/3.6 : h*STEP_KMH/3.6; }   // h 個目の板・輪で 増える速さ (m/s。1 面・2 面の 定量の加速)
+function realV(){ return v; }   // 本物の速さ (ensurePlates の中では v が 画面の流れの速さなので)
 const CAM_FAR2 = 250000, RIB2_GAP = 40; // 2 面の描画距離 (惑星は数十 km) / 断面の輪郭線の間隔 (m)
 
 /* BGM (1 面 = 1 メドレー)。曲を順につなげて鳴らし、全部終わったら FINISH。最後の曲が ラストスパート */
@@ -1153,8 +1156,8 @@ function placeNotes3(vm){   // vm = 画面の流れの速さ (輪の大きさ、
     plates.push(b); setMarkColor(b, false); note3++; placed=true; }
   return placed; }
 function ensurePlates(s, v, dt){
-  const step1= stage===1 && BOOST_MODE==='step', ahead=Math.max(PLATE_AHEAD_MIN, distAfter(v, growth, PLATE_AHEAD_SEC)), limit= step1 ? courseEnd-5 : Math.min(s+ahead, courseEnd-5); let dirty=false;   // コースがある範囲にだけ敷く (1 面は 前に PLATE_AHEAD_N 枚まで)
-  let k= step1 ? plates.reduce((n, o)=>n+(!o.hit && !o.missed ? 1 : 0), 0) : 0;   /* 1 面: まだ踏んでいない (前にある) 板の枚数 */
+  const step1= (stage===1 && BOOST_MODE==='step') || stage===2, ahead=Math.max(PLATE_AHEAD_MIN, distAfter(v, growth, PLATE_AHEAD_SEC)), limit= step1 ? courseEnd-5 : Math.min(s+ahead, courseEnd-5); let dirty=false;   // コースがある範囲にだけ敷く (1 面・2 面は 前に PLATE_AHEAD_N 枚まで。2 面も 10/26 から 定量の加速なので 同じ置き方)
+  let k= step1 ? plates.reduce((n, o)=>n+(!o.hit && !o.missed ? 1 : 0), 0) : 0;   /* 1 面・2 面: まだ踏んでいない (前にある) 板・輪の数 */
   if(stage===3 && plan3.music){ if(placeNotes3(v)) dirty=true; } else   // 3 面: 曲の時刻表が使える時は 音ごと (使えない時は これまでどおりの間隔)
   while(nextPlate<limit && (!step1 || (k<PLATE_AHEAD_N && (nextPlate-s)/Math.max(v, 0.1)<songRemaining()-FINISH_LEAD-1)) && freeIdx.length && state!=='finish' && !ov2 && songRemaining()>FINISH_LEAD+PLATE_QUIET){   // 曲の終わりが近い / FINISH 後は 新しい板を置かない (9/15)
     const sg=segFor(nextPlate); if(sg.noPlates){ nextPlate=sg.s1+6; continue; }
@@ -1163,7 +1166,7 @@ function ensurePlates(s, v, dt){
     const ring= stage===2 || sg.phase!=='ground';   // 輪 = 2 面と 1 面の空 (10/1 社長: 空の加速ボックスも 2 面と同じ輪に)。地上は板
     const b={s:nextPlate, lane:(Math.random()*LANES)|0, hit:false, idx:freeIdx.pop(), age:0, grow: ring ? Math.min(0.6, tau*0.5) : 0.6, box:false, ring, sc:Math.min(MARK_SCALE_MAX, 1+v/MARK_SCALE_V)};   // 板は 速いほど大きく (最大 6 倍)。grow = 出てくる時に育つ秒数 (輪は 着くまでの半分まで = 近い輪は すぐ完成の大きさ、Codex 指摘 10/1)
     plates.push(b); setMarkColor(b,false); dirty=true;
-    if(step1){ k++; const vp=v+(k*hits+k*(k+1)/2)*STEP_KMH/3.6; nextPlate+=Math.max(PLATE_GAP1, vp*plateSec(vp)); }   /* 1 面: 前の k 枚を 全部踏んだ後の速さ × 間隔の秒数 (最短 5 m) */
+    if(step1){ k++; let vp=realV(); for(let i=1;i<=k;i++) vp+=stepAdd(hits+i); nextPlate+=Math.max(stage===1 ? PLATE_GAP1 : 8, moveSpeed(vp)*plateSec(vp)); }   /* 1 面・2 面: 前の k 枚を 全部踏んだ後の速さ × 間隔の秒数 (最短 5 m、2 面は 8 m) */
     else nextPlate=Math.max(nextPlate+(stage===1 ? PLATE_GAP1 : 8), s+distAfter(v, growth, tau+plateSec(v)));   // 最短 8 m (1 面は 5 m)。間隔の秒数は 速さで変わる (序盤ゆるめ)
   }
   for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; b.age+=dt;
@@ -1727,10 +1730,10 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     laneX += (laneOff(lane, s)-laneX)*Math.min(1, dt*LANE_SMOOTH);
     for(const b of plates){ if(!b.hit && !b.missed && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
       b.hit=true; hits++; { frameAt(s,F); if(b.box || b.ring) ghostGlint(); else confettiBurst(F.p.x+F.r.x*laneX, F.p.y+0.9, F.p.z+F.r.z*laneX, F.t, v); }   // 地上の板 = 紙吹雪、空のボックスと 2 面 = おばけが きらりと光る
-      let add= stage===3 ? v*S3.BOOST3_RATE : stage===2 ? v*(v<S2.PLANETS2[0].ms ? BOOST2_EARLY : BOOST2_RATE) : BOOST_MODE==='step' ? hits*STEP_KMH/3.6 : BOOST_BASE+v*BOOST_RATE;   // 2 面: いまの速さの 3.04% (海王星までは 7.6%、倍々)。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
+      let add= stage===3 ? v*S3.BOOST3_RATE : stage===2 ? stepAdd(hits) : BOOST_MODE==='step' ? stepAdd(hits) : BOOST_BASE+v*BOOST_RATE;   // 2 面: n 個目は +500 + 50(n−1) km/h。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
       if(stage===1 && lastTrackStarted() && !planeRival.passed) add*=CATCHUP_RATE;   // 最後の曲に入っても飛行機を抜けていなければ 追い風 (1 面)
       if(boosterOn) add*=BOOSTER_MUL[stage];   // 救済の やり直し: ブースターで ガンガン加速 (10/20)
-      const cb= stage===1 ? (combo+1>=COMBO_B2 ? 2 : combo+1>=COMBO_B1 ? 1 : 0) : 0; add+=cb/3.6;   // コンボ ボーナス (この板で 何連続目か)
+      const cn=combo+1, cb= stage===1 ? (cn>=COMBO_B2 ? 2 : cn>=COMBO_B1 ? 1 : 0) : stage===2 ? (cn%10===0 ? cn/10*COMBO2_STEP : 0) : 0; add+=cb/3.6;   // コンボ ボーナス (この板で 何連続目か)。1 面 = 続いている間ずっと、2 面 = その瞬間に 1 回
       if(b.ring){ placePlate(b, 1); ringBurstStart(b.lane); if(stage===3) sparkBurst3(b); }   // 2 面: くぐった輪は消え、おばけの周りに 光の輪が広がる
       v+=add;   // くぐったら その場で加速 (2 面も ためない、10/5 社長: くぐっても反応がないのはいけない)
       camKick=Math.min(1, camKick+CAM_KICK_ADD); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false);   // 上限なし (インフレは最後まで)。踏んだ瞬間に 次の相手が前方に見えてくる

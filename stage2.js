@@ -2,7 +2,7 @@
 // 設計書: younglion/docs/superpowers/specs/2026-09-30-ganbare-obake-stage2-design.md
 import * as THREE from 'three';
 
-export const V2_START = 1360/3.6;            // 2 面の走り出し = 地球の自転 (m/s)
+export const V2_START = 1500/3.6;            // 2 面の走り出し (m/s)。地球の自転 1,360 km/h の少し上の きりのいい数 (10/26 社長: 定量の加速に合わせて 1,500 km/h)
 export const LANE_W2 = 10;                   // レール間隔 (m)。断面が円になると 半径 = 3×10/2π ≒ 4.8 m (10/1: 輪を大きくするため 8 → 10)
 const CTRL_MIN = 30, CTRL_SEC = 0.12;        // 制御点の間隔 = 0.12 秒ぶん (最低 30 m)。速いほど広げて 1 秒に作る区間の数を抑える
 const CRUISE_TURN = 0.12;                    // 巡航中の曲がり (rad/秒)
