@@ -1692,6 +1692,7 @@ window.addEventListener('keydown', e=>{
 
 /* ==================== 毎コマ ==================== */
 function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)、dtReal = 実時間 (時計と走る量)
+  if(ROOM_Q && stage===3 && state==='run') return;   /* ?room=1: 子ども部屋を 止めて見る (時計・走り・終わりを 進めない。カメラは 描く前に 真上へ、Codex 指摘 10/26) */
   const st0=stageT; tickStage(dtReal);
   const dtMove= state==='run' ? Math.min(2, Math.max(0, stageT-st0)) : 0;
   if(stage===2){ updateWarp2(dtReal); if(state==='finish') cleanupPlanets2(); updatePreview2(dt); updatePlanetVisuals2(dt); updateIce2(); updateWisps2(dtReal); if(state!=='title') updateDist2(); }   // ワープの時計 / FINISH 中も惑星を片づける・近づく見た目を動かす (Codex 指摘 10/1) / 太陽までの距離の表示
@@ -1792,12 +1793,15 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   const foc3= stage===3 ? focus3() : null;   // 3 面: 世界の見どころ (② の像) を 画面に入れる (10/12 社長: 像の周りを らせん状に のぼる)
   if(satE || foc3){ sat2+=(1-sat2)*Math.min(1, dt*1.2); satPos2.copy(satE ? satE.mesh.position : foc3); } else if(stage===3) sat2+=(0-sat2)*Math.min(1, dt*1.2); else sat2=0;   /* 3 面は なめらかに戻す (ワープの輪の前で 前を向く) */
   const satW= camMode2==='watch' ? sat2 : 0;   /* 見守るカメラだけ (おばけに合わせるカメラは そのまま、Codex 指摘 10/2) */
-  const pw=Math.min(1, Math.max(0, (1-camera.aspect)/0.5));   /* 縦長の画面ほど 1 (縦横比 1 以上 = 0、0.5 以下 = 1) */
-  const back0=(CAM_BACK_LOW+(CAM_BACK-CAM_BACK_LOW)*gf+kick*CAM_KICK_BACK+CAM2_BACK*k2)*(1+0.6*satW), needB=(laneWAt(s)*0.85+1.0)/Math.max(0.05, Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect), fb=1+pw*Math.max(0, needB/back0-1);   /* 縦持ちでは 横の幅が狭く、空の広いレーン (6 m) へ移ると おばけが 画面の外へ出た (10/23 社長) → 左右のレーンまで 画面に入る遠さへ 後ろに引く (横には動かさない = 酔わない、社長) */
+  const back0=(CAM_BACK_LOW+(CAM_BACK-CAM_BACK_LOW)*gf+kick*CAM_KICK_BACK+CAM2_BACK*k2)*(1+0.6*satW), aheadA=CAM_AHEAD_LOW+(CAM_AHEAD-CAM_AHEAD_LOW)*gf+spR*16;
+  /* 縦持ちでは 横の幅が狭く、空の広いレーン (6 m) へ移ると おばけが 画面の外へ出た (10/23 社長) → 外側のレーンの おばけが 画面に入る遠さへ 後ろに引く (横には動かさない = 酔わない、社長)。カメラは おばけと反対へ レーン×0.5 ずれ、前 (aheadA 先) の おばけ側を 見るので、その首の振りも 入れて 遠さを探す (Codex 指摘 10/26: 首の振りを 入れないと 速い時に 足りなかった) */
+  const laneL=laneWAt(s), halfA=Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect)*0.85, lookK= stage>=2 ? 1.1 : 1.0; let needB=back0;
+  while(needB<90 && Math.atan(1.5*laneL/needB)-Math.atan(lookK*laneL/(aheadA+needB))>halfA) needB+=0.5;   /* おばけの向き − 見ている向き が 画面の 横半分の 85% に 収まるまで */
+  const fb=Math.max(1, needB/back0);   /* 収まる遠さは 画面の形で 混ぜずに そのまま (中くらいの縦長で 足りなかった、Codex 指摘 10/26)。横長では ふつう back0 のまま = 見え方は 変わらない */
   const backT=back0*fb, upT=(CAM_UP_LOW+(CAM_UP-CAM_UP_LOW)*gf+kick*CAM_KICK_UP+CAM2_UP*k2)*(1+0.5*satW)*Math.sqrt(fb), latT=-laneX*0.5*(stage===2 ? Math.max(0, 1-Math.abs(G.b)*1.5) : 1);   // 引いた分 少し高く。2 面: 断面が曲がっている所では 横へずらさない (パイプの外へ出ないように)
   if(!camSm.init){ camSm.back=backT; camSm.up=upT; camSm.lat=latT; camSm.init=true; camUp.copy(G.u); camera.fov=FOV_MIN; camera.far= stage>=2 ? CAM_FAR2 : 8000; }   // 始まりは 即座に付け直す
   camSm.back+=(backT-camSm.back)*k; camSm.up+=(upT-camSm.up)*k; camSm.lat+=(latT-camSm.lat)*k;
-  const aheadS=s+CAM_AHEAD_LOW+(CAM_AHEAD-CAM_AHEAD_LOW)*gf+spR*16;
+  const aheadS=s+aheadA;
   if(stage>=2 && camMode2==='follow'){   // おばけに合わせる: カメラも おばけのレールの上 (後ろ・「上」へ)。画面ごと回る
     railPoint(Math.max(0, s-camSm.back), laneX, CB); camera.position.copy(CB.p).addScaledVector(CB.u, camSm.up);
     railPoint(aheadS, laneX, C); camUp.lerp(GH.u, k).normalize(); camera.up.copy(camUp); camera.lookAt(C.p);
