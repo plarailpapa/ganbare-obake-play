@@ -196,8 +196,10 @@ const plateMap=(()=>{ const c=document.createElement('canvas'); c.width=64; c.he
   g.fillStyle='#ffffff'; for(let k=0;k<3;k++){ const y0=k*128/3; g.beginPath(); g.moveTo(6,y0+30); g.lineTo(32,y0+8); g.lineTo(58,y0+30); g.lineTo(58,y0+42); g.lineTo(32,y0+20); g.lineTo(6,y0+42); g.closePath(); g.fill(); }
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.colorSpace=THREE.SRGBColorSpace; t.flipY=false; return t; })();   // 矢印の先は v の小さい側 (= 板の前)。flipY=false で canvas の上 = v 0 (Codex 指摘)。流れは offset.y を増やす
 const plateMat= new THREE.MeshBasicMaterial({map:plateMap, color:0xffffff});
+const plateSideMat=new THREE.MeshBasicMaterial({color:new THREE.Color(1.5,1.5,1.5)});   // 箱の側面: レールの色を 明るめに (上面の灰色の地より 光って見える)
 const plateGlowMat=new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false});   // 板の下に重ねる ぼんやり光る板 (一回り大きい)。遠くからでも光って見える
-const plateGeo= new THREE.PlaneGeometry(LANE_W*0.9, 3.2).rotateX(-Math.PI/2);   // レールのすぐ上に浮く発光板 (平面。回すと +v が後ろ向きになる)
+const PLATE_H=0.22, plateGeo= new THREE.BoxGeometry(LANE_W*0.9, 1, 3.2);   // 加速板 = 背の低い箱 (10/26 社長: 平らな板は見えにくい → 厚みを付けて 側面も光らせる)。高さ 0.22 m = おばけの体の下端 (レールの中心から 約 0.37 m) に届かない。上面の模様の向きは 前の平らな板と同じ (+v が後ろ)
+const plateGlowGeo=new THREE.PlaneGeometry(LANE_W*0.9, 3.2).rotateX(-Math.PI/2);   // 光る下敷き (平面)
 /* 街並みの追加物 (9/11): 横断歩道の模様、電線の線、街灯と玄関の明かり (光の点) */
 const crossTex=(()=>{ const c=document.createElement('canvas'); c.width=128; c.height=64; const g=c.getContext('2d'); g.fillStyle='#f0f0f0'; for(let i=0;i<6;i++) g.fillRect(8+i*20, 4, 12, 56); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; })();   // 白い縞 6 本 (道の向きに平行)
 const crossMat=new THREE.MeshBasicMaterial({map:crossTex, transparent:true, depthWrite:false}), crossGeo=new THREE.PlaneGeometry(6, 3).rotateX(-Math.PI/2);
@@ -986,8 +988,9 @@ function truncateCourse(keepUntil){   // keepUntil より先の (まだ遠くて
   if(k>=segs.length-1) return;
   for(const sg of segs.splice(k+1)) disposeSegment(sg);
   const last=segs[k]; Object.assign(gen, last.genEnd); tail=last.tailEnd.map(p=>p.clone()); courseEnd=last.s1;
-  for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; if(b.s>courseEnd-5){ hidePlate(b.idx); freeIdx.push(b.idx); plates.splice(i,1); } }   // 捨てた区間の板も回収
-  nextPlate=Math.min(nextPlate, courseEnd-5); markDirty();
+  let first=nextPlate;
+  for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; if(b.s>courseEnd-5){ first=Math.min(first, b.s); hidePlate(b.idx); freeIdx.push(b.idx); plates.splice(i,1); } }   // 捨てた区間の板も回収
+  nextPlate=first; markDirty();   /* 次の板は 回収した板の いちばん手前 (= 残った最後の板から いつもの間隔) から。前は 道の端 (courseEnd − 5) へ戻していて、残った最後の板の すぐ後ろに もう 1 枚 置かれた (10/26 社長: 空へ上がる直前に 2 枚続く) */
 }
 function startClimb(s, v){   // 飛行機を抜いた合図: 見えている先はそのまま、その向こうから レールが大きく空へ伸びる
   truncateCourse(s+Math.max(600, scene.fog.far*0.9));
@@ -1054,7 +1057,7 @@ const m4=new THREE.Matrix4();
 
 /* ==================== 加速板: おばけの少し先に「その時の速さ」の間隔で敷く (使い回し) ==================== */
 // 地上 = 板 (速いほど長く)。空 = 加速ボックス (光る箱) + 上に伸びる光の柱 (遠くからでも どのレールか分かる)
-const plateMesh=new THREE.InstancedMesh(plateGeo, plateMat, PLATE_POOL), plateGlowMesh=new THREE.InstancedMesh(plateGeo, plateGlowMat, PLATE_POOL);   // 矢印は板の模様に含めた (9/11)。光る下敷きは 9/12
+const plateMesh=new THREE.InstancedMesh(plateGeo, [plateSideMat, plateSideMat, plateMat, plateSideMat, plateSideMat, plateSideMat], PLATE_POOL), plateGlowMesh=new THREE.InstancedMesh(plateGlowGeo, plateGlowMat, PLATE_POOL);   /* 箱の面の順 = 右・左・上・下・前・後ろ (上面だけ 矢印の模様) */   // 矢印は板の模様に含めた (9/11)。光る下敷きは 9/12
 const boxMesh=new THREE.InstancedMesh(boxGeo, boxMat, PLATE_POOL), beamMesh=new THREE.InstancedMesh(beamGeo, boxMat, PLATE_POOL);
 /* 2 面の加速リング (10/1 社長: 高速だと板が見えにくい → ナイツのように レールの色の光る輪を くぐる)。半径 1 の輪を 置く時に大きさを掛ける。輪の面は 進む向きに垂直 */
 const ringMesh=new THREE.InstancedMesh(new THREE.TorusGeometry(1, 0.1, 12, 48), new THREE.MeshBasicMaterial({color:0xffffff}), PLATE_POOL);   // 芯 (半径 5 m で 太さ 0.5 m。10/1 社長: 高速だと見えた瞬間に着くので 大きく太く)
@@ -1107,7 +1110,7 @@ function placePlate(b, sc){   // sc = 出てくる時の大きさ 0→1。b.sc =
     ringBeamMesh.setMatrixAt(b.idx, basisAt(F, beamW(), H, beamW()).setPosition(_rb.x+F.u.x*H*0.5, _rb.y+F.u.y*H*0.5, _rb.z+F.u.z*H*0.5));
     setBeacon(b.idx, _rb.addScaledVector(F.u, H), LANE_COLORS[b.lane]);
   } else {
-    frameAt(b.s,F); plateMesh.setMatrixAt(b.idx, basisAt(F, W, sc, L).setPosition(F.p.x+F.r.x*off, F.p.y+F.r.y*off+0.14, F.p.z+F.r.z*off));   // レールの上面 (0.11) のすぐ上に浮く
+    frameAt(b.s,F); const ph=PLATE_H*sc, cy=0.12+ph*0.5; plateMesh.setMatrixAt(b.idx, basisAt(F, W, ph, L).setPosition(F.p.x+F.r.x*off+F.u.x*cy, F.p.y+F.r.y*off+F.u.y*cy, F.p.z+F.r.z*off+F.u.z*cy));   // 箱の底 = レールの上面 (0.11) のすぐ上。出てくる時は 高さも 0 から育つ
     plateGlowMesh.setMatrixAt(b.idx, basisAt(F, W*1.35, sc, L*1.12).setPosition(F.p.x+F.r.x*off, F.p.y+F.r.y*off+0.13, F.p.z+F.r.z*off));   // 光る下敷き (幅 1.35 倍・長さ 1.12 倍)
   }
 }
