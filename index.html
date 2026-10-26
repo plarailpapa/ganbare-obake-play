@@ -130,6 +130,7 @@ const TURN_RATE = 0.095;                // 見た目の曲がる速さ (rad/秒)
 const PLANE_V = LADDER[AIRPLANE_RUNG].ms, PLANE_SPAWN_RATIO = 0.6, PLANE_LEAD = 300;   // 飛行機: 本物の速さ 250 m/s。その 6 割の速さになったら 300 m 先に現れる
 const CLIMB_LEN = 1500, CLIMB_RISE = 350;   // 見せ場「上昇」区間: 1,500 m かけて 350 m 上がる大きな曲線 (板なし・操作なし)
 const CATCHUP_RATE = 1.6, CATCHUP_SEC = 45;  // 曲の最後の曲に入っても飛行機を抜けていなければ 加速 1.6 倍の追い風。残り 45 秒を切ったら 飛行機が少しゆずる
+const PASS_SEC = 1.5, HOVER_NEAR = 0.3;   // 相手の速さを超えたら この秒数で 横に並んで「ぬいた！」(10/26 社長: 超えたのに なかなか抜けないのは 小さい子が納得しない)。抜く前に待つ距離は 速さが相手に近づくほど 近く (相手の 6 割の速さ = lead → 同じ速さ = lead の 3 割)
 const TIE_GAP = 12;                     // 枕木の間隔 (m)
 const CAM_BACK = 7.5, CAM_UP = 3.2, CAM_AHEAD = 14, CAM_SMOOTH = 5;   // 後ろ視点カメラの基本位置 (おばけの後ろ 7.5 m・上 3.2 m・14 m 先を見る)
 const CAM_KICK_BACK = 1.8, CAM_KICK_UP = 0.5, CAM_KICK_ADD = 0.5, CAM_KICK_DECAY = 0.7;   // 加速した瞬間に カメラが引く量 (控えめ) と じわっと戻る速さ (1/秒。約 1.4 秒で戻る)
@@ -1289,7 +1290,7 @@ const RIVAL_DEFS={ 'カメ':{mk:mkTurtle, lead:12, len:0.8, up:0.11, glb:'craft/
   'ひこうき':{mk:()=>{ const g=mkPlane(); g.scale.setScalar(3.5); return g; }, lead:PLANE_LEAD, len:30, up:14, fly:true, side:0, glb:'craft/airliner.glb', scale:1},   // 大きな旅客機 (3.5 倍・全長約 32 m) が レールの真上 14 m を飛ぶ → 翼と機体の下を潜り抜ける
   'おとの はやさ':{mk:()=>{ const g=mkJet(); g.scale.setScalar(1.6); return g; }, lead:320, len:11, up:9, fly:true, side:-7, glb:'craft/starfighter.glb', scale:1},   // 音速の段には ジェット戦闘機の姿 (左わき・高さ 9 m = 家や木 7 m の上)
   'ブルーインパルス':{mk:mkBlueImpulse, lead:330, len:11, up:10, fly:true, side:7, glb:'craft/blue_impulse.glb', scale:1.15, post:formation5},   // 5 機編隊 + 白いスモーク (右わき・高さ 10 m)。抜かれる瞬間に扇形に開いて煙を引く (9/15 社長)。機体は Codex 製 GLB (T-4、約 12.5 m)
-  'コンコルド':{mk:mkConcorde, lead:400, len:44, up:12, fly:true, side:9, glb:'craft/concorde.glb', scale:1}, 'せんとうき':{mk:mkFighter, lead:420, len:19, up:13, fly:true, side:-10, glb:'craft/f15.glb', scale:1}, 'SR-71':{mk:mkBlackbird, lead:500, len:32, up:16, fly:true, side:12, glb:'craft/sr71.glb', scale:1}, 'ミサイル':{mk:mkMissile, lead:450, len:12, up:9, fly:true, side:-9, glb:'craft/missile.glb', scale:1},   // 高速帯: 本物の飛行機が 空のわきを飛ぶ
+  'コンコルド':{mk:mkConcorde, lead:400, len:44, up:12, fly:true, side:9, glb:'craft/concorde.glb', scale:1}, 'せんとうき':{mk:mkFighter, lead:420, len:19, up:13, fly:true, side:-10, glb:'craft/f15.glb', scale:1}, 'SR-71':{mk:mkBlackbird, lead:500, len:32, up:16, fly:true, side:12, glb:'craft/sr71.glb', scale:1}, 'ミサイル':{mk:()=>{ const g=mkMissile(); g.scale.setScalar(6); return g; }, lead:450, len:36, up:9, fly:true, side:-12, glb:'craft/missile.glb', scale:6},   /* ミサイルは 6 倍 (長さ 6 m → 36 m・太さ 約 6 m。10/26 社長: 小さくて見えにくい)。左わきへ 少し離す */   // 高速帯: 本物の飛行機が 空のわきを飛ぶ
   'X-15':{mk:mkX15, lead:520, len:20, up:11, fly:true, side:9, glb:'craft/x15.glb', scale:1}, 'ロケット':{mk:mkRocket, lead:600, len:22, up:16, fly:true, side:-10, glb:'craft/rocket.glb', scale:1}, 'だいいち うちゅうそくど':{mk:mkSatellite, lead:700, len:8, up:18, fly:true, side:11, glb:'craft/satellite.glb', scale:1}, 'だいに うちゅうそくど':{mk:mkProbe, lead:800, len:8, up:20, fly:true, side:-11, glb:'craft/probe.glb', scale:1} };   // 宇宙・高速帯も Codex 製 (9/11)
 const rivals=[], rivalByRung={}, announced=[];
 LADDER.forEach((L,i)=>{ const d=RIVAL_DEFS[L.name]; if(!d) return; const r={i, name:L.name, ms:L.ms, lead:d.lead, len:d.len, up:d.up, bounce:!!d.bounce, fly:!!d.fly, side:d.side==null?7:d.side, climbTrigger:L.name==='ひこうき', mesh:d.mk(), glb:d.glb, scale:d.scale, anim:d.anim, post:d.post, glbUp:d.glbUp, mixer:null, active:false, passed:false, met:false, s:0, v:0, lane:0}; r.mesh.visible=false; scene.add(r.mesh); rivals.push(r); rivalByRung[i]=r; });
@@ -1308,7 +1309,7 @@ function pickRivalLane(spawnS){   // おばけのレーンと、近くにいる�
   return cands[(Math.random()*cands.length)|0];
 }
 function spawnRival(r){   // 相手は 前方の遠くに現れて 見えてくる (板を踏んで 相手の 6 割の速さになった瞬間)
-  r.active=true; r.entering=false; r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true;   // 「○○が みえてきた！」は 出さない (10/26 社長: 「おいぬいた！」が どんどん出るので 文字で いっぱいになる)
+  r.active=true; r.entering=false; r.chase=null; r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true;   // 「○○が みえてきた！」は 出さない (10/26 社長: 「おいぬいた！」が どんどん出るので 文字で いっぱいになる)
 }
 function trySpawnRival(force){   // いま出せる相手 (速さが 6 割に達した・まだ出ていない) を 1 体だけ出す
   const r=rivals.find(o=>!o.active && !o.passed && (v>=o.ms*PLANE_SPAWN_RATIO || (force && o.climbTrigger)));
@@ -1321,12 +1322,17 @@ function updateRivals(dtMove){
     if(!r.active) continue;
     const gap=r.s-s;
     if(!r.passed){
-      let tv= v<r.ms ? Math.max(v-Math.max(1, r.ms*0.08), Math.min(r.ms, v+(r.lead-gap)*0.1)) : r.ms;   // 抜かれる前は 見える距離に付き合う。おばけが相手の速さを超えたら 本物の速さで
-      if(r.climbTrigger){ const rem=songRemaining(); if(rem<CATCHUP_SEC){ const closing=(gap+20)/Math.max(3, rem-30); tv=Math.min(tv, v-Math.max(8, closing)); } }   // 飛行機: 曲が終わりそうなら ゆずる (残り 30 秒は見せ場に)
-      r.v+=(tv-r.v)*Math.min(1, dtMove*2);
+      if(v>=r.ms && !r.chase){ const g0=Math.max(0, gap), T=Math.max(PASS_SEC, 1.5*g0/Math.max(0.01, v-Math.min(r.ms, 0.4*v))); if(T*(v-r.ms)<g0) r.chase={t:0, g0, T}; }   /* おばけが相手の速さを超えた → 相手が すーっと下がってきて PASS_SEC 秒で 横に並ぶ。いちばん下がる時も 相手は おばけの 4 割 (本物の速さの方が遅ければ そちら) で前へ飛ぶ (後ろ向きに飛んで見えないように。遠すぎる時だけ 少し長く)。本物の速さのままの方が 早く抜ける時 (スタートのカメなど 近くにいる相手) は これまでどおり */
+      if(r.chase){ const c=r.chase; c.t+=dtMove; const u=Math.min(1, c.t/c.T), ns=s+c.g0*(1-u*u*(3-2*u)); if(dtMove>0) r.v=(ns-r.s)/dtMove; r.s=ns; }
+      else {
+        const near=Math.min(1, Math.max(HOVER_NEAR, (r.ms-v)/(0.4*r.ms)));
+        let tv= v<r.ms ? Math.max(v-Math.max(1, r.ms*0.08), Math.min(r.ms, v+(r.lead*near-gap)*0.1)) : r.ms;   // 抜かれる前は 見える距離に付き合う (速さが相手に近づくほど 近くで待つ)。おばけが相手の速さを超えたら 本物の速さで
+        if(r.climbTrigger){ const rem=songRemaining(); if(rem<CATCHUP_SEC){ const closing=(gap+20)/Math.max(3, rem-30); tv=Math.min(tv, v-Math.max(8, closing)); } }   // 飛行機: 曲が終わりそうなら ゆずる (残り 30 秒は見せ場に)
+        r.v+=(tv-r.v)*Math.min(1, dtMove*2);
+      }
       if(!r.met && gap<r.len+8) r.met=true;
-      if(gap<=0){ r.passed=true;   /* 真横に並んだ瞬間 (体の真ん中同士) に 抜いた (10/19 社長: 追い越しきって 3 m 先 だと 並走が長い乗り物ほど 何秒も遅れた) */ if(r.i<HUD_RUNGS) pop('「'+r.name+'」を ぬいた！'); recomputeRung(); if(r.climbTrigger) startClimb(s, v); if(r.fly) camKick=Math.min(1, camKick+0.5); }   // 飛ぶ相手を抜いた瞬間は 軽いカメラのキック (9/15)   // 「ならんだ！」「そらへ！」の吹き出しは 9/10 社長判断で廃止 (抜いた！だけで十分)
-      r.s+=r.v*dtMove;
+      if(r.chase ? r.chase.t>=r.chase.T : gap<=0){ r.passed=true;   /* 真横に並んだ瞬間 (体の真ん中同士) に 抜いた (10/19 社長: 追い越しきって 3 m 先 だと 並走が長い乗り物ほど 何秒も遅れた) */ if(r.i<HUD_RUNGS) pop('「'+r.name+'」を ぬいた！'); recomputeRung(); if(r.climbTrigger) startClimb(s, v); if(r.fly) camKick=Math.min(1, camKick+0.5); }   // 飛ぶ相手を抜いた瞬間は 軽いカメラのキック (9/15)   // 「ならんだ！」「そらへ！」の吹き出しは 9/10 社長判断で廃止 (抜いた！だけで十分)
+      if(!r.chase) r.s+=r.v*dtMove;
     } else { r.v=Math.min(r.ms, v-Math.max(2, v*0.05)); r.s+=r.v*dtMove; }   // 抜かれたあとは おばけより必ず遅く (もう前に出てこない)
     if(r.passed && s-r.s>350){ r.active=false; r.mesh.visible=false; continue; }   // 遠く後ろに消えたら 片づける
     frameAt(r.s, PF);
@@ -1619,7 +1625,7 @@ function diveStep(dt){
 }
 function startRun(){
   s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
-  for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
+  for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.chase=null; r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
   resetCourse(); resetPlates();
   $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; updateLadderHUD();
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
