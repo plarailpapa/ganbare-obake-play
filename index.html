@@ -1326,7 +1326,7 @@ function spawnRival(r){   // 相手は 前方の遠くに現れて 見えてく�
   r.active=true; r.entering=false; r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true;   // 「○○が みえてきた！」は 出さない (10/26 社長: 「おいぬいた！」が どんどん出るので 文字で いっぱいになる)
 }
 function trySpawnRival(force){   // いま出せる相手 (速さが 6 割 (空は 8 割) に達した・まだ出ていない) を 1 体だけ出す
-  const R=spawnRatio(), r=rivals.find(o=>!o.active && !o.passed && (v>=o.ms*R || (force && o.climbTrigger)) && (o.up>=0 || highAt(s+o.lead*1.7, -o.up+20)));   /* レールの下を飛ぶ相手は 現れる所のレールが 十分高い時だけ (地上や 上昇の始めで 地面に埋まらないように、Codex 指摘 10/26) */
+  const R=spawnRatio(), r=rivals.find(o=>!o.active && !o.passed && (v>=o.ms*R || (force && o.climbTrigger)) && (!o.fly || o.up>=0 || highAt(s+o.lead*1.7, -o.up+20)));   /* レールの下を飛ぶ相手は 現れる所のレールが 十分高い時だけ (地上や 上昇の始めで 地面に埋まらないように、Codex 指摘 10/26) */
   if(r) spawnRival(r);
 }
 function updateRivals(dtMove){
