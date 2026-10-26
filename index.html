@@ -1767,12 +1767,13 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   if(ROOM_Q && stage===3 && state==='run') return;   /* ?room=1: 子ども部屋を 止めて見る (時計・走り・終わりを 進めない。カメラは 描く前に 真上へ、Codex 指摘 10/26) */
   const st0=stageT; tickStage(dtReal);
   const dtMove= state==='run' ? Math.min(2, Math.max(0, stageT-st0)) : 0;
-  if(stage===2){ updateWarp2(dtReal); if(state==='finish') cleanupPlanets2(); updatePreview2(dt); updatePlanetVisuals2(dt); updateIce2(); updateWisps2(dtReal); if(state!=='title') updateDist2(); }   // ワープの時計 / FINISH 中も惑星を片づける・近づく見た目を動かす (Codex 指摘 10/1) / 太陽までの距離の表示
+  if(stage===2){ updateWarp2(dtReal); if(state==='finish') cleanupPlanets2(); updatePreview2(dt); updatePlanetVisuals2(dt); if(state!=="run") updateIce2(); updateWisps2(dtReal); if(state!=='title') updateDist2(); }   // ワープの時計 / FINISH 中も惑星を片づける・近づく見た目を動かす (Codex 指摘 10/1) / 太陽までの距離の表示
   if(state==='run'){
     if(stage>=2){ const vm0=moveSpeed(v); ensureCourse(s+vm0*dtMove, vm0); ensurePlates(s, vm0, 0); }   // 2 面: 進む前に 行き先までのコースと その間の輪を作っておく (本物の速さでは 1 コマで数百 m〜1 km、コマ落ちでは もっと進み、作る前に通り過ぎてしまうため、Codex 指摘 10/1)
     const vm=moveSpeed(v), sPrev=s; s= stage===3 ? Math.max(s, S3.sAt3(plan3, stageT)) : s+vm*dtMove;   // 2 面は 画面の流れの速さで進む (時速は本物)。3 面は 曲の時計から決める (曲とずれない、設計書 3.3。後ろへは戻さない)
     if(stage===3 && ERRLOG){ for(const b of plates) if(b.ring && !b.logged && b.s>sPrev && b.s<=s){ b.logged=true; logSend({ring:+S3.tAt3(plan3, b.s).toFixed(3)}); } for(const g of gates3) if(g.at!=null && !g.logged && g.at>sPrev && g.at<=s){ g.logged=true; logSend({gate:+S3.tAt3(plan3, g.at).toFixed(3)}); } }   /* 確かめ用 ?errlog=1: 輪・世界が変わる輪を 通った時刻 (設計書 5 章、曲の時刻表と照合) */
     ensureCourse(s, vm);                                      // 先を作る (片づけは 板の判定のあと)
+    if(stage===2) updateIce2();   /* 土星の輪の石は おばけが このコマ進んだ後に並べる (進む前だと ひどいコマ落ちで 並べた石が 全部 後ろになった、Codex 指摘 10/26) */
     laneX += (laneOff(lane, s)-laneX)*Math.min(1, dt*LANE_SMOOTH);
     for(const b of plates){ if(!b.hit && !b.missed && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
       b.hit=true; hits++; { frameAt(s,F); if(b.box || b.ring) ghostGlint(); else confettiBurst(F.p.x+F.r.x*laneX, F.p.y+0.9, F.p.z+F.r.z*laneX, F.t, v); }   // 地上の板 = 紙吹雪、空のボックスと 2 面 = おばけが きらりと光る
