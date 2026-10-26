@@ -149,7 +149,8 @@ const K2_TOP = Math.log(S2.LADDER2.find(o=>o.name==='地球').ms/S2.V2_START);
 const FIRST_RING2 = 5;   // 2 面の 最初の輪 = 走り出して この秒数の所 (10/5 社長: スタートと同時に ミスしないように)
 const STEP2_FIRST = 500, STEP2_ADD = 50;   // 2 面の加速 (km/h): 1 個目の輪で +500、くぐるたびに +50 ずつ増える (+500, +550, +600 …)。10/26 社長: 速さ = スコアなので 定量の増加に (前は 今の速さの 4.54%・海王星までは 11.5% の倍々)。全部くぐると 海王星 19 個目・地球 55 個目・水星 72 個目
 const COMBO2_STEP = 50;   // 2 面の コンボ ボーナス (km/h): 続いている間 輪 1 個ごとに、10〜19 連続 +50・20〜29 連続 +100・30〜39 連続 +150 … (10/26 社長: 1 面と同じ。前は その瞬間に 1 回だけだった。3 面も 同じ考え方にする予定 = 3 面の速さを決め直す時に 数を決める)
-function stepAdd(h){ return stage===2 ? (STEP2_FIRST+STEP2_ADD*(h-1))/3.6 : h*STEP_KMH/3.6; }   // h 個目の板・輪で 増える速さ (m/s。1 面・2 面の 定量の加速)
+const STEP3_FIRST = 5000, STEP3_ADD = 500, COMBO3_STEP = 500;   // 3 面の加速 (km/h): 1 個目の輪で +5,000、くぐるたびに +500 ずつ増える。ボーナスは 続いている間 輪 1 個ごとに 10〜19 連続 +500・20〜29 連続 +1,000 … (10/26 社長: 2 面の 10 倍。108,000 → 830,000 に 全部くぐって 44 個目・5 個に 1 個逃すと 57 個目 / 輪は 約 70 個)
+function stepAdd(h){ return stage===3 ? (STEP3_FIRST+STEP3_ADD*(h-1))/3.6 : stage===2 ? (STEP2_FIRST+STEP2_ADD*(h-1))/3.6 : h*STEP_KMH/3.6; }   // h 個目の板・輪で 増える速さ (m/s。1 面・2 面の 定量の加速)
 function realV(){ return v; }   // 本物の速さ (ensurePlates の中では v が 画面の流れの速さなので)
 const CAM_FAR2 = 250000, RIB2_GAP = 40; // 2 面の描画距離 (惑星は数十 km) / 断面の輪郭線の間隔 (m)
 
@@ -1777,10 +1778,10 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     laneX += (laneOff(lane, s)-laneX)*Math.min(1, dt*LANE_SMOOTH);
     for(const b of plates){ if(!b.hit && !b.missed && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
       b.hit=true; hits++; { frameAt(s,F); if(b.box || b.ring) ghostGlint(); else confettiBurst(F.p.x+F.r.x*laneX, F.p.y+0.9, F.p.z+F.r.z*laneX, F.t, v); }   // 地上の板 = 紙吹雪、空のボックスと 2 面 = おばけが きらりと光る
-      let add= stage===3 ? v*S3.BOOST3_RATE : stage===2 ? stepAdd(hits) : BOOST_MODE==='step' ? stepAdd(hits) : BOOST_BASE+v*BOOST_RATE;   // 2 面: n 個目は +500 + 50(n−1) km/h。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
+      let add= stage>=2 ? stepAdd(hits) : BOOST_MODE==='step' ? stepAdd(hits) : BOOST_BASE+v*BOOST_RATE;   // 2 面: n 個目は +500 + 50(n−1) km/h、3 面: +5,000 + 500(n−1)。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
       if(stage===1 && lastTrackStarted() && !planeRival.passed) add*=CATCHUP_RATE;   // 最後の曲に入っても飛行機を抜けていなければ 追い風 (1 面)
       if(boosterOn) add*=BOOSTER_MUL[stage];   // 救済の やり直し: ブースターで ガンガン加速 (10/20)
-      const cn=combo+1, cb= stage===1 ? Math.floor(cn/10)*COMBO1_STEP : stage===2 ? Math.floor(cn/10)*COMBO2_STEP : 0; add+=cb/3.6;   // コンボ ボーナス (この板で 何連続目か)。1 面・2 面とも 続いている間ずっと (10 連続ごとに 1 段ずつ増える)
+      const cn=combo+1, cb= stage===1 ? Math.floor(cn/10)*COMBO1_STEP : stage===2 ? Math.floor(cn/10)*COMBO2_STEP : stage===3 ? Math.floor(cn/10)*COMBO3_STEP : 0; add+=cb/3.6;   // コンボ ボーナス (この板で 何連続目か)。1 面・2 面とも 続いている間ずっと (10 連続ごとに 1 段ずつ増える)
       if(b.ring){ placePlate(b, 1); ringBurstStart(b.lane); if(stage===3) sparkBurst3(b); }   // 2 面: くぐった輪は消え、おばけの周りに 光の輪が広がる
       v+=add;   // くぐったら その場で加速 (2 面も ためない、10/5 社長: くぐっても反応がないのはいけない)
       camKick=Math.min(1, camKick+CAM_KICK_ADD); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false);   // 上限なし (インフレは最後まで)。踏んだ瞬間に 次の相手が前方に見えてくる

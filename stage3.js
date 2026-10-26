@@ -6,9 +6,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';   // 星座の�
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';   // 神殿の部品を 1 つの形にまとめる
 import { nurseryWorld } from './nursery3.js';   // ⑤ 子ども部屋 (10/22)
 
-export const V3_START = 170500/3.6;   // 速度計の始まり = 2 面の最後に抜いた 水星の速さ (m/s)。数字は スコアのように上がり続けてよい (設計書 2.1、仮)
+export const V3_START = 108000/3.6;   // 速度計の始まり (m/s) = 2 面の目標 地球の公転 (107,200) の きりのいい数 (10/26 社長。前は 水星の 170,500)。数字は スコアのように上がり続けてよい (設計書 2.1)
 export const V3_MOVE = 150;           // おばけが 実際に進む速さ (m/s、ずっと一定)。速度計の数字とは切り離す (F-ZERO 方式: 神殿や像を じっくり見せる、2.1、仮)
-export const BOOST3_RATE = 0.03;      // 輪をくぐるたび 速度計 +3% (2 面と同じ 倍々、仮)
+// 3 面の加速は index.html の STEP3_FIRST・STEP3_ADD (10/26 から 決まった数ずつ。前は 輪をくぐるたび +3% の倍々)
 export const CAM3_K = 0.5;            // カメラの引き (2 面の速さの演出 0〜1 の真ん中: 視野 +7°・後ろへ 1.5 m・上へ 0.4 m。大きな景色が入るように、仮)
 export const LANE_W3 = 6;             // レール間隔 (m)。広げすぎない (建物の大きさが引き立つように、2.1。10/8 社長: 10 m は広すぎ・3 本とも 世界が変わる輪を通るように → 6 m)
 export const RING_R3 = 1.4, RING_H3 = 1.0;   // 加速の輪の半径 (m) と 中心の高さ (レールの面から m) = おばけの体の真ん中 (体は 0.4〜1.6 m)。おばけが 輪の真ん中をくぐる (10/8 社長: 小さく・真ん中を。2 面は レール間隔の半分で 下端がレールの上)
