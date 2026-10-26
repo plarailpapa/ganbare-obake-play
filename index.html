@@ -196,7 +196,7 @@ const plateMap=(()=>{ const c=document.createElement('canvas'); c.width=64; c.he
   g.fillStyle='#ffffff'; for(let k=0;k<3;k++){ const y0=k*128/3; g.beginPath(); g.moveTo(6,y0+30); g.lineTo(32,y0+8); g.lineTo(58,y0+30); g.lineTo(58,y0+42); g.lineTo(32,y0+20); g.lineTo(6,y0+42); g.closePath(); g.fill(); }
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.colorSpace=THREE.SRGBColorSpace; t.flipY=false; return t; })();   // 矢印の先は v の小さい側 (= 板の前)。flipY=false で canvas の上 = v 0 (Codex 指摘)。流れは offset.y を増やす
 const plateMat= new THREE.MeshBasicMaterial({map:plateMap, color:0xffffff});
-const plateGlowMat=new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending, depthWrite:false});   // 板の下に重ねる ぼんやり光る板 (一回り大きい)。遠くからでも光って見える
+const plateGlowMat=new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false});   // 板の下に重ねる ぼんやり光る板 (一回り大きい)。遠くからでも光って見える
 const plateGeo= new THREE.PlaneGeometry(LANE_W*0.9, 3.2).rotateX(-Math.PI/2);   // レールのすぐ上に浮く発光板 (平面。回すと +v が後ろ向きになる)
 /* 街並みの追加物 (9/11): 横断歩道の模様、電線の線、街灯と玄関の明かり (光の点) */
 const crossTex=(()=>{ const c=document.createElement('canvas'); c.width=128; c.height=64; const g=c.getContext('2d'); g.fillStyle='#f0f0f0'; for(let i=0;i<6;i++) g.fillRect(8+i*20, 4, 12, 56); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; })();   // 白い縞 6 本 (道の向きに平行)
@@ -357,6 +357,11 @@ async function loadSceneProps(){
 }
 
 /* 相手の動物 (動き付き GLB、1 体ずつ描くので InstancedMesh にしない): 読み込めたら 手作りの姿と入れ替え、AnimationMixer で走らせる。失敗した相手は 手作りのまま */
+function prewarmRivals(){   // 形・色・動く仕組み (骨) を 描く部分へ 先に渡す。小さな 見えない画面に 1 回だけ 全員を描く
+  const hid=rivals.filter(r=>!r.mesh.visible), rt=new THREE.WebGLRenderTarget(8, 8);
+  for(const r of hid) r.mesh.visible=true;
+  try{ renderer.setRenderTarget(rt); renderer.render(scene, camera); }catch(e){ console.warn('相手の下ごしらえ', e); } finally { renderer.setRenderTarget(null); for(const r of hid) r.mesh.visible=false; rt.dispose(); }
+}
 async function loadRivalModels(){
   const loader=new GLTFLoader(kitManager), box=new THREE.Box3();
   const results=await Promise.allSettled(rivals.filter(r=>r.glb).map(async r=>{   // 1 体が失敗しても 残りは待って入れ替える
@@ -1120,7 +1125,7 @@ function updatePipeHint(dt){
   pipeHint.material.opacity=k; pipeHint.visible=true;
 }
 const LANE_COLORS=RAIL_COLORS.map(c=>new THREE.Color(c));   // 空の加速ボックスと光の柱の色 = レールの色 (左 みどり / まん中 黄 / 右 赤)
-function setMarkColor(b, hit){ const c= hit ? cHit : ((b.box || b.ring) ? LANE_COLORS[b.lane] || cOrange : cOrange); plateMesh.setColorAt(b.idx,c); plateGlowMesh.setColorAt(b.idx,c); boxMesh.setColorAt(b.idx,c); beamMesh.setColorAt(b.idx,c); ringMesh.setColorAt(b.idx,c); ringGlowMesh.setColorAt(b.idx,c); ringBeamMesh.setColorAt(b.idx,c); }
+function setMarkColor(b, hit){ const c= hit ? cHit : (LANE_COLORS[b.lane] || cOrange);   /* 地面の板も レールの色 (左 みどり / まん中 黄 / 右 赤)。前は 地面だけ 橙 (10/26 社長: 見えにくい) */ plateMesh.setColorAt(b.idx,c); plateGlowMesh.setColorAt(b.idx,c); boxMesh.setColorAt(b.idx,c); beamMesh.setColorAt(b.idx,c); ringMesh.setColorAt(b.idx,c); ringGlowMesh.setColorAt(b.idx,c); ringBeamMesh.setColorAt(b.idx,c); }
 function markDirty(){ for(const mm of [plateMesh, plateGlowMesh, boxMesh, beamMesh, ringMesh, ringGlowMesh, ringBeamMesh]){ mm.instanceMatrix.needsUpdate=true; mm.instanceColor.needsUpdate=true; } }
 function resetPlates(){ plates=[]; note3=0; rebaseRings(_v.set(0,0,0)); freeIdx=[...Array(PLATE_POOL).keys()].reverse(); /* 小さい番号から使う (描く数を「使っている番号まで」に絞れるように) */ nextPlate= stage>=2 ? START_S+moveSpeed(Math.max(v, S2.V2_START))*FIRST_RING2 : PLATE_FIRST;   /* 2 面: 走り出して 5 秒は 輪なし (始まってすぐ 取り逃さないように、10/5 社長)。走り出しの速さで (?planet= で速く始めた時も 5 秒、Codex 指摘 10/5) */ vHist.length=0; growth=0; for(let i=0;i<PLATE_POOL;i++){ hidePlate(i); setMarkColor({idx:i, box:false, lane:1}, false); } markDirty(); }
 // 板は 数秒先に敷くので、着く頃には もっと速くなっている。いまの「加速の勢い」g (1 秒あたりの伸び率) を見込んで、着いた時に PLATE_SEC ごとになる間隔にする
@@ -1300,7 +1305,7 @@ function pickRivalLane(spawnS){   // おばけのレーンと、近くにいる�
   return cands[(Math.random()*cands.length)|0];
 }
 function spawnRival(r){   // 相手は 前方の遠くに現れて 見えてくる (板を踏んで 相手の 6 割の速さになった瞬間)
-  r.active=true; r.entering=false; r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true; if(r.i<HUD_RUNGS) pop(r.name+'が みえてきた！');   // ミサイルより後の相手 (X-15・ロケット・人工衛星) は 吹き出しなし = 黙って通り過ぎるおまけ (9/15 社長: 左上の「ぜんぶ ぬいた！」と矛盾するため)
+  r.active=true; r.entering=false; r.s=s+r.lead*1.7; r.v=Math.min(r.ms, v); r.lane=pickRivalLane(r.s); r.mesh.visible=true;   // 「○○が みえてきた！」は 出さない (10/26 社長: 「おいぬいた！」が どんどん出るので 文字で いっぱいになる)
 }
 function trySpawnRival(force){   // いま出せる相手 (速さが 6 割に達した・まだ出ていない) を 1 体だけ出す
   const r=rivals.find(o=>!o.active && !o.passed && (v>=o.ms*PLANE_SPAWN_RATIO || (force && o.climbTrigger)));
@@ -1869,6 +1874,7 @@ const propsP=loadSceneProps().catch(e=>console.warn('風車などを読み込め
 loadSmall2().catch(e=>console.warn('2 面の小物の姿を読み込めませんでした', e));   // 待たない (読み込み前に出番が来た小物は 速さで抜く)
 try{ KIT=await loadKits(); }catch(e){ console.warn('部品集を読み込めませんでした。簡易の形で続けます', e); KIT=null; }
 await rivalsP; await fieldP; await propsP;
+prewarmRivals();   /* 相手の姿を 始まる前に 見えない所で 一度 描いておく (初めて出る瞬間の カクつきを防ぐ、10/26 社長: 序盤に 次々 出る所で かくつく) */
 kitsReady=true; $('tap').textContent= KIT ? 'タップで はじめる' : 'ぶひんが よみこめませんでした (かんいの かたちで はじめます) ・ タップで はじめる';   // 読み込み失敗を画面で分かるように
 if(opTitle) opTitle.setText($('tap').textContent);
 setStage(STAGE_Q); resetCourse(); resetPlates();
