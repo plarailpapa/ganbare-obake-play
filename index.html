@@ -97,7 +97,7 @@ import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会�
 const LANES = 3, LANE_W = 1.6, LANE_W_SKY = 6.0;   // レールの本数と間隔 (m)。空では間隔を広げる (上昇区間でなめらかに 1.6 → 6.0)
 const V0 = 1.5;                         // 走り出しの速さ (m/s)
 const BOOST_MODE = 'step';              // 加速のしかた。'step' = 踏むごとに +1, +2, +3 … km/h (踏んだ枚数ぶん増える。9/8 社長採用: フルコンボ ≒ X-15) / 'ratio' = +0.8 m/s + いまの速さの 6% (複利)
-const STEP_KMH = 1;                     // step 方式の刻み (km/h)。1 なら n 枚目で +n km/h
+const STEP_KMH = 1.6;                   // step 方式の刻み (km/h)。n 枚目で +1.6n km/h (10/26: 1 面を 3 分 23 秒に縮めた = 板が 約 110 → 88 枚。前と同じ「半分ほど踏めば 時速 1,360 km」・全部踏んだ最高速度も ほぼ同じ になるよう 1 → 1.6)
 const BOOST_BASE = 0.8, BOOST_RATE = 0.06;   // ratio 方式の数字
 const PLATE_SEC = 2.0, PLATE_SEC_START = 4.5;   // 加速板の間隔 (秒): 走り出しは 4.5 秒ごと → 時速 60 km で 2 秒ごと (序盤の土のステージを長く楽しむ)。最短 8 m
 const FINISH_LEAD = 5, BLAST_RATE = 3, PLATE_QUIET = 9;   // PLATE_QUIET: FINISH の この秒数前から 加速レーンを新しく置かない (上に伸びる光の柱が 飛び去りの演出を隠すため、9/15 社長)。板は最大 PLATE_AHEAD_SEC (8) 秒先まで置くので、9 秒なら FINISH 時に残る板がなくなる (途中で消すのは不自然 = 社長判断で不採用)。PLATE_AHEAD_SEC は下で定義 (ここでは参照できない)   // 曲の終わりの 5 秒前に FINISH (時速が右中央へ・打ち上げ開始)。曲の最後の「ジャン」で ピカーン + 一気に加速 (毎秒 e^3 倍) して画面の上へ消える
@@ -146,9 +146,9 @@ const BOOST2_RATE = 0.0304, BOOST2_EARLY = 0.076;   // 2 面の加速: 踏むた
 const CAM_FAR2 = 250000, RIB2_GAP = 40; // 2 面の描画距離 (惑星は数十 km) / 断面の輪郭線の間隔 (m)
 
 /* BGM (1 面 = 1 メドレー)。曲を順につなげて鳴らし、全部終わったら FINISH。最後の曲が ラストスパート */
-const BGM_TRACKS = [
-  {src:'bgm/necke-csikos-post-pocketsound.mp3', vol:0.5, credit:'ネッケ「クシコス・ポスト」／ 音源: ポケットサウンド https://pocket-se.info/'},
-  {src:'bgm/offenbach-cancan-section.mp3',      vol:1.0, credit:'オッフェンバック「天国と地獄」カンカン ／ 演奏: Musopen (パブリックドメイン)'},
+const BGM_TRACKS = [   /* 10/26 社長 (縦持ちで 遊んでもらって「間延び」→ 3 分〜3 分 30 秒に、C 案): クシコス・ポストは 96 秒 (はじめ + 静かめの中間) まで・最後の くり返しを 省いて 2.5 秒で消える → 天国と地獄を 全部。ラストスパートは 天国と地獄の 57.5 秒 (一度 静かになって 最後の大盛り上がりへ) から。全体 約 3 分 23 秒 */
+  {src:'bgm/necke-csikos-post-pocketsound.mp3', end:96.0, fadeOut:2.5, vol:0.5, credit:'ネッケ「クシコス・ポスト」／ 音源: ポケットサウンド https://pocket-se.info/'},
+  {src:'bgm/offenbach-cancan-section.mp3', spurt:57.5, vol:1.0, credit:'オッフェンバック「天国と地獄」カンカン ／ 演奏: Musopen (パブリックドメイン)'},
 ];
 const BGM_TRACKS2 = [   // 2 面: ホルスト「木星」を 頭から 有名な旋律の終わりまで 切らずに (10/2 社長)。spurt = 曲の中の秒で「ラストスパート！」(有名な旋律の始まり 3:05)。end = 旋律の最後の和音が消える所 (4:55.3)、fadeOut = 終わりの この秒数で 音を小さく (社長「静かに終わってもいい」)。fadeIn 0 = 始まりの演奏が静かなので 最初から通常の音量で
   {src:'bgm/holst-jupiter-usaf.mp3', end:295.3, fadeOut:2, spurt:185, fadeIn:0, vol:1.0, credit:'ホルスト「木星」(組曲「惑星」より) ／ 演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)'},
