@@ -651,6 +651,8 @@ const GH_HIST=OV2_TRAIL-1, ghHist=[]; let ghHistT=0;   // おばけの通った�
 let ov2=null; const _ovD=new THREE.Vector3(), _ovL=new THREE.Vector3(), _ovV=new THREE.Vector3(), _ovG=new THREE.Vector3(), OV2_VIS_ARC=0.45;   // OV2_VIS_ARC = 土星の特別カメラで 見た目のおばけが 環の円の上を回る角度 (rad ≒ 26°)
 function arcDir2(o, th, out){ return out.copy(o.a).multiplyScalar(Math.cos(th)).addScaledVector(o.f, Math.sin(th)); }   // 弧の角度 th での 惑星の中心から外向き
 function fitSat2(o, c, ac, rho, th){   // 土星の「うえ」: 北極 (六角形) と 見た目のおばけ (動き始め・動き終わり) が 画面の横幅に収まる所まで 後ろへ引く (最大 3 倍。横長で収まっていれば そのまま。10/26 社長: スマホだと 六角形が見えない)
+  if(!o.fit) o.fit={c, ac, rho, th, base:o.camP.clone()}; else { ({c, ac, rho, th}=o.fit); o.camP.copy(o.fit.base); }   /* 2 回目からは 最初の位置と材料で 計算し直す (途中で 画面の形が変わった時。引き量が 積み重ならないように、Codex 指摘) */
+  o.fit.aspect=camera.aspect;
   const pole=c.clone().addScaledVector(o.nm, o.R), g0=ac.clone().addScaledVector(arcDir2(o, th, new THREE.Vector3()), rho), g1=ac.clone().addScaledVector(arcDir2(o, th+OV2_VIS_ARC, new THREE.Vector3()), rho);
   const M=pole.clone().add(g0).add(g1).multiplyScalar(1/3), hF=0.85*Math.atan(Math.tan(OV2_FOV*Math.PI/360)*camera.aspect), P=new THREE.Vector3(), d=o.camP.clone().sub(M), ang=(a, b)=>a.clone().sub(P).angleTo(b.clone().sub(P));
   for(let k=1;k<=3.001;k+=0.1){ P.copy(M).addScaledVector(d, k); if(Math.max(ang(pole, g0), ang(pole, g1), ang(g0, g1))<=2*hF) break; }   /* 3 つの どの 2 つの間の角度も 横の見える角度 (左右の 85%) に収まるまで */
@@ -684,7 +686,7 @@ function updateOv2(dt, gp, dtReal){ const o=ov2; o.t+=dt; o.tr+=dtReal;   /* ピ
   else {
     if(o.shot==='hiki'){ const k=Math.min(1, o.tr/OV2_HIKI), sm=k*k*(3-2*k); const D=40*Math.pow(o.dMax/40, sm); camera.position.copy(gp).addScaledVector(o.dir, D); _ovL.copy(gp).lerp(o.c, 0.45*D/o.dMax); }   // 40 m → 惑星の半径の 2.6 倍 (衛星のある木星は 4 倍) へ 倍々に 3.5 秒で引く (実時間)。見る所は 引いた距離に合わせて 惑星の方へ (時間で動かすと 引き始めに おばけが画面から外れた、Codex 指摘 10/2)
     else if(o.shot==='yoko'){ camera.position.copy(gp).addScaledVector(o.ax, o.R*1.1).addScaledVector(ng, o.R*0.35); _ovL.copy(gp).lerp(o.c, 0.25); }
-    else if(o.shot==='ue' && o.e.ringH){ camera.position.copy(o.camP);   /* 土星: 北極 (六角形) と 環の上のおばけの 間の上 (前の半分ほどの近さ、10/3 社長: 上からが良い・六角形を見せたい・離れすぎず) */
+    else if(o.shot==='ue' && o.e.ringH){ if(o.fit && o.fit.aspect!==camera.aspect) fitSat2(o); camera.position.copy(o.camP);   /* 途中で 縦横が変わったら 引き直す (Codex 指摘 10/26) */   /* 土星: 北極 (六角形) と 環の上のおばけの 間の上 (前の半分ほどの近さ、10/3 社長: 上からが良い・六角形を見せたい・離れすぎず) */
       _ovD.copy(o.c).addScaledVector(o.nm, o.R).sub(camera.position).normalize(); _ovL.copy(gp).sub(camera.position).normalize().add(_ovD).add(camera.position); }   /* 見る向き = 北極への向きと おばけへの向きの 真ん中 (両方が画面に入る) */
     else if(o.shot==='ue'){ camera.position.copy(o.c).addScaledVector(o.nm, o.R*(3+0.04*o.t)).addScaledVector(o.tm, -o.R*0.5); _ovL.copy(o.c).lerp(gp, 0.6); }   // ゆっくり 上へ引いていく
     else if(o.shot==='taiyo'){ camera.position.copy(o.pos); _ovL.copy(o.look); ghostSil.position.copy(ghost.position); ghostSil.quaternion.copy(ghost.quaternion); ghostSil.scale.setScalar(Math.max(ghost.scale.x, TAIYO.sil*sunDiscA*camera.position.distanceTo(ghost.position)/SIL_H)); }   // 止まったまま 太陽を見る (寄りなし)。影絵は 豆粒 (円盤の 0.08 倍) より小さくしない
@@ -1843,7 +1845,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     camera.position.copy(CB.p).addScaledVector(CB.u, camSm.up).addScaledVector(CB.r, camSm.lat);
     if(stage>=2) railPoint(aheadS, laneX*0.6, C); else frameAt(aheadS, C);
     camUp.lerp(G.u,k).normalize(); camera.up.copy(camUp);
-    if(stage>=2 && satW>0.001){ _scF.copy(C.p).sub(camera.position).projectOnPlane(camUp).normalize(); _scS.copy(satPos2).sub(camera.position).projectOnPlane(camUp).normalize(); const th=Math.acos(Math.min(1, Math.max(-1, _scF.dot(_scS)))), sg=Math.sign(_scV.crossVectors(_scF, _scS).dot(camUp))||1, ph=satW*Math.min(SAT2_TURN, th*0.5, halfA*0.95);   /* 土星の向きへ 最大 45° (土星までの角度の半分)。画面の 横の見える角度の 8 割まで (10/26 社長: 縦持ちで 流れてくる輪が 右の枠外へ → 土星は 見えにくくなっても コースの先を ぎりぎり見せる。halfA = 横半分の 85%) */
+    if(stage>=2 && satW>0.001){ _scF.copy(C.p).sub(camera.position).projectOnPlane(camUp).normalize(); _scS.copy(satPos2).sub(camera.position).projectOnPlane(camUp).normalize(); const th=Math.acos(Math.min(1, Math.max(-1, _scF.dot(_scS)))), sg=Math.sign(_scV.crossVectors(_scF, _scS).dot(camUp))||1, ph=satW*Math.min(SAT2_TURN, th*0.5, stage===2 && camera.aspect<1 ? halfA*0.95 : Infinity);   /* 土星の向きへ 最大 45° (土星までの角度の半分)。2 面の縦長の画面だけ 横の見える角度の 8 割まで (3 面の像・横長は これまでどおり、Codex 指摘。10/26 社長: 縦持ちで 流れてくる輪が 右の枠外へ → 土星は 見えにくくなっても コースの先を ぎりぎり見せる。halfA = 横半分の 85%) */
       _scQ.setFromAxisAngle(camUp, sg*ph); camera.position.sub(gp).applyQuaternion(_scQ).add(gp); _scV.copy(C.p).sub(gp).applyQuaternion(_scQ).add(gp);   /* カメラと見る所を まとめて おばけ (左右のレーンでも その位置) の周りに回す → いつもの構図のまま 向きだけ土星の側へ (おばけは いつもの位置に映る、Codex 指摘 10/2) */
       if(stage===3){ _scF.copy(_scV).sub(camera.position).normalize(); _scS.copy(satPos2).sub(camera.position).normalize(); const el=Math.asin(Math.min(1, Math.max(-1, _scS.dot(camUp))))-Math.asin(Math.min(1, Math.max(-1, _scF.dot(camUp)))), pa=satW*Math.min(PITCH3, Math.max(0, el*0.5));   /* 3 面: 見どころが 上にあれば 見上げる (上下の角度の半分、最大 18°。10/12 社長: 正面から 像を見上げるように)。これも おばけの周りに回す */
         if(pa>1e-4){ _scS.crossVectors(_scF, camUp).normalize(); _scQ.setFromAxisAngle(_scS, pa); camera.position.sub(gp).applyQuaternion(_scQ).add(gp); _scV.sub(gp).applyQuaternion(_scQ).add(gp); } }
