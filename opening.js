@@ -41,8 +41,8 @@ export function sparkle(actx){   // 杖の キラキラの音 (高い音 5 つ�
 const OP_CSS = `
 .ot-root{position:fixed;inset:0;z-index:35;pointer-events:none;font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;transition:opacity .5s ease}
 .ot-out{opacity:0}
-.ot-logo{position:absolute;left:0;right:0;top:calc(11vh + env(safe-area-inset-top));text-align:center;white-space:nowrap;font-size:clamp(38px,11vw,96px);font-weight:900;letter-spacing:.04em;color:#fff;-webkit-text-stroke:.14em #ffad3d;paint-order:stroke fill;text-shadow:0 .07em 0 #e48a1c,0 .18em .35em rgba(120,80,0,.3)}
-.ot-logo span{display:inline-block;animation:ot-bob 2.4s ease-in-out infinite}
+.ot-logo{position:absolute;left:0;right:0;top:calc(9vh + env(safe-area-inset-top));text-align:center;font-size:clamp(38px,11vw,96px)}
+.ot-logo img{width:min(92vw,640px);height:auto;animation:ot-bob 2.4s ease-in-out infinite}
 @keyframes ot-bob{50%{transform:translateY(-.12em)}}
 .ot-tap{position:absolute;left:0;right:0;bottom:calc(13vh + env(safe-area-inset-bottom));text-align:center;font-size:clamp(18px,5vw,30px);font-weight:bold;color:#fff;text-shadow:0 0 6px rgba(80,60,0,.75),0 0 2px #000;animation:ot-blink 1.4s ease-in-out infinite}
 @keyframes ot-blink{50%{opacity:.4}}
@@ -57,7 +57,7 @@ function injectCss(){ if(!document.getElementById('op-css')){ const st = documen
 export function createTitle(root){   // タイトルの文字 (題名・タップで はじめる・操作のヒント)
   injectCss();
   root.className = 'ot-root'; root.hidden = false;
-  root.innerHTML = '<div class="ot-logo">' + [...'がんばれおばけ！'].map((c, i) => `<span style="animation-delay:${(i * 0.12).toFixed(2)}s">${c}</span>`).join('') + '</div>'
+  root.innerHTML = '<div class="ot-logo"><img src="assets/title-logo.png" alt="がんばれおばけ！"></div>'   /* 題名は 絵 (10/26 社長から 届いた 文字の絵。余白を切って 横 1200) */
     + '<div class="ot-tap"></div><div class="ot-hint">ひだり / みぎ を タップで レールを うつる<br>オレンジの いたを ふむと はやくなる！</div>';
   const tap = root.querySelector('.ot-tap');
   return {
