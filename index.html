@@ -1714,7 +1714,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     if(stage===3 && ERRLOG){ for(const b of plates) if(b.ring && !b.logged && b.s>sPrev && b.s<=s){ b.logged=true; logSend({ring:+S3.tAt3(plan3, b.s).toFixed(3)}); } for(const g of gates3) if(g.at!=null && !g.logged && g.at>sPrev && g.at<=s){ g.logged=true; logSend({gate:+S3.tAt3(plan3, g.at).toFixed(3)}); } }   /* 確かめ用 ?errlog=1: 輪・世界が変わる輪を 通った時刻 (設計書 5 章、曲の時刻表と照合) */
     ensureCourse(s, vm);                                      // 先を作る (片づけは 板の判定のあと)
     laneX += (laneOff(lane, s)-laneX)*Math.min(1, dt*LANE_SMOOTH);
-    for(const b of plates){ if(!b.hit && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
+    for(const b of plates){ if(!b.hit && !b.missed && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
       b.hit=true; hits++; { frameAt(s,F); if(b.box || b.ring) ghostGlint(); else confettiBurst(F.p.x+F.r.x*laneX, F.p.y+0.9, F.p.z+F.r.z*laneX, F.t, v); }   // 地上の板 = 紙吹雪、空のボックスと 2 面 = おばけが きらりと光る
       let add= stage===3 ? v*S3.BOOST3_RATE : stage===2 ? v*(v<S2.PLANETS2[0].ms ? BOOST2_EARLY : BOOST2_RATE) : BOOST_MODE==='step' ? hits*STEP_KMH/3.6 : BOOST_BASE+v*BOOST_RATE;   // 2 面: いまの速さの 3.04% (海王星までは 7.6%、倍々)。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
       if(stage===1 && lastTrackStarted() && !planeRival.passed) add*=CATCHUP_RATE;   // 最後の曲に入っても飛行機を抜けていなければ 追い風 (1 面)
@@ -1724,7 +1724,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
       v+=add;   // くぐったら その場で加速 (2 面も ためない、10/5 社長: くぐっても反応がないのはいけない)
       camKick=Math.min(1, camKick+CAM_KICK_ADD); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false);   // 上限なし (インフレは最後まで)。踏んだ瞬間に 次の相手が前方に見えてくる
       combo++; showGain(add, cb); if(combo%10===0) pop(combo+' れんぞく！', true); }   // 加速は右上に小さく。連続は 10 ごとに一言だけ (踏めなくても何も言わない)
-      else if(!b.hit && !b.missed && b.s<s-3){ b.missed=true; combo=0; } }
+      else if(!b.hit && !b.missed && b.s<s-1.6*b.sc){ b.missed=true; combo=0; } }   /* 踏めなかったと決めるのは 踏める範囲 (板の長さの半分) を 過ぎてから (前は 3 m 後ろ固定で、大きい板は まだ踏めるのに コンボだけ先に切れた = ボーナスが付かない、Codex 指摘 10/26) */
     $('combo').textContent= combo>=3 ? combo+' れんぞく' : '';
     if(stage===2){ updatePlanets2(dtMove, dt); updateSmall2(s-sPrev, dtMove); }   // 惑星イベント (追い風・ぬいた・ギアアップ) / 姿のある小物
     trackGrowth(stageT, moveSpeed(v)); if(stage===1) updateRivals(dtMove); ensurePlates(s, moveSpeed(v), dt); tidyCourse(s);   // 速さの段の更新は updateRivals の中 (抜いた時 / 速さで)。板の間隔は 画面の流れの速さで (2 面)
