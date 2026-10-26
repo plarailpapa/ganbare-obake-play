@@ -1322,7 +1322,7 @@ function updateRivals(dtMove){
     if(!r.active) continue;
     const gap=r.s-s;
     if(!r.passed){
-      if(v>=r.ms && !r.chase){ const g0=Math.max(0, gap+r.v*dtMove), T=Math.max(PASS_SEC, 1.5*g0/Math.max(0.01, v-Math.min(r.ms, 0.4*v))); if(T*(v-r.ms)<g0) r.chase={t:0, g0, T}; }   /* おばけが相手の速さを超えた → 相手が すーっと下がってきて PASS_SEC 秒で 横に並ぶ。いちばん下がる時も 相手は おばけの 4 割 (本物の速さの方が遅ければ そちら) で前へ飛ぶ (後ろ向きに飛んで見えないように。遠すぎる時だけ 少し長く)。本物の速さのままの方が 早く抜ける時 (スタートのカメなど 近くにいる相手) は これまでどおり。始まりの間隔 g0 は このフレームで相手が いつもどおり進んだ後の位置から (おばけは もう進んでいるので、Codex 指摘 10/26) */
+      if(v>=r.ms && !r.chase){ const g0=Math.max(0, gap+r.v*dtMove), T=Math.max(PASS_SEC, 1.5*g0/Math.max(0.01, v-Math.min(r.ms, 0.4*v))); if(T*(v-r.ms)<g0) r.chase={t:-dtMove, g0, T}; }   /* おばけが相手の速さを超えた → 相手が すーっと下がってきて PASS_SEC 秒で 横に並ぶ。いちばん下がる時も 相手は おばけの 4 割 (本物の速さの方が遅ければ そちら) で前へ飛ぶ (後ろ向きに飛んで見えないように。遠すぎる時だけ 少し長く)。本物の速さのままの方が 早く抜ける時 (スタートのカメなど 近くにいる相手) は これまでどおり。始まりの間隔 g0 は このフレームで相手が いつもどおり進んだ後の位置から (おばけは もう進んでいるので、Codex 指摘 10/26)。t = −dtMove で始め、このフレームは いつもの速さのまま進み 次のフレームから下がる (コマ落ちの時に 急に減速しないように、Codex 再指摘) */
       if(r.chase){ const c=r.chase; c.t+=dtMove; const u=Math.min(1, c.t/c.T), ns=s+c.g0*(1-u*u*(3-2*u)); if(dtMove>0) r.v=(ns-r.s)/dtMove; r.s=ns; }
       else {
         const near=Math.min(1, Math.max(HOVER_NEAR, (r.ms-v)/(0.4*r.ms)));
