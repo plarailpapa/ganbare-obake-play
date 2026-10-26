@@ -58,7 +58,7 @@ export function createTitle(root){   // タイトルの文字 (題名・タッ�
   injectCss();
   root.className = 'ot-root'; root.hidden = false;
   root.innerHTML = '<div class="ot-logo"><img src="assets/title-logo.png" alt="がんばれおばけ！"></div>'   /* 題名は 絵 (10/26 社長から 届いた 文字の絵。余白を切って 横 1200) */
-    + '<div class="ot-tap"></div><div class="ot-hint">ひだり / みぎ を タップで レールを うつる<br>オレンジの いたを ふむと はやくなる！</div>';
+    + '<div class="ot-tap"></div><div class="ot-hint">ひだり / みぎ を タップで レールを うつる<br>かそくを ふむと はやくなる！</div>';
   const tap = root.querySelector('.ot-tap');
   return {
     setText(s){ tap.textContent = s; },
