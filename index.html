@@ -128,7 +128,7 @@ const STRATO_ALT = 4000, OZONE_ALT = 7000, SPACE_ALT = 12000;   // ゲーム内�
 const PLASMA_V = 1700, PLASMA_ALT = 13000;      // 大気の中を これより速く (≒ マッハ 5) 飛ぶと 空気が焼けてプラズマが光る。大気の外 (SPACE_ALT 以上) では消える
 const TURN_RATE = 0.095;                // 見た目の曲がる速さ (rad/秒)。速いほどカーブをゆるくして これを一定に保つ (目がちらつかない)
 const PLANE_V = LADDER[AIRPLANE_RUNG].ms, PLANE_SPAWN_RATIO = 0.6, PLANE_LEAD = 300;   // 飛行機: 本物の速さ 250 m/s。その 6 割の速さになったら 300 m 先に現れる
-const SKY_NEAR = 60;   // 空 (上昇から先) の相手は 板を踏んで速くなるほど 近くで待つ: 相手の 6 割の速さ = lead → 同じ速さ = 機体の後ろの端が この距離 (10/26 社長: 空は 踏んでも 近づかなくて ストレス。地上は これまでどおり)
+const SKY_NEAR = 20;   // 空 (上昇から先) の相手は 板を踏んで速くなるほど 近くで待つ: 相手の 6 割の速さ = lead → 同じ速さ = 機体の後ろの端が この距離 (10/26 社長: 空は 踏んでも 近づかなくて ストレス → 「もっと ぐんぐん」で 60 → 20 m。地上は これまでどおり)
 const CLIMB_LEN = 1500, CLIMB_RISE = 350;   // 見せ場「上昇」区間: 1,500 m かけて 350 m 上がる大きな曲線 (板なし・操作なし)
 const CATCHUP_RATE = 1.6, CATCHUP_SEC = 45;  // 曲の最後の曲に入っても飛行機を抜けていなければ 加速 1.6 倍の追い風。残り 45 秒を切ったら 飛行機が少しゆずる
 const TIE_GAP = 12;                     // 枕木の間隔 (m)
@@ -1324,8 +1324,8 @@ function updateRivals(dtMove){
     if(!r.active) continue;
     const gap=r.s-s;
     if(!r.passed){
-      const p= sky ? Math.min(1, Math.max(0, (v-r.ms*PLANE_SPAWN_RATIO)/(r.ms*(1-PLANE_SPAWN_RATIO)))) : 0, want=r.lead+(Math.min(r.lead, SKY_NEAR+r.len*0.5)-r.lead)*p;   /* 待つ距離 (空だけ 速さが相手に近づくほど 近く) */
-      const fk= sky ? 0.8 : 0.1, fc= sky ? 0.15 : 0.08;   /* 待つ距離への 寄り方 (空は 1〜2 秒で寄る = 踏むたびに 20 m ほど近づいて見える。0.1 だと 10 秒かかり 超えた時に まだ 200 m 先だった、Codex 指摘) と 寄る速さの上限 (相手の速さの割合) */
+      const p= sky ? Math.min(1, Math.max(0, (v-r.ms*PLANE_SPAWN_RATIO)/(r.ms*(1-PLANE_SPAWN_RATIO)))) : 0, want=r.lead*Math.pow(Math.min(r.lead, SKY_NEAR+r.len*0.5)/r.lead, p);   /* 待つ距離 (空だけ 速さが相手に近づくほど 近く)。割合で縮める = 踏むたびに 見た目が 1.1〜1.2 倍ずつ大きくなる (同じ m ずつだと 遠くでは 5% しか変わらず 分かりにくかった、10/26 社長) */
+      const fk= sky ? 1.2 : 0.1, fc= sky ? 0.25 : 0.08;   /* 待つ距離への 寄り方 (空は 1 秒ほどで寄る。0.1 だと 10 秒かかり 超えた時に まだ 200 m 先だった、Codex 指摘) と 寄る速さの上限 (相手の速さの割合) */
       let tv= v<r.ms ? Math.max(v-Math.max(1, r.ms*fc), Math.min(r.ms, v+(want-gap)*fk)) : sky ? Math.min(r.ms, v-Math.max(1, r.ms*fc)) : r.ms;   // 抜かれる前は 見える距離に付き合う。おばけが相手の速さを超えたら 本物の速さで (空は 約 100 m 先から 相手の 15% ぶん 速く追い抜く = 1〜2 秒)   /* 10/26 に「超えたら 1.5 秒で並ぶ」方式を試したが 社長判断で元に戻した (地上は 一気に まとめて抜けて 楽しくない) */
       if(r.climbTrigger){ const rem=songRemaining(); if(rem<CATCHUP_SEC){ const closing=(gap+20)/Math.max(3, rem-30); tv=Math.min(tv, v-Math.max(8, closing)); } }   // 飛行機: 曲が終わりそうなら ゆずる (残り 30 秒は見せ場に)
       r.v+=(tv-r.v)*Math.min(1, dtMove*2);
@@ -1336,7 +1336,7 @@ function updateRivals(dtMove){
     if(r.passed && s-r.s>350){ r.active=false; r.mesh.visible=false; continue; }   // 遠く後ろに消えたら 片づける
     frameAt(r.s, PF);
     let off= r.fly ? r.side : laneOff(r.lane, r.s), up= r.fly ? r.up+Math.sin(bob*0.7)*0.4 : r.up+(r.bounce ? Math.abs(Math.sin(r.s*0.9))*0.06 : 0);   // 飛ぶ相手は 決めた高さ、ほかは自分のレールの上 (動物は軽く跳ねる)
-    if(r.fly && PF.p.y>30){ const d=Math.abs(r.s-s+5), k= d>=125 ? 0 : d<=25 ? 1 : 1-(d-25)/100, e=k*k*(3-2*k);   // 距離は 相手を進めた後の位置で取り直す (gap は進める前の値 = Codex 指摘)   // 空 (レールの高さ 30 m 以上) でだけ: すれ違いの位置へ寄る。抜かれる前後 125 m で寄り始め、25 m 以内で完全に。離れたら戻る (9/15 社長: 迫力。地上では変なので出さない)
+    if(r.fly && PF.p.y>30){ const d=Math.abs(r.s-s+5), k= d>=60 ? 0 : d<=15 ? 1 : 1-(d-15)/45, e=k*k*(3-2*k);   /* 寄り始めは 前後 60 m から (10/26: 空の相手が 踏むたびに すぐ近くまで来て待つので、125 m からだと 抜く前から おばけの真横の高さに 居座って 板が見えにくい) */   // 距離は 相手を進めた後の位置で取り直す (gap は進める前の値 = Codex 指摘)   // 空 (レールの高さ 30 m 以上) でだけ: すれ違いの位置へ寄る。抜かれる前後 60 m で寄り始め、15 m 以内で完全に。離れたら戻る (9/15 社長: 迫力。地上では変なので出さない)
       const over=PASS_OVER.has(r.name), po= laneX+(over ? 0 : Math.sign(r.side||1)*Math.max(3, r.len*0.12)), pu= over ? 5 : 1.5;   // おばけの車線 (laneX) を基準に: 横すれすれ = 横 3〜5 m・同じ高さ / 上を飛ぶ組 (編隊) = 真上 5 m (空の車線は 6 m 間隔なので コース中央基準だと ぶつかって見える = Codex 指摘)。「下へ沈む」は 9/15 社長判断で廃止 (大きな機体が画面いっぱいに来て カクつく)
       off+=(po-off)*e; up+=(pu-up)*e; }
     r.mesh.position.copy(PF.p).addScaledVector(PF.r, off).addScaledVector(PF.u, up); r.mesh.quaternion.setFromRotationMatrix(basisAt(PF));
