@@ -486,7 +486,7 @@ function setStage(n){   // 1 面 (夕暮れの地球) ⇄ 2 面・3 面 (宇宙)
   beaconPts.renderOrder= sp ? 2 : 0;   // 2 面: 光の点を 半透明のもの・パイプの奥の光 (1) の後に描く (海王星の雲の筋に覆われて暗くならないように)。1 面は 今のまま
   $('title').querySelectorAll('p')[0].textContent= n===3 ? '3めん ・ かみがみの せかい' : two ? '2めん ・ わくせいレース' : '3D 試作 4 ・ 空へ、そして 宇宙へ';
   rung=-1; buildLadderHUD(); if(bgmTracks!==BGM_SETS[n]){ bgmStop(); bgmLoad(BGM_SETS[n]); }
-  if(two) S2.preloadPlanetTex();   // 惑星の模様を 裏で読み始める (何度呼んでもよい)
+  if(two) S2.preloadPlanetTex(); else S2.clearPrebuilt();   // 惑星の模様を 裏で読み始める (何度呼んでもよい)。2 面以外へ移る時は 先に作った惑星を片づける (メモリを空ける)
   clearPlanets2(); clearWorlds3();   // 惑星 (遠景の形 と 奥行きだけの球) / 3 面の世界の景色 を片づける
 }
 
@@ -576,7 +576,7 @@ function railPoint(s, x, out){   // レール面の上の横位置 x (m) の 位
 /* 2 面の惑星イベント (作業③ 10/1): 作り手 (S2.nextCtrl2) が始めた惑星を 遠景に置き、奥行きだけの球を手前の描画に置く。追い風・「ぬいた！」・ギアアップ・片づけ */
 let events2=[]; const passed2=new Set();   // 惑星イベント / 抜いた相手の名前
 const occluderMat=new THREE.MeshBasicMaterial({colorWrite:false});   // 惑星の「奥行きだけ」(色は描かない): 惑星の地平線の向こうのレールを隠す
-function onEvent2(ev){ const pv= prev2 && prev2.def===ev.def ? prev2 : null, m= pv ? pv.mesh : S2.makePlanetMesh(ev.def, ev.R); if(pv){ ev.blendFrom=m.position.clone(); ev.sigFrom=pv.sig; prev2=null; }   /* 見え始めの形を そのまま使う (作り直さない、10/5) */ if(!pv) m.position.copy(ev.center);   /* 引き継いだ形は 見えている位置のまま (中心へ動かすと 1 コマだけ 別の所に描かれる) */ const n0=ev.pArc.clone().sub(ev.center).normalize(), hA=Math.floor(ev.nF/2)*ev.delta; S2.orientPlanet(m, n0, ev.fwd, ev.up, ev.spotN || n0.clone().multiplyScalar(Math.cos(hA)).addScaledVector(ev.fwd, Math.sin(hA)));   /* mid = 最低の弧の真ん中 (floor(nF/2) 点目) の真下 = 地球の日本を向ける所 (10/5 から 抜く所は 離れる所) */ if(!pv){ m.visible=false; farScene.add(m); } ev.mesh=m;   /* 作るのは 作り手が先を作った時。見せるのは 前の惑星が片づいて ワープが終わってから (showPlanet2) */
+function onEvent2(ev){ const pv= prev2 && prev2.def===ev.def ? prev2 : null, m= pv ? pv.mesh : S2.takePlanetMesh(ev.def, ev.R); if(pv){ ev.blendFrom=m.position.clone(); ev.sigFrom=pv.sig; prev2=null; }   /* 見え始めの形を そのまま使う (作り直さない、10/5) */ if(!pv) m.position.copy(ev.center);   /* 引き継いだ形は 見えている位置のまま (中心へ動かすと 1 コマだけ 別の所に描かれる) */ const n0=ev.pArc.clone().sub(ev.center).normalize(), hA=Math.floor(ev.nF/2)*ev.delta; S2.orientPlanet(m, n0, ev.fwd, ev.up, ev.spotN || n0.clone().multiplyScalar(Math.cos(hA)).addScaledVector(ev.fwd, Math.sin(hA)));   /* mid = 最低の弧の真ん中 (floor(nF/2) 点目) の真下 = 地球の日本を向ける所 (10/5 から 抜く所は 離れる所) */ if(!pv){ m.visible=false; farScene.add(m); } ev.mesh=m;   /* 作るのは 作り手が先を作った時。見せるのは 前の惑星が片づいて ワープが終わってから (showPlanet2) */
   const oc=new THREE.Mesh(new THREE.SphereGeometry(ev.R-50, S2.PLANET_SEG, S2.PLANET_SEG/2), occluderMat);   /* 見える球より 50 m 内側 (割合だと木星で 2 km ずれる、Codex 指摘 10/2) */ oc.renderOrder=-100; oc.position.copy(ev.center); oc.visible=false;   /* 色のある物より必ず先に描く (先に描かれたレールは 後から隠せないため、Codex 指摘 10/1)。本当の位置に着くまでは 使わない */ scene.add(oc); ev.occ=oc; ev.passed=false; ev.shown=false; events2.push(ev); }
 const _mw=new THREE.Vector3();
 const DOT2_ANG=0.007, DOT2_MIN=0.0015, R_EARTH_KM=6371;   // 見せ始めの 惑星の見かけの半径 (rad): 地球で 0.007 (≒ 0.4°)、ほかは 本物の半径の比率 (10/2 社長: 本物どおり。木星は最初から大きな円盤)。小さくても 1〜2 画素の光の点は残す
@@ -590,7 +590,7 @@ function updatePreview2(dt){ if(state==='finish') return;   /* FINISH 中は 見
   const ok= stage===2 && state==='run' && warp2<0 && P && !events2.length && v>=P.ms*S2.PREVIEW2;   /* 前の惑星が片づき ワープも終わってから */
   if(!ok){ dropPreview2(); return; }   /* 条件を外れたら 片づける (イベントが始まった時は onEvent2 が引き取って prev2 は空) */
   const sd=PREV_SIDE[P.from]||PREV_SIDE.below, toC=_pv.copy(G.r).multiplyScalar(sd[0]).addScaledVector(G.u, sd[1]);
-  if(!prev2){ const R=S2.planetR(P), m=S2.makePlanetMesh(P, R), n=toC.clone().negate(); S2.orientPlanet(m, n, G.t.clone(), G.u.clone(), n); farScene.add(m); prev2={def:P, mesh:m, R, D:null, sig:1}; }   /* 仮の向きで 模様・環・衛星を並べておく (イベントの始まりで 本当の向きへ。向きは近いので ほぼ変わらない、Codex 指摘 10/5) */
+  if(!prev2){ const R=S2.planetR(P), m=S2.takePlanetMesh(P, R), n=toC.clone().negate(); S2.orientPlanet(m, n, G.t.clone(), G.u.clone(), n); farScene.add(m); prev2={def:P, mesh:m, R, D:null, sig:1}; }   /* 仮の向きで 模様・環・衛星を並べておく (イベントの始まりで 本当の向きへ。向きは近いので ほぼ変わらない、Codex 指摘 10/5) */
   const vm=Math.max(1, moveSpeed(v)), D=Math.max(0, courseEnd-s)+S2.approachDist(P, vm); prev2.D= prev2.D==null ? D : prev2.D+(D-prev2.D)*Math.min(1, dt*1.5);   /* 進む先の 近づく区間ぶん先 (イベントの弧の始まりと同じ。10/26 に 近づく 9 → 4 秒にした時 ここが 9 秒のままで 専用コースに入った瞬間 惑星が ぐっと迫った、Codex 指摘)。作り手の先が 区間ごとに跳ぶので なめらかに */
   const R=prev2.R;
   const anchor=_pa.copy(G.p).addScaledVector(G.t, prev2.D).addScaledVector(toC, 3000), k=Math.min(1, Math.max(0, (v/P.ms-S2.PREVIEW2)/(0.8-S2.PREVIEW2))), ang=Math.max(DOT2_MIN, DOT2_ANG*P.rkm/R_EARTH_KM)*(0.4+0.6*k);   // 見かけの大きさ: 60% で 0.4 倍 → 80% で 今の「見せ始め」の大きさ
@@ -1402,6 +1402,14 @@ const SMALL2_LOOKS={   // up = コースの真上の高さ / gap = 現れる先�
 };
 const SMALL2_SHOW=0.9, SMALL2_FILL=0.6, SMALL2_PLANET_FILL=0.7, SMALL2_PACE_SEC=1, SMALL2_REL_MIN=60, SMALL2_REL_MAX=250;   // 現れる速さ (割合) / 影の側の明るさ (太陽が前にあり 後ろからは影の側しか見えないため。10/6 社長: もっと明るく) / 準惑星の夜の側の明るさ (模様ごと) / 一緒に飛ぶ秒 / 抜いたあと離れる速さ (m/秒、見た目の都合で この範囲に)   /* 10/26 社長: 2 面を 3 分半にしたので 一緒に飛ぶ 3 → 1 秒、ボイジャーの 下がる速さ 10 → 30 m/秒 (約 0.8 秒)・ハレー彗星 400 → 800 m/秒 (約 2 秒) */
 const small2=[], small2Names=new Set();
+function prep2Step(){   // 2 面の前 (走っていない間) に 1 コマ 1 つずつ: 惑星を作る・模様を当てる・見えない所で描く → 準惑星などの小物も 見えない所で描く (出てくる時の カクつき防止、10/26 社長)
+  if(!S2.prebuildPlanet(warmFar2)) return;
+  for(const r of small2){ if(r.warmed) continue; const g=r.mesh.children[0], tk=g && g.userData.tick, pd=g && g.userData.pending;
+    if(r.L.planet && pd && pd.length){ const n=pd.length; S2.updatePlanetTex(g); if(pd.length<n) return; continue; }   /* 準惑星の模様は 届いてから (まだなら 次の小物へ) */
+    if(tk) tk(0, 1); warmFar2(r.mesh, r.L.planet ? farScene : scene); if(tk) tk(0, 0); r.warmed=true; return; } }   /* tick で 模様と 光らせる模様を 先に差し替え (差し替えると 描き方が変わるため) → 描いて → 見えない濃さへ戻す */
+function warmFar2(m, sc=farScene){ const rt=new THREE.WebGLRenderTarget(8, 8), was=m.visible, inS=m.parent===sc, cam= sc===farScene ? farCam : camera, culled=[];   // 見えない小さな画面に 1 回描く (形・模様・描き方の準備)。画面の外の物も描く
+  m.visible=true; if(!inS) sc.add(m); m.traverse(o=>{ if((o.isMesh || o.isSprite) && o.frustumCulled){ culled.push(o); o.frustumCulled=false; } });
+  try{ renderer.setRenderTarget(null); renderer.compile(sc, cam); renderer.setRenderTarget(rt); renderer.render(sc, cam); }catch(e){ console.warn('2 面の下ごしらえ', e); } finally { renderer.setRenderTarget(null); for(const o of culled) o.frustumCulled=true; m.visible=was; if(!inS) sc.remove(m); rt.dispose(); } }
 async function loadSmall2(){
   const loader=new GLTFLoader(kitManager);
   const results=await Promise.allSettled(S2.LADDER2.filter(o=>o.kind==='small' && SMALL2_LOOKS[o.name]).map(async def=>{
@@ -1946,6 +1954,7 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   if(pendingStart && canStart()){ pendingStart=false; startRun(); }   /* 次の面: 曲・部品が 読めたら 始める (10/20) */
   if(curtain) curtainStep(Math.min(0.05,raw));
   if(pendingTalk){ const n=pendingTalk; pendingTalk=0; beginIntro(n); }   /* 試しの入口 ?talk=N */
+  if(stage===2 && (state==='title' || state==='opening')) prep2Step();   /* 2 面の前の タイトル・会話の間に 惑星と小物の下ごしらえ (1 コマ 1 つずつ。走っている間・ゴールの演出中は しない) */
   if(boosterFx.visible){ const k=0.8+Math.random()*0.45; boosterFx.userData.flame.scale.set(0.55*k, 0.55*k, 1); }   /* ブースターの炎の ゆらぎ */
   if(quickMode && !boosterOn && state==='run' && stageT>(stage===3 ? plan3[0].t0 : 0)+5){ v=QUICK_KMH[stage][quickMode==='ok' ? 0 : 1]/3.6; finishRun(); }   /* 試しの入口 (?result=) */
   if(op && (state==='opening' || state==='title')){ const dt=Math.min(0.05,raw); op.update(dt); if(talk) talk.update(dt); if(diving) diveStep(dt); if(op){ renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(op.scene, op.camera); } requestAnimationFrame(frame); return; }   /* タイトル画面と 導入の間は 天国の場面だけ描く (10/19)。talk.update で 導入が終わると op は片づいている */

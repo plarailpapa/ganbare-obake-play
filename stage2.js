@@ -186,6 +186,15 @@ export function makePlanetMesh(def, R){
 }
 export function updatePlanetTex(grp){ const pd=grp.userData.pending; for(let i=pd.length-1;i>=0;i--){ const im=texImgs.get(pd[i].file); if(im===undefined) continue; const it=pd.splice(i,1)[0]; if(im) it.apply(im); } }   // 毎コマ呼んでよい: 読めた部分だけ 1 回差し替える (失敗は 色の帯のまま)
 export function disposePlanet(grp){ grp.userData.pending.length=0; grp.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material){ if(o.material.map) o.material.map.dispose(); if(o.material.alphaMap) o.material.alphaMap.dispose(); o.material.dispose(); } }); }   // 片づけた後に 画像が届いても 差し替えない
+const prebuilt=new Map();   // 2 面の前 (会話・説明・タイトル・結果の画面) に 先に作って 見えない所で一度描いた 惑星 (出てくる瞬間に 作る・模様を加工する・画面へ渡す と スマホで カクついた、10/26 社長)
+export function prebuildPlanet(warm){   // 1 回に 1 つだけ進める: 作る → 模様が届いていれば当てる (重い) → warm (見えない所で描く)。全部済んだら true
+  for(const P of PLANETS2){ const e=prebuilt.get(P.name);
+    if(!e){ prebuilt.set(P.name, {mesh:makePlanetMesh(P, planetR(P)), warm:false}); return false; }
+    const pd=e.mesh.userData.pending; if(pd.length){ const n=pd.length; updatePlanetTex(e.mesh); if(pd.length<n) return false; continue; }   /* まだ届いていない模様は 後のコマで */
+    if(!e.warm){ warm(e.mesh); e.warm=true; return false; } }
+  return true; }
+export function takePlanetMesh(def, R){ const e=prebuilt.get(def.name); if(e){ prebuilt.delete(def.name); return e.mesh; } return makePlanetMesh(def, R); }   // 先に作ってあれば それを渡す (なければ その場で作る)
+export function clearPrebuilt(){ for(const e of prebuilt.values()) disposePlanet(e.mesh); prebuilt.clear(); }   // 2 面以外へ移る時 (スマホのメモリを空ける)
 export function makeMoonMesh(M, R){   // 衛星の見た目 (色を描いた模様。地図画像 M.tex があれば 読めた時に差し替え)
   const W=1024, H=512, c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d'), rnd=(a,b)=>a+Math.random()*(b-a);
   const dot=(r,col)=>{ g.fillStyle=col; g.beginPath(); g.ellipse(rnd(0,W), rnd(0,H), r, r*0.8, 0, 0, Math.PI*2); g.fill(); };
