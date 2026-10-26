@@ -1278,8 +1278,8 @@ function formation5(jet){   // 読み込んだ機体 1 機 (実寸) から 5 機
   g.userData.fan={jets, cones, t:-1, puffT:0}; return g; }
 const _fp=new THREE.Vector3();
 function updateFan(r, gap, dt){ const g=r.mesh.children[0], fd=g && g.userData.fan; if(!fd) return;
-  if(fd.t<0){ if(gap<80 && (v>=r.ms*0.95 || r.passed)) fd.t=0; else return; }   /* 10/26 社長: 追い抜く直前に 扇形に → 速さが 95% に来て 80 m 先まで迫ったら 開き始める (抜く 1〜2 回前のくぐり)。開くのは 2.5 秒 */   // 先頭が おばけの 60 m 先 (抜かれる 2〜3 秒前) に来たら開き始める (9/15 社長: 抜くタイミングより少し早く)   /* 10/26: 空の相手が 踏むたびに すぐ近くまで来て待つようになったので、速さが追いついて 本当に抜く時から (待っている間に 開き終わらないように、Codex 指摘) */
-  fd.t+=dt; const k=Math.min(1, fd.t/2.5), e=k*k*(3-2*k);
+  if(fd.t<0){ if(gap<80 && (v>=r.ms*0.95 || r.passed)) { fd.t=0; fd.dur=2.5; } else return; }   /* 10/26 社長: 追い抜く直前に 扇形に → 速さが 95% に来て 80 m 先まで迫ったら 開き始める (抜く 1〜2 回前のくぐり)。開くのは 2.5 秒 */   // 先頭が おばけの 60 m 先 (抜かれる 2〜3 秒前) に来たら開き始める (9/15 社長: 抜くタイミングより少し早く)   /* 10/26: 空の相手が 踏むたびに すぐ近くまで来て待つようになったので、速さが追いついて 本当に抜く時から (待っている間に 開き終わらないように、Codex 指摘) */
+  fd.t+=dt; const rel=v-r.v; if(!r.passed && v>=r.ms && rel>1) fd.dur=Math.min(fd.dur, fd.t+Math.max(0.2, gap/rel*0.9)); const k=Math.min(1, fd.t/fd.dur), e=k*k*(3-2*k);   /* 抜くまでの残り (間 ÷ 近づく速さ) が 短ければ その分 速く開く = 抜く前に 開き切る (Codex 指摘 10/26) */
   fd.jets.forEach((j,i)=>{ const a=FAN_ANG[i], [x,y,z]=FAN_POS[i]; j.position.set(x+Math.sin(a)*90*e, y+Math.cos(a)*90*e, z); j.rotation.z=a*0.8*e; });   // 2.5 秒で 90 m まで扇形に。機体は開く向きへ傾ける
   for(const c of fd.cones) c.visible=false;   // 筒のスモークは消し、点の煙に切り替え
   fd.puffT+=dt; if(fd.t<5 && fd.puffT>=0.06){ fd.puffT-=0.06; for(const j of fd.jets){ _fp.set(j.position.x, j.position.y, j.position.z-6); g.localToWorld(_fp); puffEmit(_fp); } } }   // 5 秒間、0.06 秒ごとに 各機の機尾から煙
@@ -1383,7 +1383,7 @@ function updateRivals(dtMove){
     r.mesh.position.copy(PF.p).addScaledVector(PF.r, off).addScaledVector(PF.u, up); r.mesh.quaternion.setFromRotationMatrix(basisAt(PF));
     if(r.name==='せんとうき'){ if(r.loopT==null && !r.passed && v>=r.ms*0.95) r.loopT=0;   /* 抜かれる直前に 宙返り (10/26 社長): 速さが 95% に来たら 2 秒で 縦に 1 回転。途中は 外側へ少し ふくらむ (レールの上を通らない) */
       if(r.loopT!=null && r.loopT<LOOP_SEC){ r.loopT+=dtMove; const u=Math.min(1, r.loopT/LOOP_SEC), ph=2*Math.PI*u*u*(3-2*u); r.mesh.position.addScaledVector(PF.t, LOOP_R*Math.sin(ph)).addScaledVector(PF.u, LOOP_R*(1-Math.cos(ph))).addScaledVector(PF.r, Math.sign(r.side||-1)*4*Math.sin(Math.PI*u)); r.mesh.quaternion.multiply(_lq.setFromAxisAngle(_lx, -ph)); } }
-    if(r.flames) for(const f of r.flames) flickFlame(f); if(r.sep) updateShuttle(r, dtMove);   /* 噴射口の炎・シャトルの切り離し */
+    if(r.sep) updateShuttle(r, dtMove); if(r.flames) for(const f of r.flames) flickFlame(f);   /* シャトルの切り離し (炎の明るさも決める) → 噴射口の炎 (この順で 同じコマに反映、Codex 指摘) */
     if(r.name==='ブルーインパルス') updateFan(r, gap, dtMove);   // 抜かれる瞬間に扇形に開いて煙 (9/15)
     const rotor=r.mesh.getObjectByName('rotor'); if(rotor) rotor.rotation.y+=dtMove*25; const prop=r.mesh.getObjectByName('prop'); if(prop) prop.rotation.z+=dtMove*40;   // ヘリのローターとプロペラは回る
     if(r.mixer) r.mixer.update(dtMove*Math.min(1.6, Math.max(0.5, r.v/r.ms)));   // 走る動きの速さ = いまの速さ ÷ 本来の速さ (ゆっくり付き合う時は ゆっくり走る)
