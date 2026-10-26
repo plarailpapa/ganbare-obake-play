@@ -23,7 +23,7 @@ const _f=new THREE.Vector3(), _dq=new THREE.Quaternion(), AXX=new THREE.Vector3(
 function turn(g, axis, ang){ if(ang) g.q.multiply(_dq.setFromAxisAngle(axis, ang)); }   // 自分の向きを基準に回す (x = 機首を下げる、y = 左右、z = 横転)
 export function ctrlLen(vm){ return Math.max(CTRL_MIN, vm*CTRL_SEC); }   // 制御点の間隔 (m)。始まりの持ち越し点も これに合わせる (間隔が急に変わると 曲線が後ろへ折り返す、Codex 指摘 10/1)
 /* 惑星イベント: 近づく (まっすぐ) → そばを飛ぶ弧 (惑星の中心の周りの円) → 離れる (まっすぐ)。惑星は おばけから見て 下・上・左・右 のどれか (10/2 社長: 全部「下」で同じに見えた) */
-const APP_SEC=9, DEP_SEC=2, GAP_SEC=4.5, FAST_START=0.8, ORBIT_MIN=5.5;   // 近づく (遠くの点から 9 秒) / 離れる / 次までの最低の間 (秒。ワープ 2.5 秒 + 少し、10/1 社長: 惑星どうしの遠さ)。速さが惑星の 80% で 専用コースへ (10/5 社長)。ORBIT_MIN = 専用コースを 最低 何秒 回るか (速い人も 見せ場が一瞬で終わらないように。始まった時の速さで 5.5 秒ぶん = その後 加速するので 実際は 約 4 秒、Codex 指摘 10/5)
+const APP_SEC=4, DEP_SEC=2, GAP_SEC=1.5, FAST_START=0.8, ORBIT_MIN=2.7;   // 近づく (遠くの点から 4 秒) / 離れる / 次までの最低の間 (秒)。速さが惑星の 80% で 専用コースへ (10/5 社長)。ORBIT_MIN = 専用コースを 最低 何秒 回るか (始まった時の速さで 2.7 秒ぶん = その後 加速するので 実際は 約 2 秒)。10/26 社長: 2 面が 5 分 → 3 分半になったので 短く (前は 近づく 9 秒・間 4.5 秒・回る 5.5 秒 = 惑星 1 つに 最低 約 20 秒かかり、速さが足りても 演出の行列で 水星まで届かなかった)
 export const PREVIEW2=0.6;   // 惑星が 遠くに見え始める速さ (公転速度の 60%、10/5 社長)。80% で 専用コース、100% で 抜く
 const SIZE_DIV=35, HOVER2=3000;   // 惑星の大きさ = 本物の半径 ÷ 35 (10/2 社長: 本物どおりの比率。木星 ≒ 2,000 km が 遠景の描画距離 5,000 km に収まる上限) / そばを飛ぶ高さ (m、全惑星で同じ → 小さい星ほど足元に丸く見える)
 export function planetR(def){ return def.rkm*1000/SIZE_DIV; }   // ゲームの半径 (m)
