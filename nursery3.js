@@ -128,7 +128,7 @@ export function nurseryWorld(scene, root, P, opts, out){
   const N = NURSERY, Dk = N.desk;
   room(root);
   placeModel(root, out, 'assets/nursery/desk.glb', p3(Dk.x, 0, Dk.z), Math.PI, [Dk.w, Dk.h, Dk.d]);   // 机 (左下の 角。模型の 横長を X に)
-  placeModel(root, out, 'assets/nursery/chairDesk.glb', p3(Dk.x, 0, Dk.z + Dk.d / 2 + 260), Math.PI, [520, 950, 520]);
+  placeModel(root, out, 'assets/nursery/chairDesk.glb', p3(Dk.x, 0, Dk.z + Dk.d / 2 + 160), Math.PI, [520, 950, 520]);   // いす (机の下へ 少し 入れる = 入口から 180 mm 離す、Codex 指摘 10/27)
   placeModel(root, out, 'assets/nursery/lampRoundTable.glb', p3(Dk.x + 350, Dk.h, Dk.z - 150), 0, [230, 450, 230]);   // 机の ランプ
   placeModel(root, out, 'assets/nursery/books.glb', p3(Dk.x - 350, Dk.h, Dk.z - 100), 0.2, [300, 220, 160]);   // 机の 本
   const bear = plush('bear', 180, '#b07a52'); bear.position.copy(p3(Dk.x + 120, Dk.h, Dk.z + 50)); bear.rotation.y = 0.3; root.add(bear);   // 机の上の 小さな クマ
@@ -145,13 +145,20 @@ export function nurseryWorld(scene, root, P, opts, out){
   const nl = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), color:0xffc98a, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false })); nl.position.copy(p3(-1500, 860, N.room.z1 - 160)); nl.scale.setScalar(700 * MM3); root.add(nl);
   crib(root, out);
   scene.fog = new THREE.Fog(0x24163a, 250 * MM3, 2200 * MM3);   // 夜の 紫の もや: 床の上からは 部屋の奥が 見えない (何か分からない、社長)
-  const Cw = new THREE.Vector3(), up = new THREE.Vector3(), back = new THREE.Vector3();
+  const Cw = new THREE.Vector3(), up = new THREE.Vector3(), back = new THREE.Vector3(), q = new THREE.Vector3();
   out.frame = (cam, aspect) => { scene.fog.near = 1e6; scene.fog.far = 2e6;   /* 見下ろしでは もやを なくす (高い所からだと 部屋が全部 もやに埋もれて 紫の四角になる、10/23 社長) */
-    const R = N.room, t = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)), pad = 150, port = aspect < 1;   /* 横長 = 部屋全体を 右に寄せ 左を空ける。縦持ち = ベッドを中心に 部屋の右半分、下の壁を 画面の下へ (上が 空く) (社長 10/26) */
-    const x0 = R.x0 - pad, wNeed = ((port ? -1200 : R.x1 + pad) - x0) / (port ? 1 : 1 - FRAME_ROLL), dNeed = R.z1 - R.z0 + 2 * pad;
-    const dist = Math.max(dNeed / 2 / t, wNeed / 2 / (t * aspect)), cx = x0 + dist * t * aspect, cz = port ? R.z0 - pad + dist * t : (R.z0 + R.z1) / 2, D = (dist + R.h) * MM3;   // dist = 壁の上の高さから カメラまで (mm)。画面の右端 = 右の壁 (画面の右 = −X)
-    root.updateMatrixWorld(); root.localToWorld(p3(cx, 0, cz, Cw)); up.set(0, 1, 0).transformDirection(root.matrixWorld); back.set(0, 0, -1).transformDirection(root.matrixWorld);
-    cam.position.copy(Cw).addScaledVector(up, D * Math.cos(FRAME_TILT)).addScaledVector(back, D * Math.sin(FRAME_TILT)); cam.up.set(0, 0, 1).transformDirection(root.matrixWorld); cam.lookAt(Cw); };   // 上 = ドア (+Z)
+    const R = N.room, port = aspect < 1, m = 0.04, xs = port ? [R.x0, -1200] : [R.x0, R.x1], t = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));   /* 横長 = 部屋全体を 右に寄せ 左を空ける。縦持ち = ベッドを中心に 部屋の右半分、下の壁を 画面の下へ (上が 空く) (社長 10/26) */
+    const L = port ? -1 + m : -1 + 2 * FRAME_ROLL, Rt = 1 - m, B = -1 + m, T = 1 - m;   // 収める枠 (画面の座標 −1〜1。右 = 右の壁)
+    root.updateMatrixWorld(); up.set(0, 1, 0).transformDirection(root.matrixWorld); back.set(0, 0, -1).transformDirection(root.matrixWorld); cam.up.set(0, 0, 1).transformDirection(root.matrixWorld); cam.updateProjectionMatrix();   // 上 = ドア (+Z)
+    /* 部屋の角 (床と 壁の上) を 実際に 画面へ映して 枠に合わせる (傾きと 遠近の分も 合う、Codex 指摘 10/27): 距離 D は 収まる/はみ出す で 半分ずつ 絞り込み、各 D で 見る点を ずらして 枠の まん中 (縦持ちは 下の壁を 下端) へ */
+    const place = (cx, cz, D) => { root.localToWorld(p3(cx, 0, cz, Cw)); cam.position.copy(Cw).addScaledVector(up, D * MM3 * Math.cos(FRAME_TILT)).addScaledVector(back, D * MM3 * Math.sin(FRAME_TILT)); cam.lookAt(Cw); cam.updateMatrixWorld(); };
+    const box = () => { let x0 = 9, x1 = -9, y0 = 9, y1 = -9; for(const x of xs) for(const z of [R.z0, R.z1]) for(const h of [0, R.h]){ root.localToWorld(p3(x, h, z, q)).project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); } return [x0, x1, y0, y1]; };
+    let cx = (xs[0] + xs[1]) / 2, cz = (R.z0 + R.z1) / 2, lo = (R.h + 300) / Math.cos(FRAME_TILT), hi = 60000, b;   // 見る点 (床、mm)。D = そこから カメラまで (mm、カメラは 壁より 上)
+    const center = D => { const De = D - R.h / Math.cos(FRAME_TILT);   // 画面の端を決めるのは 壁の上の角 → ずらす量は そこまでの距離で
+      for(let it = 0; it < 4; it++){ place(cx, cz, D); b = box(); cx += ((L + Rt) / 2 - (b[0] + b[1]) / 2) * De * t * cam.aspect; cz -= (port ? B - b[2] : (B + T) / 2 - (b[2] + b[3]) / 2) * De * t / Math.cos(FRAME_TILT); }   // 画面の右 = root の −X
+      place(cx, cz, D); b = box(); };
+    for(let k = 0; k < 18; k++){ const D = (lo + hi) / 2; center(D); if(b[1] - b[0] > Rt - L || b[3] - b[2] > T - B) lo = D; else hi = D; }
+    center(hi); };
   const M = out.nursery.merry;
   return [(cam, dt) => { M.rotation.y += dt * 0.6; }];   // メリーは いつも ゆっくり 回る
 }
