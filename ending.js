@@ -1,6 +1,6 @@
-// エンディング (10/27): 子ども部屋で 真っ白に なった後、赤ちゃんの目から 見た景色。目を閉じて むにゃむにゃ → 瞬きしながら 目が開く → 白い世界に ぼんやり 人影 → タップで ばあ！
+// エンディング (10/27): 子ども部屋で 真っ白に なった後、赤ちゃんの目から 見た景色。目を閉じて むにゃむにゃ → 瞬きしながら 目が開く → 白い世界に ぼんやり 人影 → タップで ばあ！ (赤ちゃんの 絵の 顔に 寄った所から 上半身まで 引く) → 歓声・おしまい → タップで 結果発表
 // 設計書 docs/superpowers/specs/2026-10-27-ganbare-obake-ending-design.md 2・3 章
-import { createTalk, preloadVoices } from './talk.js';
+import { createTalk, preloadVoices, playSound } from './talk.js';
 
 const LINES = [   // 声の台本 (10/26 版。声優さんの連絡で「人を」「いくぞ！」)。おばけの 顔の絵は 出さない (cast なし = 赤ちゃんの目から 見た 景色)
   { id:'e-04', who:'obake', cast:[], text:'むにゃむにゃ… どうやら {地球|ちきゅう}に {追|お}いついたみたい…' },
@@ -28,6 +28,12 @@ const CSS = `
 @keyframes ed-haze{0%,100%{transform:skewX(0) scaleY(1)}30%{transform:skewX(2.5deg) scaleY(1.015)}65%{transform:skewX(-2deg) scaleY(.99)}}
 @keyframes ed-sway{0%,100%{transform:translateX(0)}50%{transform:translateX(4%)}}
 .ed-lid{position:absolute;inset:0;display:none}
+.ed-baa{position:absolute;inset:0;overflow:hidden;opacity:0;pointer-events:none;background:#fdf1df}
+.ed-baa-on .ed-baa{opacity:1;pointer-events:auto;transition:opacity .12s ease}
+.ed-bg{position:absolute;inset:-2%;background:url(assets/ending/haikei.jpg) center/cover}
+.ed-baby{position:absolute;left:0;top:0;width:1143px;height:1600px;max-width:none;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-select:none}
+.ed-owari{position:absolute;right:max(20px,4vw);bottom:calc(max(20px,5vh) + env(safe-area-inset-bottom));font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;font-weight:bold;font-size:clamp(30px,8vmin,64px);letter-spacing:.08em;color:#c0603a;text-shadow:0 0 6px #fff,0 0 3px #fff,0 2px 0 #fff;opacity:0;transform:translateY(12px);transition:opacity .9s ease,transform .9s cubic-bezier(.25,.6,.3,1)}
+.ed-owari-on .ed-owari{opacity:1;transform:none}
 .tk-root.ed-talk .tk-box{box-shadow:0 2px 16px rgba(170,130,50,.28)}
 .tk-root.ed-talk .tk-go{top:70%;color:#f29a1f;text-shadow:0 0 8px #fff,0 0 2px #fff}
 `;
@@ -37,6 +43,9 @@ function injectCss(){ if(document.getElementById('ed-css')) return; const st = d
 const FADE = 2.5, TALK_AT = 3.0;   // 灰色に なりきる 秒 / 会話を 始める 秒 (e-04 は 6.2 秒)
 const LID_KEYS = [[0, 0], [2.0, 0], [2.6, .16], [3.2, .16], [3.4, 0], [3.6, 0], [4.4, .42], [5.4, .42], [5.55, .04], [5.7, .04], [7.2, 1]];   // 会話の 始まりからの [秒, 目の開き 0〜1]: 「むにゃむにゃ…」の間は 閉じたまま → 細く開く → 瞬き → 半分 → 瞬き → 全開 (e-05 の 少し前)
 const LID_RGB = '132,133,138', LID = `rgb(${LID_RGB})`;   // まぶたの裏の色 = 人影と 同じ 灰色 (10/27 社長「背景は 白、人影は グレー」= 白と 灰色だけの 世界)
+// ばあ！ (10/27 社長「赤ちゃんの まん中に カメラが 寄っている 状態から 後ろに 下がっていく。上半身くらいが 見える 所で ストップ、歓声が 聞こえて 右下に おしまい」)
+const BABY = { face:[590, 560], box:[140, 150, 1020, 1130] };   // 絵 (assets/ending/baa.png、1143 × 1600) の 中の 位置: 寄り始めの 顔の まん中 / 止まる 上半身の 枠 (頭の 上 〜 おなかの ボタン、両手も 入る)
+const ZOOM = 2.6, CHEER_AT = 2.7, OWARI_AT = 3.1, OWARI_TAP = 0.6;   // 引く 秒 / 歓声 (効果音ラボ「歓声と拍手 1」約 4 秒) / おしまい / おしまいから タップを 受けるまで (秒、ばあ！ から)
 function lidOpen(t){
   if(t <= 0) return 0;
   for(let i = 1; i < LID_KEYS.length; i++){
@@ -56,18 +65,39 @@ function drawLid(el, o){
 export function createEnding({ root, talkRoot, actx, faces, onDone, log }){   // root = エンディングの層 (白い幕の上・会話の下)、talkRoot = 会話の画面の 置き場。onDone = おしまいの 後の タップ (→ 結果発表)
   injectCss();
   root.className = 'ed-root'; root.hidden = false;
-  root.innerHTML = '<div class="ed-shadows"><div class="ed-sh"><i></i></div><div class="ed-sh"><i></i></div></div><div class="ed-lid"></div>';   // 人影 2 つ (お父さんと お母さんが 左右から すぐ近くで のぞき込む。左右対称だと 怖いので 左 = 近く 大きく 低め、右 = 奥で 小さく 高め・少し 遅れて 出る。赤ちゃんの 目なので 大きく ぼかす。灰色で 陽炎のように ゆらゆら、目鼻は なし = 怖く しない)
-  const lid = root.querySelector('.ed-lid'), VOICE_DIR = 'assets/voice/';
-  let talk = null, done = false, t = 0;
-  const end = () => { if(done) return; done = true; root.classList.add('ed-hide'); onDone(); };   // タップで ばあ！ (とばす も 同じ)。人影は すっと 消える
+  root.innerHTML = '<div class="ed-shadows"><div class="ed-sh"><i></i></div><div class="ed-sh"><i></i></div></div><div class="ed-lid"></div><div class="ed-baa"><div class="ed-bg"></div><img class="ed-baby" src="assets/ending/baa.png" width="1143" height="1600" alt="" draggable="false"><div class="ed-owari">おしまい</div></div>';   // ばあ！の 絵は 先に 読んでおく。人影 2 つ (お父さんと お母さんが 左右から すぐ近くで のぞき込む。左右対称だと 怖いので 左 = 近く 大きく 低め、右 = 奥で 小さく 高め・少し 遅れて 出る。赤ちゃんの 目なので 大きく ぼかす。灰色で 陽炎のように ゆらゆら、目鼻は なし = 怖く しない)
+  const lid = root.querySelector('.ed-lid'), baa = root.querySelector('.ed-baa'), bg = root.querySelector('.ed-bg'), baby = root.querySelector('.ed-baby'), VOICE_DIR = 'assets/voice/';
+  let talk = null, done = false, t = 0, baaT = -1, cheered = false;
+  const startBaa = () => {   // タップで ばあ！ (とばす も 同じ): 会話を 片づけ、声と 一緒に 背景と 赤ちゃんの 絵を ぱっと 出す
+    if(baaT >= 0 || done) return; baaT = 0;
+    if(talk){ talk.dispose(); talk = null; }
+    root.classList.add('ed-hide', 'ed-baa-on'); placeBaby(0);
+    if(actx) playSound(actx, VOICE_DIR + 'e-08.mp3', 1, () => !done);
+    if(log) log('baa');
+  };
+  const placeBaby = k => {   // k = 引く 割合 0〜1。顔の まん中に 大きく 寄った所 → 上半身の 枠が 収まる所 (縦持ち・横長 どちらでも 毎コマ 画面の 形で 計算)
+    const W = innerWidth, H = innerHeight, [x0, y0, x1, y1] = BABY.box, s1 = Math.min(W / (x1 - x0), H / (y1 - y0)) * 0.92, s0 = Math.max(W, H) / 560;
+    const e = 1 - Math.pow(1 - k, 3), s = s0 * Math.pow(s1 / s0, e);   // 初めは 速く 引き、ゆっくり 止まる。大きさは 割合で 縮める (引く 速さが 一定に 見える)
+    const fx = BABY.face[0] + ((x0 + x1) / 2 - BABY.face[0]) * e, fy = BABY.face[1] + ((y0 + y1) / 2 - BABY.face[1]) * e;
+    baby.style.transform = `translate(${(W / 2 - fx * s).toFixed(1)}px, ${(H * (0.5 - 0.03 * e) - fy * s).toFixed(1)}px) scale(${s.toFixed(4)})`;
+    bg.style.transform = `scale(${(1 + 0.25 * (1 - e)).toFixed(3)})`;
+  };
+  const end = () => { if(done) return; done = true; onDone(); };   // おしまいの 後の タップ → 結果発表
+  baa.addEventListener('pointerdown', e => { e.preventDefault(); if(baaT >= OWARI_AT + OWARI_TAP) end(); });
   return {
-    start(){ if(actx) preloadVoices(actx, VOICE_DIR, LINES); },   // 灰色に なる 間に 声を 読み込んでおく
+    start(){ if(actx){ preloadVoices(actx, VOICE_DIR, [...LINES, { id:'e-08' }]); preloadVoices(actx, 'assets/ending/', [{ id:'cheer' }]); } },   // 灰色に なる 間に 声と 歓声を 読み込んでおく
     update(dt){
       t += dt;
+      if(baaT >= 0){
+        baaT += dt; placeBaby(Math.min(1, baaT / ZOOM));
+        if(!cheered && baaT >= CHEER_AT){ cheered = true; if(actx) playSound(actx, 'assets/ending/cheer.mp3', 0.8, () => !done); }
+        if(baaT >= OWARI_AT) root.classList.add('ed-owari-on');
+        return;
+      }
       if(t < FADE){ const k = t / FADE; lid.style.display = 'block'; lid.style.background = LID; lid.style.opacity = (k * k * (3 - 2 * k)).toFixed(3); }
       else { lid.style.opacity = 1; drawLid(lid, lidOpen(t - TALK_AT)); }
       if(!talk && t >= TALK_AT){
-        talk = createTalk({ root:talkRoot, faces, actx, voiceDir:VOICE_DIR, endPrompt:'タップで ばあ！', onCue:n => { if(n === 'shadow') root.classList.add('ed-shadow-on'); return 0; }, onEnd:end, log });
+        talk = createTalk({ root:talkRoot, faces, actx, voiceDir:VOICE_DIR, endPrompt:'タップで ばあ！', onCue:n => { if(n === 'shadow') root.classList.add('ed-shadow-on'); return 0; }, onEnd:startBaa, log });
         talkRoot.classList.add('ed-talk'); talk.start(LINES);
       }
       if(talk) talk.update(dt);

@@ -1571,6 +1571,7 @@ const ROLL3_A=4, ROLL3_B=28;   // スタッフロールを 流す 秒 (子ども
 const CREDITS3=[   // スタッフロールの 中身 (c = 列: a はじめ / l 左 / r 右 / e 最後、h = 見出し、i = 行。名前は まだ 空ける、10/26 社長)
   {c:'a', h:'つくった ひと', i:['〇〇〇〇']}, {c:'a', h:'え', i:['〇〇〇〇']}, {c:'a', h:'こえ', i:['〇〇〇〇']}, {c:'a', h:'てつだった AI', i:['Claude<small>Anthropic</small>', 'Codex<small>OpenAI</small>']},
   {c:'l', h:'おんがく', i:['ネッケ「クシコス・ポスト」<small>音源: ポケットサウンド https://pocket-se.info/</small>', 'オッフェンバック「天国と地獄」<small>演奏: Musopen (パブリックドメイン)</small>', 'ホルスト「木星」<small>演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)</small>', 'サティ「ジムノペディ」第 1 番<small>演奏: Robin Alciatore (Musopen、パブリックドメイン)</small>', 'モーツァルト「きらきら星変奏曲」K.265<small>演奏: Simone Renzi (CC BY 3.0)</small>', 'きらきら星 (オルゴール)<small>音源: KonstantinPazuzuStudio (Pixabay)</small>']},
+  {c:'l', h:'こうかおん', i:['歓声と拍手<small>効果音ラボ https://soundeffect-lab.info/</small>']},
   {c:'r', h:'3D の ぶひん', i:['Kenney<small>Nature Kit・City Kit Suburban・Car Kit・Furniture Kit・Fantasy Town Kit (CC0) www.kenney.nl</small>', 'Quaternius<small>Farm Animals・Ultimate Animated Animals (CC0)</small>', 'ボイジャー 1 号<small>NASA</small>']},
   {c:'r', h:'しゃしん・ちず', i:['惑星・月・太陽の 地図<small>Solar System Scope (CC BY 4.0)</small>', '天の川銀河の 想像図<small>NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0)</small>', '冥王星・ケレスの 地図<small>NASA</small>']},
   {c:'l', h:'プログラムの ぶひん', i:['three.js<small>MIT License</small>']},
@@ -1782,7 +1783,7 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   const praise= stage===1 ? RS.praiseFor(LADDER, kmh, 'ちきゅうの じてん') : stage===2 ? RS.praiseFor(S2.LADDER2, kmh, '地球') : RS.praiseFor(RS.COSMIC3, kmh, '');
   const okLine= stage===1 ? '{地球|ちきゅう}の {自転|じてん}を おいぬいた！' : stage===2 ? '{地球|ちきゅう}の {公転|こうてん}を おいぬいた！' : '{太陽系|たいようけい}の {公転|こうてん}を おいぬいた！';
   const rest=Math.max(1, goal-kmh).toLocaleString('en-US'), remainLine= stage===1 ? '{自転|じてん}まで あと '+rest+' km！' : '{公転|こうてん}まで あと '+rest+' km！';
-  const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'title', label:'タイトルに もどる', big:true}, {id:'retry', label:'もういちど'}] : [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
+  const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'title', label:'タイトルに もどる', big:true}] :   /* 3 面の 合格 (エンディングの 後) は タイトルへ だけ (10/27 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
   resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:false, god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons, confetti:ok,
     onButton:id=>{ if(ERRLOG) logSend({button:id}); if(id==='retry') retry(false); else if(id==='booster') retry(true); else if(id==='next') goNext(); else goTitle(); } });
