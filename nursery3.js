@@ -176,7 +176,8 @@ export function nurseryWorld(scene, world, P, opts, out){   // world = 世界の
   placeModel(root, out, 'assets/nursery/pillow.glb', p3(-1950, 0, -1060), 0.2, [300, 120, 300]);
   placeModel(root, out, 'assets/nursery/bookcaseOpenLow.glb', p3(-600, 0, N.room.z1 - 160), Math.PI, [800, 600, 300]);   // 本棚 (上の壁、ドアの すぐ右、10/27 社長)
   placeModel(root, out, 'assets/nursery/lampRoundTable.glb', p3(-600, 600, N.room.z1 - 160), 0, [180, 330, 180]);   // 常夜灯 (本棚の上)
-  const nl = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), color:0xffc98a, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false })); nl.position.copy(p3(-600, 860, N.room.z1 - 160)); nl.scale.setScalar(700 * MM3); root.add(nl);
+  const nl = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), color:0xffc98a, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false })); nl.position.copy(p3(-600, 850, N.room.z1 - 160)); nl.scale.setScalar(280 * MM3); root.add(nl);   // 常夜灯の かさの まわりの 光。半径 14 cm = 壁 (16 cm 後ろ) に 届かない (半径 35 cm の 時は カメラを 向く 板が 斜めから 壁に めり込んで 光が 切れて 見えた、10/27 社長)
+  const wl = new THREE.Mesh(new THREE.PlaneGeometry(1000 * MM3, 1000 * MM3), new THREE.MeshBasicMaterial({ map:glowTex(), color:0xffc98a, transparent:true, opacity:0.4, blending:THREE.AdditiveBlending, depthWrite:false })); wl.position.copy(p3(-600, 880, N.room.z1 - 3)); wl.rotation.y = Math.PI; root.add(wl);   // 壁に 映る 常夜灯の 光の 輪 (壁の 3 mm 手前に 貼る。下は 本棚に 隠れる)
   crib(root, out);
   scene.fog = new THREE.Fog(0x24163a, 250 * MM3, 2200 * MM3);   // 夜の 紫の もや: 床の上からは 部屋の奥が 見えない (何か分からない、社長)
   const Cw = new THREE.Vector3(), cp = new THREE.Vector3(); let fk = 0, fkT = -1e9;   // 画面の形の 係数 (なめらかに 追う) と その時刻

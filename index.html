@@ -61,6 +61,7 @@
   @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   #credit{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));text-align:center;font-size:11px;opacity:.8;line-height:1.5}
   #foot{position:fixed;left:10px;bottom:calc(8px + env(safe-area-inset-bottom));font-size:11px;opacity:.6;color:#fff;pointer-events:none;z-index:1}
+  body.hud-calm #hud > :not(#white3):not(#mom3):not(#roll3), body.hud-calm #foot{opacity:0 !important;transition:opacity .8s !important}   /* 子ども部屋の スタッフロールから 結果発表まで: 速度などの 表示を ふわっと 消す (白い幕・字幕・スタッフロールは 残す、10/27 社長) */
   #space{position:fixed;inset:0;background:linear-gradient(#020208 0%,#07071c 45%,#151038 100%);opacity:0;z-index:0;pointer-events:none}   /* 高いほど・FINISH 後: 空が宇宙の色へ (3D の下に敷く) */
   #ozone{position:fixed;inset:0;background:linear-gradient(rgba(110,140,255,0) 0%,rgba(110,140,255,.45) 35%,rgba(170,120,255,.35) 65%,rgba(60,40,120,0) 100%);opacity:0;z-index:0;pointer-events:none}   /* オゾン層の 青紫の帯 */
   [hidden]{display:none!important}
@@ -90,6 +91,7 @@
 </div>
 <div id="optitle" hidden></div>
 <div id="result" hidden></div>
+<div id="ending" hidden></div>
 <div id="talk" hidden></div>
 <div id="foot">がんばれおばけ！ 3D 試作 4</div>
 <script type="module">
@@ -104,6 +106,7 @@ import * as S3 from './stage3.js';   // 3 面 (神々の世界めぐり) の表�
 import { createTalk, preloadVoices, playSound, rubyHtml } from './talk.js';   // 会話の画面 (導入・面のはじめ・エンディングで共通、10/19)
 import * as OP from './opening.js';   // 導入 (天国の会話と 自転の説明、10/19)
 import * as RS from './result.js';   // 結果発表の画面 (10/20)
+import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
 import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会話と 3D の説明、10/20)
 
 /* ==================== 調整ノブ ==================== */
@@ -184,6 +187,7 @@ const RISE_FLOOR = 0.005, BGM_GAP = 0.5, TRIM_LEVEL = 0.02, NO_TRACK_LEN = 120, 
 
 /* ==================== 3D の下ごしらえ ==================== */
 const Q=new URLSearchParams(location.search), ERRLOG=Q.has('errlog'), ROOM_Q=Q.has('room');   /* ROOM_Q = 確かめ用 ?room=1: 3 面の 子ども部屋を 真上から 止めて見る (10/22) */   // ERRLOG = 確かめ用の記録 (?errlog=1、末尾の記録係)
+const ENDING_Q = Q.get('ending')==='1';   // 確かめ用: 子ども部屋に 入ったら すぐ エンディング (10/27)
 const STAGE_Q = ({'2':2, '3':3})[Q.get('stage')] || 1;   // 試遊用: ?stage=2 で 2 面、?stage=3 で 3 面に直行 (9/30・10/8)
 const OPENING_ON = STAGE_Q===1, OP_FROM = Math.max(1, Math.min(OP.OPENING_LINES.length, parseInt(Q.get('op')||'1')||1)) - 1;   // 導入は 1 面の入口だけ。?op=N で セリフ N から (10/19)
 const REAL2 = Q.get('real')!=='0';              // 2 面の画面の流れ = 本物の速さそのまま (10/1 社長が試して決定: 輪と光の柱で 時速 30 万 km でも遊べた)。?real=0 で 縮めた流れ (V2_EXP) と見比べ
@@ -1576,19 +1580,22 @@ let roll3Built=false, roll3A=-1, roll3H=-1, roll3Hold=0;   // 帯と 中身の �
 function roll3Step(){   // 毎コマ (3 面): 子ども部屋の スタッフロールを 曲の時計に 合わせて 下から上へ (一定の 速さ。画面の形が 変わっても その場で 計り直す)
   const on=nurseryOn3(), tn= on ? stageT-nurseryT0() : -1, el=$('roll3'), k=(tn-ROLL3_A)/(ROLL3_B-ROLL3_A), show= on && k>=0 && k<=1;
   if(on && !roll3Built){ roll3Built=true; const col=k=>CREDITS3.filter(c=>c.c===k).map(c=>'<h4>'+c.h+'</h4>'+c.i.map(t=>'<p>'+t+'</p>').join('')).join(''); el.innerHTML='<div class="in"><div class="ca"><img src="assets/title-logo.png" width="1200" height="619" alt="がんばれおばけ！">'+col('a')+'</div><div class="cl">'+col('l')+'</div><div class="cr">'+col('r')+'</div><div class="ce">'+col('e')+'</div></div>'; }   // 子ども部屋に 入ったら 作っておく (題名の絵を 先に 読む)
+  if(on && tn>=ROLL3_A) document.body.classList.add('hud-calm');   // スタッフロールが 始まったら 速度などの 表示を 消す (結果発表の 後の もういちど・タイトルへ まで)
   if(!show || !el.firstChild){ el.style.opacity=0; return; }
   const A=el.clientHeight, H=el.firstChild.offsetHeight, now=performance.now()/1000;
   if(roll3A>=0 && (Math.abs(A-roll3A)>2 || Math.abs(H-roll3H)>2)) roll3Hold=now+0.6; roll3A=A; roll3H=H;   // 縦 ↔ 横 で 帯の形が 変わったら いったん ふわっと 消し、0.6 秒後に 新しい 位置から 出す (位置の 跳びを 見せない、Codex 指摘 10/27)
   if(now<roll3Hold){ el.style.opacity=0; return; }
   el.style.opacity=1; el.firstChild.style.transform='translateY('+(A-(A+H)*k).toFixed(1)+'px)'; }   // 始め = 帯の 下の外、終わり = 帯の 上の外
-function roll3Reset(){ roll3Built=false; roll3A=roll3H=-1; roll3Hold=0; const el=$('roll3'); el.style.opacity=0; el.innerHTML=''; }   // もういちど・タイトルへ
+function roll3Reset(){ document.body.classList.remove('hud-calm'); roll3Built=false; roll3A=roll3H=-1; roll3Hold=0; const el=$('roll3'); el.style.opacity=0; el.innerHTML=''; }   // もういちど・タイトルへ
+let ending3=null; const ENDING3_LEAD=0.9;   // エンディング (子ども部屋の 白の後。ending.js) / 曲の ファイルの 終わりの 何秒前に 始めるか (オルゴールの 余韻が −46 dB = ほぼ 聞こえなく なるのが 終わりの 約 0.9 秒前、Blender で 測った。10/27 社長「曲が 終わったら すぐ」)
+function startEnding(){ document.body.classList.add('hud-calm'); $('white3').style.opacity=1; white3Full=true; /* 目覚めの 場面が 始まったら 子ども部屋は 終わり: すぐ 真っ白・コースは 描かない (白い幕は 子ども部屋の 引きの カメラ = 8 秒〜 に 頼らない。確かめ用 ?ending=1 で コースが 見えたまま 瞬きが 始まった、10/27 社長) */ ending3=ED.createEnding({ root:$('ending'), talkRoot:$('talk'), actx, faces:OP.FACES, onDone:()=>{ ending3.dispose(); ending3=null; showResult(); }, log: ERRLOG ? m=>logSend({ending:m}) : null }); ending3.start(); if(ERRLOG) logSend({ending:'start'}); }   // 白の上に 会話 → 人影 → タップで ばあ！ → (おしまいの 後) 結果発表
 let cine3=false, goal3T=-1, white3Full=false; const WHITE3_A=32.0, WHITE3_B=35.0;   // 子ども部屋の 引くカメラを 使っている (描く範囲を 元へ 戻すため) / 曲が 鳴り終わってからの 秒 (ゴールの後、−1 = まだ) / 画面が 白く なり始める・真っ白 (子ども部屋の 始まりから 秒。オルゴールの 最後の フレーズの 音 32.0 秒から、最後の 和音 35.0 秒で 真っ白 = 曲の頭から 31.26 秒・34.26 秒 + 入りの 0.75 秒、Blender で 測った。カメラが 着地点の 3 cm 手前まで 寄るのも 35 秒)
 function nurseryCam3(){   // 子ども部屋の 上へ 引き続ける カメラ (nursery3.js の cine) と 遠くからの おばけの 光。使った コマは true
   const w= nurseryOn3() ? views3.get(pi3) : null, on=!!(w && w.placed && w.cine && w.cine(stageT, camera, camera.aspect, nurseryT0(), ghost.position));
   if(!on){ if(cine3){ cine3=false; camera.near=1; camera.updateProjectionMatrix(); nurseryLight3(0); ghostBody3(true); railFade3(1); scene.visible=true; white3Full=false; $('white3').style.opacity=0; } return false; }   // やり直し・タイトルへ: 3 面の ふつうの 描く範囲へ
   const tn=stageT-nurseryT0(), home=tn>=plan3[pi3].def.path.times.bed, d=camera.position.distanceTo(ghost.position), fade= home ? Math.min(1, Math.max(0, (d-240)/360)) : 1; cine3=true; ghostBody3(!home); railFade3(fade);   // ベッドに 着いたら 体を消す (寄った カメラに 止まった おばけが 見えると 違う感じ、10/27 社長。着く時は カメラが 約 70 cm 先なので 消えても 分からない)。レール 3 本・光の点・光の筋も カメラが 約 50 cm → 20 cm に 寄る間 (約 28.4〜29.5 秒) に 消す (10/27 社長「コースが 3 本線で 残る」「光る球・点々が 残る」)
   nurseryLight3(home ? fade : Math.min(1, Math.max(0, (d-40)/160))); scene.visible=!(home && fade<=0);   // 消え切ったら コース側 (レール・おばけ・光・輪などの 効果) は 丸ごと 描かない = 部屋だけ
-  const tw=Math.min(1, Math.max(0, (tn-WHITE3_A)/(WHITE3_B-WHITE3_A))); $('white3').style.opacity=tw*tw*(3-2*tw); white3Full= tw>=1; return true; }   // 着地点へ 寄りながら なめらかに 真っ白へ   // 光は カメラが 約 3 cm → 17 cm 離れる間に ふわっと 出る
+  const tw= goal3T>=0 ? 1 : Math.min(1, Math.max(0, (tn-WHITE3_A)/(WHITE3_B-WHITE3_A)));   /* 曲が 終わった後 (目覚めの 場面・結果発表) は 真っ白の まま (確かめ用 ?ending=1 で 早く 始めた時も、終わった後も) */ $('white3').style.opacity=tw*tw*(3-2*tw); white3Full= tw>=1; return true; }   // 着地点へ 寄りながら なめらかに 真っ白へ   // 光は カメラが 約 3 cm → 17 cm 離れる間に ふわっと 出る
 function clearWorlds3(){ sparks.length=0; sparkMesh.count=0; for(const w of views3.values()) w.dispose(); views3.clear(); if(lost3){ lost3.dispose(); lost3=null; } lost3On=false; pass3=null; gates3=[]; pi3=0; view3Due=-1; gateA3=0; gate3.visible=false; }
 let move3=S3.V3_MOVE;   // 3 面の おばけの実際の進み (m/秒)。世界ごとの速さ (planWorlds の move。② は コースの長さ ÷ 時間) へ なめらかに寄せる (速度計の数字とは 別)
 function resetWorlds3(){ clearWorlds3(); view3(0); view3(1); move3=(plan3[0] && plan3[0].move) || S3.V3_MOVE; }
@@ -1764,7 +1771,7 @@ function finishRun(){   // 曲の終わり 5 秒前: 結果を用意し、時速
   spaceDark0=parseFloat($('space').style.opacity)||0; launchS=s; ghostGlow.visible=true; shadow.visible=false;   // 空の暗さは ここから 6 秒で 1 へ (update で)
 }
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
-function resetRun(){ bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
+function resetRun(){ bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
 const EARTH2_KMH = S2.PLANETS2.find(p=>p.name==='地球').kmh, GOAL3_KMH = 830000;   // 2 面の合格 = 地球の公転 (時速 107,200)、3 面の「おいぬいた」= 太陽系の公転
 function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め言葉・ボタン・足りない時の 神様
@@ -1828,7 +1835,8 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   if(ROOM_Q && stage===3 && state==='run') return;   /* ?room=1: 子ども部屋を 止めて見る (時計・走り・終わりを 進めない。カメラは 描く前に 真上へ、Codex 指摘 10/26) */
   const st0=stageT; tickStage(dtReal);
   const dtMove= state==='run' ? Math.min(2, Math.max(0, stageT-st0)) : 0;
-  if(stage===3){ mom3Step(); roll3Step(); }   // 子ども部屋の お母さんの声と字幕・スタッフロール
+  if(stage===3 && goal3T<0){ mom3Step(); roll3Step(); }   // 子ども部屋の お母さんの声と字幕・スタッフロール。曲が 終わったら (= エンディングの 前) 止める: 確かめ用 ?ending=1 で 早く エンディングに 入っても 裏で 流れない (10/27 社長「2 つが 混ざっている」)
+  if(ENDING_Q && state==='run' && nurseryOn3()){ finishRun(); goal3T=1; bgmHalt(); }   /* 確かめ用 ?ending=1 (?stage=3&world=5&kmh=900000 と 一緒に): 子ども部屋に 入ったら すぐ 白 → エンディング */
   if(stage===2){ updateWarp2(dtReal); if(state==='finish') cleanupPlanets2(); updatePreview2(dt); updatePlanetVisuals2(dt); if(state!=="run") updateIce2(); updateWisps2(dtReal); if(state!=='title') updateDist2(); }   // ワープの時計 / FINISH 中も惑星を片づける・近づく見た目を動かす (Codex 指摘 10/1) / 太陽までの距離の表示
   if(state==='run'){
     if(stage>=2){ const vm0=moveSpeed(v); ensureCourse(s+vm0*dtMove, vm0); ensurePlates(s, vm0, 0); }   // 2 面: 進む前に 行き先までのコースと その間の輪を作っておく (本物の速さでは 1 コマで数百 m〜1 km、コマ落ちでは もっと進み、作る前に通り過ぎてしまうため、Codex 指摘 10/1)
@@ -1857,7 +1865,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   }
   else if(state==='finish' && nurseryOn3()){   // 子ども部屋の ゴール: 飛び去り・ピカーン・宇宙の色は なし。白い幕 (最後の和音で 真っ白) の まま 曲が 鳴り終わるのを 待ち、0.6 秒後に 結果発表 (白い幕は 後ろに 残す。エンディングは ここに 挟む)
     finishT+=dtReal; if(goal3T<0){ if(songRemaining()<=0){ goal3T=0; bgmHalt(); } } else goal3T+=dtReal;   /* 曲の時計だけで 決める (実時間の 保険は タブを 隠して 戻った時に 余韻を 切るので 使わない。曲が 無い・止まった時も 時計は 進む、Codex 指摘 10/27) */
-    if(goal3T>0.6 && !resultShown) showResult(); }
+    if((goal3T>=0 || songRemaining()<=ENDING3_LEAD) && !ending3 && !resultShown) startEnding(); if(ending3) ending3.update(dtReal); }   // オルゴールの 余韻が 聞こえなく なったら すぐ エンディング (灰色へ → むにゃむにゃ → 目が開く → ばあ！)、終わったら 結果発表
   else if(state==='finish'){   // 宇宙へ: おばけは加速しながら レールを駆け上がる。空は暗く、遠くまで見えるように
     finishT+=dtReal;
     if(!blast){ if(stage>=2){ v*=Math.exp(0.25*dtReal); const ds=moveSpeed(v)*dtReal; s+=ds; ensureCourse(s, moveSpeed(v)); if(stage===2) updateSmall2(ds, dtReal); } else { v+=LAUNCH_ACC*dtReal; s+=v*dtReal; ensureCourse(s, v); } tidyCourse(launchS);   // 見守るカメラより後ろの区間だけ片づける (軌道は残す)。2 面: 打ち上げはなく そのまま先へ加速
