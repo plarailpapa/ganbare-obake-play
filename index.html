@@ -28,7 +28,7 @@
   #roll3{position:fixed;left:16px;right:16px;top:calc(64px + env(safe-area-inset-top));height:38%;pointer-events:none;opacity:0;transition:opacity .6s;z-index:2;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent)}   /* 子ども部屋の スタッフロール: 縦持ち = 上側 (右上の 速さの下)、横長 = 左の 帯 (下の 字幕の上まで) */
   @media (min-aspect-ratio:1/1){ #roll3{left:max(16px,3vw);right:max(16px,3vw);top:calc(64px + env(safe-area-inset-top));bottom:calc(110px + env(safe-area-inset-bottom));height:auto} #roll3 .in{display:grid;grid-template-columns:30vw 1fr 30vw;align-items:start} #roll3 .ca,#roll3 .cl,#roll3 .ce{grid-column:1} #roll3 .cr{grid-column:3;grid-row:2} }   /* 横長: はじめ (つくった ひと〜AI) は 左の 帯だけ、素材は 左と 右の 帯に 分けて 同時に、最後の スペシャルサンクスは 左 (10/27 社長)。縦持ちは 上の 帯に 1 列 */
   #roll3 .in{position:absolute;left:0;right:0;top:0;text-align:center;color:#fff;font-size:clamp(11px,2.3vmin,15px);line-height:1.55;text-shadow:0 0 5px rgba(30,16,50,.95),0 1px 2px rgba(0,0,0,.9);will-change:transform}
-  #roll3 img{display:block;width:min(72%,220px);margin:0 auto 1.4em}
+  #roll3 img{display:block;width:min(72%,220px);height:auto;margin:0 auto 1.4em}
   #roll3 h4{margin:1.5em 0 .35em;font-size:.82em;font-weight:normal;color:#ffe2a0;letter-spacing:.14em}
   #roll3 p{margin:.2em 0 .5em} #roll3 small{display:block;font-size:.8em;opacity:.85}
   #roll3 .ce p{font-size:1.3em;margin-top:.4em} #roll3 .ce h4{margin-top:2.6em}
@@ -1572,13 +1572,16 @@ const CREDITS3=[   // スタッフロールの 中身 (c = 列: a はじめ / l 
   {c:'l', h:'プログラムの ぶひん', i:['three.js<small>MIT License</small>']},
   {c:'r', h:'', i:['<small>曲・画像の 一部は 長さ・色・大きさを 変えて 使っています。<br>CC BY 3.0: creativecommons.org/licenses/by/3.0/<br>CC BY 4.0: creativecommons.org/licenses/by/4.0/</small>']},
   {c:'e', h:'スペシャルサンクス', i:['プレイしてくれた あなた']}];   // 出典は 10/27 に コード・LICENSE・倉庫・記録から 洗い出し (CC BY の 曲 1 つ・画像 2 つは 必ず。ほかは 感謝として)
-let roll3Built=false;
+let roll3Built=false, roll3A=-1, roll3H=-1, roll3Hold=0;   // 帯と 中身の 高さ (前の コマ) / この時刻までは 消しておく
 function roll3Step(){   // 毎コマ (3 面): 子ども部屋の スタッフロールを 曲の時計に 合わせて 下から上へ (一定の 速さ。画面の形が 変わっても その場で 計り直す)
   const on=nurseryOn3(), tn= on ? stageT-nurseryT0() : -1, el=$('roll3'), k=(tn-ROLL3_A)/(ROLL3_B-ROLL3_A), show= on && k>=0 && k<=1;
-  if(on && !roll3Built){ roll3Built=true; const col=k=>CREDITS3.filter(c=>c.c===k).map(c=>'<h4>'+c.h+'</h4>'+c.i.map(t=>'<p>'+t+'</p>').join('')).join(''); el.innerHTML='<div class="in"><div class="ca"><img src="assets/title-logo.png" alt="がんばれおばけ！">'+col('a')+'</div><div class="cl">'+col('l')+'</div><div class="cr">'+col('r')+'</div><div class="ce">'+col('e')+'</div></div>'; }   // 子ども部屋に 入ったら 作っておく (題名の絵を 先に 読む)
-  el.style.opacity= show ? 1 : 0; if(!show || !el.firstChild) return;
-  const A=el.clientHeight, H=el.firstChild.offsetHeight; el.firstChild.style.transform='translateY('+(A-(A+H)*k).toFixed(1)+'px)'; }   // 始め = 帯の 下の外、終わり = 帯の 上の外
-function roll3Reset(){ roll3Built=false; const el=$('roll3'); el.style.opacity=0; el.innerHTML=''; }   // もういちど・タイトルへ
+  if(on && !roll3Built){ roll3Built=true; const col=k=>CREDITS3.filter(c=>c.c===k).map(c=>'<h4>'+c.h+'</h4>'+c.i.map(t=>'<p>'+t+'</p>').join('')).join(''); el.innerHTML='<div class="in"><div class="ca"><img src="assets/title-logo.png" width="1200" height="619" alt="がんばれおばけ！">'+col('a')+'</div><div class="cl">'+col('l')+'</div><div class="cr">'+col('r')+'</div><div class="ce">'+col('e')+'</div></div>'; }   // 子ども部屋に 入ったら 作っておく (題名の絵を 先に 読む)
+  if(!show || !el.firstChild){ el.style.opacity=0; return; }
+  const A=el.clientHeight, H=el.firstChild.offsetHeight, now=performance.now()/1000;
+  if(roll3A>=0 && (Math.abs(A-roll3A)>2 || Math.abs(H-roll3H)>2)) roll3Hold=now+0.6; roll3A=A; roll3H=H;   // 縦 ↔ 横 で 帯の形が 変わったら いったん ふわっと 消し、0.6 秒後に 新しい 位置から 出す (位置の 跳びを 見せない、Codex 指摘 10/27)
+  if(now<roll3Hold){ el.style.opacity=0; return; }
+  el.style.opacity=1; el.firstChild.style.transform='translateY('+(A-(A+H)*k).toFixed(1)+'px)'; }   // 始め = 帯の 下の外、終わり = 帯の 上の外
+function roll3Reset(){ roll3Built=false; roll3A=roll3H=-1; roll3Hold=0; const el=$('roll3'); el.style.opacity=0; el.innerHTML=''; }   // もういちど・タイトルへ
 let cine3=false; const WHITE3_A=30.5, WHITE3_B=33;   // 子ども部屋の 引くカメラを 使っている (描く範囲を 元へ 戻すため) / 画面が 白く なり始める・真っ白 (子ども部屋の 始まりから 秒。カメラが 着地点の 3 cm 手前まで 寄る 33 秒に 合わせる)
 function nurseryCam3(){   // 子ども部屋の 上へ 引き続ける カメラ (nursery3.js の cine) と 遠くからの おばけの 光。使った コマは true
   const w= nurseryOn3() ? views3.get(pi3) : null, on=!!(w && w.placed && w.cine && w.cine(stageT, camera, camera.aspect, nurseryT0(), ghost.position));
