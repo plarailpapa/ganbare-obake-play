@@ -56,6 +56,36 @@ const OP_CSS = `
 .ot-btn:active{transform:translateY(2px)}
 @media (min-aspect-ratio:1/1) and (max-height:560px){ .ot-logo img{width:auto;height:42vh} .ot-menu{flex-direction:row;bottom:calc(16vh + env(safe-area-inset-bottom))} }   /* 横長の 低い 画面: 題名を 小さめに、ボタンは 横に 並べる (題名・操作の ヒントと 重ならない) */
 .ot-hint{position:absolute;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));text-align:right;font-size:clamp(11px,3vw,14px);line-height:1.5;color:#4a5a7a;opacity:.85}
+.ot-night{position:fixed;inset:0;z-index:-1;transition:opacity .9s ease;background:radial-gradient(2px 2px at 12% 18%,#fff,transparent),radial-gradient(1.5px 1.5px at 27% 72%,#fff,transparent),radial-gradient(2px 2px at 44% 86%,#fff,transparent),radial-gradient(1.5px 1.5px at 63% 78%,#fff,transparent),radial-gradient(2px 2px at 82% 9%,#fff,transparent),radial-gradient(1.5px 1.5px at 91% 38%,#fff,transparent),radial-gradient(2px 2px at 76% 62%,#fff,transparent),radial-gradient(1.5px 1.5px at 6% 52%,#fff,transparent),radial-gradient(1.5px 1.5px at 55% 4%,#fff,transparent),linear-gradient(#1b2350,#352f68 55%,#5a4a86)}
+.ot-dream .ot-hint{display:none}
+.ot-dreamy{position:absolute;inset:0;pointer-events:none}
+.ot-catch{position:absolute;inset:0;pointer-events:auto}
+.ot-menu-on .ot-catch{display:none}
+.ot-baby{position:absolute;left:2vw;bottom:calc(2vh + env(safe-area-inset-bottom));width:52vw;height:auto;transform-origin:30% 100%;animation:ot-breathe 3.6s ease-in-out infinite}
+@keyframes ot-breathe{50%{transform:scale(1.012,1.03)}}
+.ot-bub{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,rgba(255,255,255,.8) 60%,rgba(255,255,255,.4));box-shadow:0 0 12px rgba(255,255,255,.55);animation:ot-float 3s ease-in-out infinite}
+.ot-bub.b1{width:3vmin;height:3vmin;left:24vw;bottom:calc(2vh + 26vw)}
+.ot-bub.b2{width:5vmin;height:5vmin;left:29vw;bottom:calc(2vh + 38vw);animation-delay:-1s}
+.ot-bub.b3{width:7.5vmin;height:7.5vmin;left:35vw;bottom:calc(2vh + 54vw);animation-delay:-2s}
+@keyframes ot-float{50%{transform:translateY(-5px)}}
+.ot-z{position:absolute;color:#d6e6ff;font-weight:bold;opacity:0;animation:ot-zz 3.2s ease-out infinite}
+.ot-z.z1{left:9vw;bottom:calc(2vh + 26vw);font-size:4vmin}
+.ot-z.z2{left:12vw;bottom:calc(2vh + 30vw);font-size:5.5vmin;animation-delay:-1.6s}
+@keyframes ot-zz{0%{opacity:0;transform:translate(0,0)}25%{opacity:.9}100%{opacity:0;transform:translate(-3vmin,-6vmin)}}
+.ot-dream .ot-logo{top:calc(7vh + env(safe-area-inset-top))}
+.ot-dream .ot-logo img{width:min(76vw,560px)}
+.ot-dream .ot-tap{left:auto;right:4vw;transform:none;bottom:calc(6vh + env(safe-area-inset-bottom));font-size:clamp(16px,4.4vw,24px)}
+.ot-dream .ot-menu{left:auto;right:4vw;bottom:calc(3vh + env(safe-area-inset-bottom));flex-direction:column;align-items:stretch;gap:8px}
+.ot-dream .ot-btn{font-size:clamp(15px,4vw,20px);padding:.45em 1.2em}
+.ot-dream .ot-btn.ot-big{font-size:clamp(17px,4.6vw,23px)}
+.ot-btn.ot-small{font-size:clamp(13px,3.4vw,16px);padding:.35em 1em;background:rgba(255,255,255,.82);color:#6a5a8a;box-shadow:none}
+@media (min-aspect-ratio:1/1){
+  .ot-baby{width:auto;height:30vh;left:2vw;bottom:calc(1vh + env(safe-area-inset-bottom))}
+  .ot-bub.b1{left:calc(2vw + 21vh);bottom:28vh} .ot-bub.b2{left:calc(2vw + 25vh);bottom:34vh} .ot-bub.b3{left:calc(2vw + 30vh);bottom:42vh}
+  .ot-z.z1{left:calc(2vw + 9vh);bottom:27vh} .ot-z.z2{left:calc(2vw + 12vh);bottom:31vh}
+  .ot-dream .ot-logo{left:3vw;right:26vw;top:calc(8vh + env(safe-area-inset-top))} .ot-dream .ot-logo img{width:auto;height:min(30vh,26vw)}
+  .ot-dream .ot-menu{right:2.5vw;bottom:calc(5vh + env(safe-area-inset-bottom))} .ot-dream .ot-tap{right:3vw}
+}   /* 夢の タイトル (10/27 設計書 ⑦): 夜空の 下に 眠る 赤ちゃん (左下)・頭から 泡と z、右下に ボタン。縦持ち = 雲は 上 6 割、横長 = 雲は 左 7 割 */
 .op-speed{position:fixed;left:0;right:0;top:calc(5vh + env(safe-area-inset-top));z-index:36;text-align:center;pointer-events:none;font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;font-weight:900;font-size:clamp(26px,7vw,52px);color:#fff;-webkit-text-stroke:.12em #3a7ad8;paint-order:stroke fill;opacity:0;transition:opacity .4s ease}
 .op-speed rt{font-size:.38em;-webkit-text-stroke:.1em #3a7ad8}
 .op-speed.on{opacity:1}
@@ -63,22 +93,50 @@ const OP_CSS = `
 `;
 function injectCss(){ if(!document.getElementById('op-css')){ const st = document.createElement('style'); st.id = 'op-css'; st.textContent = OP_CSS; document.head.appendChild(st); } }
 
-export function createTitle(root){   // タイトルの文字 (題名・タップで はじめる・操作のヒント)
+// 夢の 雲 (10/27 設計書 ⑦): 今の タイトル (3D の canvas) を s 倍に 縮めて 左上 (ox, oy = 画面の 割合) へ。雲の 形に 切り抜く 範囲 r = canvas の 中の [左, 上, 右, 下] (割合)
+const DREAM = { portrait:{ s:0.92, ox:0.04, oy:0.01, r:[0.03, 0.03, 0.97, 0.67] }, landscape:{ s:0.76, ox:0.01, oy:0.02, r:[0.03, 0.04, 0.97, 0.96] } };
+function cloudMask(w, h, r){   // 雲の 形 = まん中の 楕円 + まわりの もくもく (円)。位置・大きさは canvas の 割合 (%) で 書く = 切り抜きの 大きさを 変えると 形ごと 広がる (はじめる時)
+  const Rw = (r[2] - r[0]) * w, Rh = (r[3] - r[1]) * h, cx = (r[0] + r[2]) / 2 * w, cy = (r[1] + r[3]) / 2 * h, b = 0.17 * Math.min(Rw, Rh), ax = Rw / 2 - b, ay = Rh / 2 - b;
+  const pc = (v, d) => (v / d * 100).toFixed(2) + '%', layers = [`radial-gradient(ellipse ${pc(ax + b * 0.5, w)} ${pc(ay + b * 0.5, h)} at ${pc(cx, w)} ${pc(cy, h)}, #000 80%, transparent 100%)`];
+  const n = Math.max(8, Math.round(2 * Math.PI * Math.sqrt((ax * ax + ay * ay) / 2) / (1.25 * b)));
+  for(let i = 0; i < n; i++){
+    const a = (i + 0.5) / n * 2 * Math.PI, rr = b * (0.9 + 0.25 * ((i * 7) % 5) / 4), x = cx + ax * Math.cos(a), y = cy + ay * Math.sin(a);   // もくもくの 大きさは 少しずつ 変える (同じ 丸が 並ばない)
+    layers.push(`radial-gradient(ellipse ${pc(rr, w)} ${pc(rr, h)} at ${pc(x, w)} ${pc(y, h)}, #000 60%, rgba(0,0,0,.55) 82%, transparent 100%)`);
+  }
+  return layers.join(',');
+}
+
+export function createTitle(root, { dream = false, babies = [], canvas = null, onTap = null } = {}){   // タイトルの文字 (題名・タップで はじめる・操作のヒント)。dream = クリア後の 夢の タイトル (眠る 赤ちゃんの 夢の 雲の 中に 今の タイトル、canvas = 3D の 画面を 雲に 切り抜く)
   injectCss();
-  root.className = 'ot-root'; root.hidden = false;
-  root.innerHTML = '<div class="ot-logo"><img src="assets/title-logo.png" alt="がんばれおばけ！"></div>'   /* 題名は 絵 (10/26 社長から 届いた 文字の絵。余白を切って 横 1200) */
+  root.className = 'ot-root' + (dream ? ' ot-dream' : ''); root.hidden = false;
+  root.innerHTML = (dream ? '<div class="ot-catch"></div><div class="ot-dreamy"><img class="ot-baby" src="' + babies[Math.floor(Math.random() * babies.length)] + '" alt=""><i class="ot-bub b1"></i><i class="ot-bub b2"></i><i class="ot-bub b3"></i><span class="ot-z z1">z</span><span class="ot-z z2">Z</span></div>' : '')   /* 眠る 赤ちゃんは 開くたびに 1 枚を 選ぶ (何通りか 届いたら、10/27 社長) */
+    + '<div class="ot-logo"><img src="assets/title-logo.png" alt="がんばれおばけ！"></div>'   /* 題名は 絵 (10/26 社長から 届いた 文字の絵。余白を切って 横 1200) */
     + '<div class="ot-tap"></div><div class="ot-menu"></div><div class="ot-hint">ひだり / みぎ を タップで レールを うつる<br>かそくを ふむと はやくなる！</div>';
   const tap = root.querySelector('.ot-tap'), menuEl = root.querySelector('.ot-menu');
+  if(dream && onTap) root.querySelector('.ot-catch').addEventListener('pointerdown', e => { e.preventDefault(); onTap(); });   // 雲の 外を タップしても「タップで はじめる」
+  let night = null, cs = null, leaveTimer = 0;
+  const lay = () => {   // 3D の 画面を 縮めて 雲の 形に 切り抜く (画面の 形が 変わるたびに 計算し直す)
+    const w = innerWidth, h = innerHeight, d = w > h ? DREAM.landscape : DREAM.portrait;
+    cs.transformOrigin = '0 0'; cs.transform = `translate(${(d.ox * w).toFixed(1)}px, ${(d.oy * h).toFixed(1)}px) scale(${d.s})`;
+    cs.webkitMaskImage = cs.maskImage = cloudMask(w, h, d.r);
+    cs.webkitMaskSize = cs.maskSize = '100% 100%'; cs.webkitMaskRepeat = cs.maskRepeat = 'no-repeat'; cs.webkitMaskPosition = cs.maskPosition = '50% 50%';
+  };
+  const unlay = () => { if(!cs) return; clearTimeout(leaveTimer); removeEventListener('resize', lay); for(const k of ['transform', 'transformOrigin', 'transition', 'webkitMaskImage', 'maskImage', 'webkitMaskSize', 'maskSize', 'webkitMaskRepeat', 'maskRepeat', 'webkitMaskPosition', 'maskPosition']) cs[k] = ''; cs = null; if(night){ night.remove(); night = null; } };
+  if(dream && canvas){ cs = canvas.style; night = document.createElement('div'); night.className = 'ot-night'; document.body.appendChild(night); lay(); addEventListener('resize', lay); }
   return {
+    dream,
     setText(s){ tap.textContent = s; },
-    menu(items, onPick){   // 「タップで はじめる」の 後の ボタン (10/27 社長: 最初の タップで 音が 使えるように なり、ここから タイトルの 曲が 鳴る)。items = [{ id, label, big }]
-      menuEl.innerHTML = items.map(b => `<button class="ot-btn${b.big ? ' ot-big' : ''}" data-id="${b.id}">${b.label}</button>`).join('');
+    menu(items, onPick){   // 「タップで はじめる」の 後の ボタン (10/27 社長: 最初の タップで 音が 使えるように なり、ここから タイトルの 曲が 鳴る)。items = [{ id, label, big, small }]
+      menuEl.innerHTML = items.map(b => `<button class="ot-btn${b.big ? ' ot-big' : b.small ? ' ot-small' : ''}" data-id="${b.id}">${b.label}</button>`).join('');
       menuEl.onclick = e => { const b = e.target.closest('button'); if(b) onPick(b.dataset.id); };
       root.classList.add('ot-menu-on');
     },
     get menuOpen(){ return root.classList.contains('ot-menu-on'); },
-    hide(){ root.classList.add('ot-out'); },
-    dispose(){ root.innerHTML = ''; root.className = ''; root.hidden = true; }
+    hide(){   // はじめる: 文字は 消え、夢の 雲は ぐーっと 広がって 画面いっぱいに (夢の 中へ 入っていく)
+      root.classList.add('ot-out');
+      if(cs){ removeEventListener('resize', lay); cs.transition = 'transform .9s cubic-bezier(.3,.6,.3,1), mask-size .9s ease-in, -webkit-mask-size .9s ease-in'; cs.transform = 'none'; cs.webkitMaskSize = cs.maskSize = '320% 320%'; leaveTimer = setTimeout(unlay, 950); }
+    },
+    dispose(){ unlay(); root.innerHTML = ''; root.className = ''; root.hidden = true; }
   };
 }
 

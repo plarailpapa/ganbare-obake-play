@@ -190,6 +190,9 @@ const RISE_FLOOR = 0.005, BGM_GAP = 0.5, TRIM_LEVEL = 0.02, NO_TRACK_LEN = 120, 
 /* ==================== 3D の下ごしらえ ==================== */
 const Q=new URLSearchParams(location.search), ERRLOG=Q.has('errlog'), ROOM_Q=Q.has('room');   /* ROOM_Q = 確かめ用 ?room=1: 3 面の 子ども部屋を 真上から 止めて見る (10/22) */   // ERRLOG = 確かめ用の記録 (?errlog=1、末尾の記録係)
 const ENDING_Q = Q.get('ending')==='1';   // 確かめ用: 子ども部屋に 入ったら すぐ エンディング (10/27)
+const CLEARED_Q = Q.get('cleared')==='1';   // 確かめ用: クリア済みの 夢の タイトル (記録は 書かない、10/27)
+if(Q.get('save')==='reset') REC.resetRecords();   // 確かめ用: ?save=reset で 記録を 消してから 始める (10/27)
+const BABIES = ['assets/ending/sleep-0.svg'];   // 夢の タイトルの 眠る 赤ちゃん (仮の 絵。社長が 依頼中の 絵が 届いたら 差し替え・何通りか あれば 並べる = 開くたびに 1 つ)
 const STAGE_Q = ({'2':2, '3':3})[Q.get('stage')] || 1;   // 試遊用: ?stage=2 で 2 面、?stage=3 で 3 面に直行 (9/30・10/8)
 const OPENING_ON = STAGE_Q===1, OP_FROM = Math.max(1, Math.min(OP.OPENING_LINES.length, parseInt(Q.get('op')||'1')||1)) - 1;   // 導入は 1 面の入口だけ。?op=N で セリフ N から (10/19)
 const REAL2 = Q.get('real')!=='0';              // 2 面の画面の流れ = 本物の速さそのまま (10/1 社長が試して決定: 輪と光の柱で 時速 30 万 km でも遊べた)。?real=0 で 縮めた流れ (V2_EXP) と見比べ
@@ -1591,7 +1594,7 @@ function roll3Step(){   // 毎コマ (3 面): 子ども部屋の スタッフロ
   el.style.opacity=1; el.firstChild.style.transform='translateY('+(A-(A+H)*k).toFixed(1)+'px)'; }   // 始め = 帯の 下の外、終わり = 帯の 上の外
 function roll3Reset(){ document.body.classList.remove('hud-calm'); roll3Built=false; roll3A=roll3H=-1; roll3Hold=0; const el=$('roll3'); el.style.opacity=0; el.innerHTML=''; }   // もういちど・タイトルへ
 let ending3=null; const ENDING3_LEAD=0.9;   // エンディング (子ども部屋の 白の後。ending.js) / 曲の ファイルの 終わりの 何秒前に 始めるか (オルゴールの 余韻が −46 dB = ほぼ 聞こえなく なるのが 終わりの 約 0.9 秒前、Blender で 測った。10/27 社長「曲が 終わったら すぐ」)
-function startEnding(){ document.body.classList.add('hud-calm'); $('white3').style.opacity=1; white3Full=true; /* 目覚めの 場面が 始まったら 子ども部屋は 終わり: すぐ 真っ白・コースは 描かない (白い幕は 子ども部屋の 引きの カメラ = 8 秒〜 に 頼らない。確かめ用 ?ending=1 で コースが 見えたまま 瞬きが 始まった、10/27 社長) */ ending3=ED.createEnding({ root:$('ending'), talkRoot:$('talk'), actx, faces:OP.FACES, onDone:()=>{ ending3.dispose(); ending3=null; showResult(); }, log: ERRLOG ? m=>logSend({ending:m}) : null }); ending3.start(); if(ERRLOG) logSend({ending:'start'}); }   // 白の上に 会話 → 人影 → タップで ばあ！ → (おしまいの 後) 結果発表
+function startEnding(){ document.body.classList.add('hud-calm'); $('white3').style.opacity=1; white3Full=true; /* 目覚めの 場面が 始まったら 子ども部屋は 終わり: すぐ 真っ白・コースは 描かない (白い幕は 子ども部屋の 引きの カメラ = 8 秒〜 に 頼らない。確かめ用 ?ending=1 で コースが 見えたまま 瞬きが 始まった、10/27 社長) */ ending3=ED.createEnding({ root:$('ending'), talkRoot:$('talk'), actx, faces:OP.FACES, onDone:()=>{ REC.markCleared(); ending3.dispose(); ending3=null; showResult(); }, log: ERRLOG ? m=>logSend({ending:m}) : null }); ending3.start(); if(ERRLOG) logSend({ending:'start'}); }   // 白の上に 会話 → 人影 → タップで ばあ！ → (おしまいの 後) 結果発表
 let cine3=false, goal3T=-1, white3Full=false; const WHITE3_A=32.0, WHITE3_B=35.0;   // 子ども部屋の 引くカメラを 使っている (描く範囲を 元へ 戻すため) / 曲が 鳴り終わってからの 秒 (ゴールの後、−1 = まだ) / 画面が 白く なり始める・真っ白 (子ども部屋の 始まりから 秒。オルゴールの 最後の フレーズの 音 32.0 秒から、最後の 和音 35.0 秒で 真っ白 = 曲の頭から 31.26 秒・34.26 秒 + 入りの 0.75 秒、Blender で 測った。カメラが 着地点の 3 cm 手前まで 寄るのも 35 秒)
 function nurseryCam3(){   // 子ども部屋の 上へ 引き続ける カメラ (nursery3.js の cine) と 遠くからの おばけの 光。使った コマは true
   const w= nurseryOn3() ? views3.get(pi3) : null, on=!!(w && w.placed && w.cine && w.cine(stageT, camera, camera.aspect, nurseryT0(), ghost.position));
@@ -1818,18 +1821,25 @@ function beginIntro(n, from=0){   // 2 面・3 面のはじめ: 天国の会話�
   if(ERRLOG) logSend({intro:n, from});
 }
 let optionsUI=null;   // 開いている オプションの 板
-function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション
-  opTitle.menu([{id:'start', label:'はじめから はじめる', big:true}, {id:'options', label:'オプション'}], id=>{
+function makeTitle(){   // 天国の タイトルの 文字・ボタン。クリア済みなら 夢の タイトル (眠る 赤ちゃんの 夢の 雲の 中、10/27 社長「一度 クリアしたら ずっと」)
+  return OP.createTitle($('optitle'), { dream: CLEARED_Q || REC.isCleared(), babies:BABIES, canvas:cv, onTap:()=>{ if(state==='title' && canStart() && !pendingStart && !optionsUI && !opTitle.menuOpen) openTitleMenu(); } });
+}
+function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション。夢の タイトルは ステージ 1〜3・ぜんぶ あそぶ・オプション
+  const dream=opTitle.dream, items= dream ? [{id:'s1', label:'ステージ 1'}, {id:'s2', label:'ステージ 2'}, {id:'s3', label:'ステージ 3'}, {id:'start', label:'ぜんぶ あそぶ', big:true}, {id:'options', label:'オプション', small:true}] : [{id:'start', label:'はじめから はじめる', big:true}, {id:'options', label:'オプション'}];
+  opTitle.menu(items, id=>{
     if(state!=='title' || optionsUI) return;
     if(id==='start'){ if(canStart() && !pendingStart) beginRun(); }
-    else optionsUI=OPT.createOptions({ volume:REC.getVolume(), onVolume:n=>{ REC.setVolume(n); if(actx) setAudioVolume(actx, OPT.VOLUMES[n]); }, onReset:()=>REC.resetRecords(), onClose:()=>{ optionsUI=null; } });
+    else if(id==='options'){ let reset=false;
+      optionsUI=OPT.createOptions({ volume:REC.getVolume(), onVolume:n=>{ REC.setVolume(n); if(actx) setAudioVolume(actx, OPT.VOLUMES[n]); }, onReset:()=>{ REC.resetRecords(); reset=true; },
+        onClose:()=>{ optionsUI=null; if(reset && opTitle.dream && !CLEARED_Q) whiteSwap(()=>{ if(state!=='title') return; opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); }); } });   /* 夢の タイトルで 記録を 消したら クリア前の タイトルへ */ }
+    /* ステージ 1〜3 (s1〜s3) は 次の 段階 (Task 4) で つなぐ。今は 押しても 何も しない */
   });
 }
 function goTitle(){   // タイトルに もどる (3 面の結果): 白 → 天国の タイトル画面 (おばけが うろうろ)。タップで 導入から
   whiteSwap(()=>{
     setBooster(false); resetRun(); setStage(1); openingSeen=false; titleOpening=true;
     if(talk){ talk.dispose(); talk=null; } if(op) op.dispose(); op=OP.createOpening({renderer, getKit:()=>KIT, actx});
-    if(opTitle) opTitle.dispose(); opTitle=OP.createTitle($('optitle')); opTitle.setText('タップで はじめる'); $('hud').style.visibility='hidden'; state='title';
+    if(opTitle) opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); $('hud').style.visibility='hidden'; state='title';
     if(ERRLOG) logSend({title:'back'});
   });
 }
@@ -2032,7 +2042,7 @@ let kitsReady=false;   // 部品集の読み込みが終わるまで スター�
 bgmPrepare(); if(actx) setAudioVolume(actx, OPT.VOLUMES[REC.getVolume()]); bgmLoad(BGM_SETS[STAGE_Q]);   /* 音の 大きさは 覚えている 段で (オプション、10/27) */ if(actx) bgmBuf(HEAVEN_BGM.src).catch(()=>{}); $('tap').textContent='ぶひんを よみこみ中…';   /* 天国の曲も 先に読んでおく */
 preloadVoices(actx, 'assets/voice/', RS.FAIL_LINES);   /* 結果発表の 神様の声を 先に読んでおく (10/20) */
 if(OPENING_ON){   /* 1 面の入口は 天国の タイトル画面 (雲の上を おばけが うろうろ)。部品集を読んでいる間から 描く (10/19) */
-  op=OP.createOpening({renderer, getKit:()=>KIT, actx}); opTitle=OP.createTitle($('optitle')); opTitle.setText($('tap').textContent); $('hud').style.visibility='hidden'; preloadVoices(actx, 'assets/voice/', OP.OPENING_LINES);   /* 声は タイトルの間に 先読み (最初の行に 間に合うように) */
+  op=OP.createOpening({renderer, getKit:()=>KIT, actx}); opTitle=makeTitle(); opTitle.setText($('tap').textContent); $('hud').style.visibility='hidden'; preloadVoices(actx, 'assets/voice/', OP.OPENING_LINES);   /* 声は タイトルの間に 先読み (最初の行に 間に合うように) */
   let pl=performance.now(); const pre=n=>{ if(kitsReady || !op) return; const dt=Math.min(0.05, Math.max(0, (n-pl)/1000)); pl=n; op.update(dt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(op.scene, op.camera); requestAnimationFrame(pre); }; requestAnimationFrame(pre); }   /* 読み込み中だけの 描き手 (読み終わると いつもの frame に 交代) */
 const rivalsP=loadRivalModels().catch(e=>console.warn('相手の動物 (動き付き) を読み込めませんでした。手作りの姿で続けます', e));   // 部品集と並行して読む
 const fieldP=loadFieldAnimals().catch(e=>console.warn('野原の動物 (動き付き) を読み込めませんでした。静止の部品で続けます', e));
