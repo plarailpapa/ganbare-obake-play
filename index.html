@@ -190,7 +190,7 @@ const REAL2 = Q.get('real')!=='0';              // 2 面の画面の流れ = 本
 const KMH2_Q = Q.has('kmh') ? Math.max(1360, +Q.get('kmh')||1360) : 0;   // 試し: ?kmh=100000 で 2 面を その時速から始める
 const PLANET_Q = Q.has('planet') ? Math.min(S2.PLANETS2.length-1, Math.max(0, Math.floor(+Q.get('planet')||0))) : -1;   // 試し: ?planet=N で 2 面を N 番目の惑星 (0 = 海王星 … 7 = 水星) の手前から、その惑星の 90% の速さで (10/2: 8 つの見た目を 5 分遊ばずに確かめる)
 const WORLD_Q = Q.has('world') ? Math.min(S3.WORLDS3.length-1, Math.max(0, Math.floor(+Q.get('world')||1)-1)) : 0;   // 試し: ?stage=3&world=N で 3 面を N 番目の世界から (設計書の丸数字のまま: 1 = 天の川 … 4 = 悟空と日本の神々、5 = 子ども部屋。中の番号は N−1)
-const PROBE3 = {neb:Q.get('neb')!=='0', gal:Q.get('gal')!=='0', win:Q.get('win')!=='0', statue:Q.get('statue')!=='0', hall:Q.get('hall')!=='0'};   // 3 面の重さの見比べ (10/8 社長: 44 fps): ?neb=0 星雲なし / ?gal=0 眼下の銀河なし / ?win=0 輪の窓なし / ?statue=0 ② の像なし / ?hall=0 ② の大広間なし (10/12: 20 fps)
+const PROBE3 = {neb:Q.get('neb')!=='0', gal:Q.get('gal')!=='0', win:Q.get('win')!=='0', statue:Q.get('statue')==='1', hall:Q.get('hall')!=='0'};   // 3 面の重さの見比べ (10/8 社長: 44 fps): ?neb=0 星雲なし / ?gal=0 眼下の銀河なし / ?win=0 輪の窓なし / ?statue=0 ② の像なし / ?hall=0 ② の大広間なし (10/12: 20 fps)
 let camMode2 = Q.get('cam')==='follow' ? 'follow' : 'watch';   // 2 面のカメラ: watch = 切り離して見守る (既定・酔いにくい) / follow = おばけに合わせて画面ごと回る (F-ZERO 風)。C キーで切り替え (社長の見比べ用、9/30 設計)
 // 見た目の切替 (9/14): ?shadow=0 で影なし、?fps=1 で速度計、?px=1 で描画の細かさを画面ドット等倍に (既定は 1.5 倍まで)
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
@@ -1567,7 +1567,7 @@ const ROLL3_A=4, ROLL3_B=28;   // スタッフロールを 流す 秒 (子ども
 const CREDITS3=[   // スタッフロールの 中身 (c = 列: a はじめ / l 左 / r 右 / e 最後、h = 見出し、i = 行。名前は まだ 空ける、10/26 社長)
   {c:'a', h:'つくった ひと', i:['〇〇〇〇']}, {c:'a', h:'え', i:['〇〇〇〇']}, {c:'a', h:'こえ', i:['〇〇〇〇']}, {c:'a', h:'てつだった AI', i:['Claude<small>Anthropic</small>', 'Codex<small>OpenAI</small>']},
   {c:'l', h:'おんがく', i:['ネッケ「クシコス・ポスト」<small>音源: ポケットサウンド https://pocket-se.info/</small>', 'オッフェンバック「天国と地獄」<small>演奏: Musopen (パブリックドメイン)</small>', 'ホルスト「木星」<small>演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)</small>', 'サティ「ジムノペディ」第 1 番<small>演奏: Robin Alciatore (Musopen、パブリックドメイン)</small>', 'モーツァルト「きらきら星変奏曲」K.265<small>演奏: Simone Renzi (CC BY 3.0)</small>', 'きらきら星 (オルゴール)<small>音源: KonstantinPazuzuStudio (Pixabay)</small>']},
-  {c:'r', h:'3D の ぶひん', i:['Kenney<small>Nature Kit・City Kit Suburban・Car Kit・Furniture Kit・Fantasy Town Kit (CC0) www.kenney.nl</small>', 'Quaternius<small>Farm Animals・Ultimate Animated Animals (CC0)</small>', 'ボイジャー 1 号<small>NASA</small>', 'サモトラケのニケ<small>Scan The World (MyMiniFactory)</small>']},
+  {c:'r', h:'3D の ぶひん', i:['Kenney<small>Nature Kit・City Kit Suburban・Car Kit・Furniture Kit・Fantasy Town Kit (CC0) www.kenney.nl</small>', 'Quaternius<small>Farm Animals・Ultimate Animated Animals (CC0)</small>', 'ボイジャー 1 号<small>NASA</small>']},
   {c:'r', h:'しゃしん・ちず', i:['惑星・月・太陽の 地図<small>Solar System Scope (CC BY 4.0)</small>', '天の川銀河の 想像図<small>NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0)</small>', '冥王星・ケレスの 地図<small>NASA</small>']},
   {c:'l', h:'プログラムの ぶひん', i:['three.js<small>MIT License</small>']},
   {c:'r', h:'', i:['<small>曲・画像の 一部は 長さ・色・大きさを 変えて 使っています。<br>CC BY 3.0: creativecommons.org/licenses/by/3.0/<br>CC BY 4.0: creativecommons.org/licenses/by/4.0/</small>']},

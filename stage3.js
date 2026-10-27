@@ -247,7 +247,7 @@ function castleWorld(scene, root, P, opts, out){   // 置き物を root に足�
   const wt=waterTex(opts), water=new THREE.Mesh(new THREE.CircleGeometry(CASTLE.RH+80, 128).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({map:wt, color:0xe6dcd4, transparent:true, opacity:0.85, depthWrite:false})); water.position.set(cx, CASTLE.water, cz);   // 床の水 (半透明 = 下の明るい空が透けて 光る水に)
   const R=seeded(1012), ctex=cloudTex(['#fff1e2', '#ffd2b4']);   // 窓の外の 朝日に染まった雲
   for(let i=0;i<26;i++){ const a=R()*Math.PI*2, d=3000+R()*6000, sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ctex, transparent:true, opacity:0.9, depthWrite:false})), sz=700+R()*1600; sp.position.set(cx+Math.sin(a)*d, 100+R()*2600, cz+Math.cos(a)*d); sp.scale.set(sz*1.6, sz, 1); root.add(sp); }
-  if(opts.statue!==false) bigStatue(root, H, c);
+  if(opts.statue===true) bigStatue(root, H, c);   // 像 (ニケ) は 出さない (10/27 社長「評判が よくなかった、のける」。公開版は 10/23 から なし)。模型は 倉庫 assets-warehouse/scans へ
   out.focus=(sl, o)=>{ const k=Math.min(1, Math.max(0, (sl-0.3*T.sJ)/(0.7*T.sJ+300))); T.at(sl, o); return o.set(cx, o.y+1100*(1-k*k*(3-2*k)), cz); };   // カメラが向く所 (道のり sl の時、root の座標) = 像の体の線の上の コースの高さ + 見上げ (入口では 1,100 m 上 = 見上げて近づく → らせんに入って 300 m で なくなる)
   root.add(water); scene.fog=new THREE.Fog(0xf2dcc8, 2200, 16000);   /* 朝もや = 広間の奥ほど 金色がかって かすむ (大きさが分かる)。光は 焼き付けたので 光源なし */
   return [(cam, dt)=>{ wt.offset.x+=dt*0.004; }];   // さざ波
