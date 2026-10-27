@@ -1819,9 +1819,11 @@ let introStage=0, curtain=null;   // 天国の会話中の 面 (0 = 導入)・�
 function whiteSwap(fn){   // 白い幕で 場面を切り替える (0.55 秒で白く → fn → 0.6 秒で晴れる)。時間は frame の dt で
   if(curtain) return;
   const wc=document.createElement('div'); wc.style.cssText='position:fixed;inset:0;z-index:46;background:#fff;opacity:0;pointer-events:none;transition:opacity .5s ease'; document.body.appendChild(wc);
-  requestAnimationFrame(()=>{ wc.style.opacity='1'; }); curtain={t:0, fn, wc, called:false};
+  requestAnimationFrame(()=>{ wc.style.opacity='1'; }); curtain={t:0, fn, wc, called:false, out:-1};
 }
-function curtainStep(dt){ const c=curtain; c.t+=dt; if(!c.called && c.t>=0.55){ c.called=true; c.fn(); c.wc.style.transition='opacity .6s ease'; c.wc.style.opacity='0'; } if(c.t>=1.3){ c.wc.remove(); curtain=null; } }
+function curtainStep(dt){ const c=curtain; c.t+=dt; if(!c.called && c.t>=0.55){ c.called=true; c.fn(); }
+  if(c.called && c.out<0 && !pendingStart){ c.out=c.t; c.wc.style.transition='opacity .6s ease'; c.wc.style.opacity='0'; }   /* その面の 曲・部品を 待つ 間 (pendingStart) は 白い まま、始まったら 晴れる (10/27 Codex 指摘) */
+  if(c.out>=0 && c.t>=c.out+0.75){ c.wc.remove(); curtain=null; } }
 function goNext(){ const n=stage+1; whiteSwap(()=>beginIntro(n)); }   // つぎへ すすむ: 白 → 天国 (おばけが ニョッキ) → 次の面のはじめの会話
 function beginIntro(n, from=0){   // 2 面・3 面のはじめ: 天国の会話。面の景色・曲は 会話の間に 用意する (setStage で 読み始める)
   setBooster(false); resetRun(); setStage(n); introStage=n;
@@ -1839,7 +1841,7 @@ function startSolo(n, story){   // ステージ n だけ 遊ぶ (10/27 社長): 
     if(state!=='title') return;
     soloStage=n;
     if(story){ if(opTitle){ opTitle.dispose(); opTitle=null; } beginIntro(n); return; }   /* 2 面・3 面の はじめの 天国の 会話 → その面 */
-    setBooster(false); resetRun(); setStage(n); resetCourse(); resetPlates(); pendingT=0;   /* コースも その面の 物に (起動時と 同じ。始まるまでの 待ちの 間も 毎コマ 動くので、前の 面の コースの まま だと 3 面で 止まった、Codex 指摘 10/27) */
+    setBooster(false); resetRun(); setStage(n); pendingT=0;
     if(talk){ talk.dispose(); talk=null; } if(op){ op.dispose(); op=null; } if(opTitle){ opTitle.dispose(); opTitle=null; } openingSeen=true;
     $('title').hidden=true; $('tap').hidden=true; $('hud').style.visibility=''; pendingStart=true;   /* state は title の まま (タップで 始まらない = pendingStart)、frame で 読めたら startRun */
     if(ERRLOG) logSend({solo:n});
@@ -2098,7 +2100,8 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   if(stage===2 && (state==='title' || state==='opening' || (state==='finish' && resultShown))) prep2Step();   /* 2 面の前の タイトル・会話の間に 惑星と小物の下ごしらえ (結果画面の間も = 「もういちど」で すぐ走る時のため、Codex 指摘。1 コマ 1 つずつ。走っている間・ゴールの飛び去りの間は しない) */
   if(boosterFx.visible){ const k=0.8+Math.random()*0.45; boosterFx.userData.flame.scale.set(0.55*k, 0.55*k, 1); }   /* ブースターの炎の ゆらぎ */
   if(quickMode && !boosterOn && state==='run' && stageT>(stage===3 ? plan3[0].t0 : 0)+5){ v=QUICK_KMH[stage][quickMode==='ok' ? 0 : 1]/3.6; finishRun(); }   /* 試しの入口 (?result=) */
-  if((state==='title' && !!op)!==!!titleMus){ if(titleMus) titleMusicStop(1); else titleMusicPlay(); }   /* 天国の タイトル画面の 間だけ オルゴールの きらきら星 (始める・面の 試しの 入口などで タイトルを 離れたら 1 秒で 消す) */
+  if((state==='title' && !!op)!==!!titleMus){ if(titleMus) titleMusicStop(1); else titleMusicPlay(); }
+  if(pendingStart){ requestAnimationFrame(frame); return; }   /* ストーリー なしで その面を 待つ 間 (白い 幕の 下) は ゲームを 動かさない・描かない (前の 遊びの 位置・速さの まま 動いて 止まった、Codex 指摘 10/27)。始まりは startRun が 全部 整える */   /* 天国の タイトル画面の 間だけ オルゴールの きらきら星 (始める・面の 試しの 入口などで タイトルを 離れたら 1 秒で 消す) */
   if(op && (state==='opening' || state==='title')){ const dt=Math.min(0.05,raw); op.update(dt); if(talk) talk.update(dt); if(diving) diveStep(dt); if(op){ renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(op.scene, op.camera); } requestAnimationFrame(frame); return; }   /* タイトル画面と 導入の間は 天国の場面だけ描く (10/19)。talk.update で 導入が終わると op は片づいている */
   update(Math.min(0.05,raw), Math.min(2,raw));
   updateCloud2(); renderer.setClearColor(cloudK2>0.02 ? CLOUD2_COL : 0x000000, cloudK2>0.02 ? 1 : 0); renderer.info.reset(); renderer.clear();   /* 海王星の雲の中は 深い青で塗る (ふだんは 透明 = 後ろの宇宙の色) */
