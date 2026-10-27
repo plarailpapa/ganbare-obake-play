@@ -106,7 +106,8 @@ import * as S2 from './stage2.js';   // 2 面 (宇宙・惑星レース) の計�
 import * as S3 from './stage3.js';   // 3 面 (神々の世界めぐり) の表・作り手・世界の景色 (10/8)
 import { createTalk, preloadVoices, playSound, rubyHtml, audioOut, setAudioVolume } from './talk.js';   // 会話の画面 (導入・面のはじめ・エンディングで共通、10/19)・音の 出口 (音の 大きさの つまみ)
 import * as REC from './records.js';   // 遊びの 記録 (クリア・ハイスコア・音の 大きさ、10/27)
-import * as OPT from './options.js';   // オプションの 板 (音の 大きさ・画面の 向き・記録を 消す、10/27)
+import * as OPT from './options.js';   // オプションの 板 (音の 大きさ・記録を 消す、10/27)
+import * as RK from './ranking.js';   // ランキングの 板 (夢の タイトルの ステージ 1〜3、10/27)
 import * as OP from './opening.js';   // 導入 (天国の会話と 自転の説明、10/19)
 import * as RS from './result.js';   // 結果発表の画面 (10/20)
 import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
@@ -193,6 +194,7 @@ const Q=new URLSearchParams(location.search), ERRLOG=Q.has('errlog'), ROOM_Q=Q.h
 const ENDING_Q = Q.get('ending')==='1';   // 確かめ用: 子ども部屋に 入ったら すぐ エンディング (10/27)
 const CLEARED_Q = Q.get('cleared')==='1';   // 確かめ用: クリア済みの 夢の タイトル (記録は 書かない、10/27)
 if(Q.get('save')==='reset') REC.resetRecords();   // 確かめ用: ?save=reset で 記録を 消してから 始める (10/27)
+const SCORE_Q = !['stage', 'world', 'kmh', 'result', 'planet', 'ending', 'room', 'talk', 'op'].some(k=>Q.has(k));   // ハイスコアを 貯めるのは ふつうに 遊んだ 時だけ (試しの 入口で 出した 速さは 入れない)
 const BABIES = ['assets/ending/sleep-0.svg'];   // 夢の タイトルの 眠る 赤ちゃん (仮の 絵。社長が 依頼中の 絵が 届いたら 差し替え・何通りか あれば 並べる = 開くたびに 1 つ)
 const STAGE_Q = ({'2':2, '3':3})[Q.get('stage')] || 1;   // 試遊用: ?stage=2 で 2 面、?stage=3 で 3 面に直行 (9/30・10/8)
 const OPENING_ON = STAGE_Q===1, OP_FROM = Math.max(1, Math.min(OP.OPENING_LINES.length, parseInt(Q.get('op')||'1')||1)) - 1;   // 導入は 1 面の入口だけ。?op=N で セリフ N から (10/19)
@@ -1789,6 +1791,12 @@ function finishRun(){   // 曲の終わり 5 秒前: 結果を用意し、時速
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
 function resetRun(){ bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
+const RIVALS = {   // ハイスコアの 表に 最初から 並ぶ ライバル (10/27 社長「1 面なら スペースシャトル、2 面なら 金星などを ランクインさせて」)。名前と 速さは ゲームの 中の 相手と 同じ
+  1: ['スペースシャトル', 'ミサイル', 'SR-71', 'ヴァルキリー', 'せんとうき', 'Tu-144', 'コンコルド', 'ちきゅうの じてん', 'おとの はやさ', 'ひこうき'].map(n=>LADDER.find(o=>o.name===n)),
+  2: ['水星', '金星', '地球', '火星', 'ケレス', 'ボイジャー1号', '木星', '土星', '天王星', '海王星'].map(n=>S2.LADDER2.find(o=>o.name===n)),
+  3: [...RS.COSMIC3, {name:'ヘリオス 2 号', kana:'へりおす 2 ごう', kmh:252800}, ...['金星', '地球'].map(n=>S2.LADDER2.find(o=>o.name===n))]   /* 3 面の 段は 3 つ → 太陽の 近くを 飛んだ 探査機 ヘリオス 2 号 (1976 年、時速 約 25 万 km) と 2 面の 惑星で 補う */
+};
+for(const k in RIVALS) RIVALS[k]=RIVALS[k].filter(Boolean).map(o=>({name:o.name, kana:o.kana, kmh:o.kmh, rival:true}));   // 名前の 書き間違いで 見つからない 相手は 外す
 const EARTH2_KMH = S2.PLANETS2.find(p=>p.name==='地球').kmh, GOAL3_KMH = 830000;   // 2 面の合格 = 地球の公転 (時速 107,200)、3 面の「おいぬいた」= 太陽系の公転
 function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め言葉・ボタン・足りない時の 神様
   resultShown=true; $('speed').style.visibility='hidden';
@@ -1799,8 +1807,10 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   const okLine= stage===1 ? '{地球|ちきゅう}の {自転|じてん}を おいぬいた！' : stage===2 ? '{地球|ちきゅう}の {公転|こうてん}を おいぬいた！' : '{太陽系|たいようけい}の {公転|こうてん}を おいぬいた！';
   const rest=Math.max(1, goal-kmh).toLocaleString('en-US'), remainLine= stage===1 ? '{自転|じてん}まで あと '+rest+' km！' : '{公転|こうてん}まで あと '+rest+' km！';
   const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'title', label:'タイトルに もどる', big:true}] :   /* 3 面の 合格 (エンディングの 後) は タイトルへ だけ (10/27 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
+  const soloButtons= ok ? [{id:'retry', label:'もういちど', big:true}, {id:'title', label:'タイトルに もどる'}] : [...buttons, {id:'title', label:'タイトルに もどる'}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎへ は 出さず タイトルへ (10/27 設計書) */
+  const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage]) : null;   /* 速さを 面ごとの 上位 10 件へ。ライバルと 合わせて 10 位以内なら「ランキング ◯い！」、自分の 1 位を 超えたら「しんきろく！」 */
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
-  resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:false, god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons, confetti:ok,
+  resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:!!(sc && sc.best), rank: sc ? sc.rank : 0, god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons: soloStage ? soloButtons : buttons, confetti:ok,
     onButton:id=>{ if(ERRLOG) logSend({button:id}); if(id==='retry') retry(false); else if(id==='booster') retry(true); else if(id==='next') goNext(); else goTitle(); } });
   if(ERRLOG) logSend({result: ok ? 'ok' : 'ng', kmh, stage, fail:failCount[stage]});
 }
@@ -1821,24 +1831,38 @@ function beginIntro(n, from=0){   // 2 面・3 面のはじめ: 天国の会話�
   talk.start(n===2 ? IN.S2_LINES : IN.S3_LINES, from, {enter:'up'}); heavenPlay();
   if(ERRLOG) logSend({intro:n, from});
 }
-let optionsUI=null;   // 開いている オプションの 板
+let panelUI=null;   // 開いている 板 (オプション・ランキング)
+let soloStage=0;   // 夢の タイトルで 選んだ 面 (その面だけ 遊ぶ。0 = 通し)
+function startSolo(n, story){   // ステージ n だけ 遊ぶ (10/27 社長): ストーリー あり = その面の 天国の 会話から (1 面は いつもの 導入から)、なし = 白 → 会話なしで すぐ (曲・部品が 読めたら 走る)
+  if(story && n===1){ soloStage=1; beginRun(); return; }   /* 1 面の ストーリー = いつもの 導入 (夢の 雲が 広がって 天国の 会話 → 雲へ 飛び込む) */
+  whiteSwap(()=>{
+    if(state!=='title') return;
+    soloStage=n;
+    if(story){ if(opTitle){ opTitle.dispose(); opTitle=null; } beginIntro(n); return; }   /* 2 面・3 面の はじめの 天国の 会話 → その面 */
+    setBooster(false); resetRun(); setStage(n);
+    if(talk){ talk.dispose(); talk=null; } if(op){ op.dispose(); op=null; } if(opTitle){ opTitle.dispose(); opTitle=null; } openingSeen=true;
+    $('title').hidden=true; $('tap').hidden=true; $('hud').style.visibility=''; pendingStart=true;   /* state は title の まま (タップで 始まらない = pendingStart)、frame で 読めたら startRun */
+    if(ERRLOG) logSend({solo:n});
+  });
+}
 function makeTitle(){   // 天国の タイトルの 文字・ボタン。クリア済みなら 夢の タイトル (眠る 赤ちゃんの 夢の 雲の 中、10/27 社長「一度 クリアしたら ずっと」)
-  return OP.createTitle($('optitle'), { dream: CLEARED_Q || REC.isCleared(), babies:BABIES, canvas:cv, onTap:()=>{ if(state==='title' && canStart() && !pendingStart && !optionsUI && !opTitle.menuOpen) openTitleMenu(); } });
+  return OP.createTitle($('optitle'), { dream: CLEARED_Q || REC.isCleared(), babies:BABIES, canvas:cv, onTap:()=>{ if(state==='title' && canStart() && !pendingStart && !panelUI && !opTitle.menuOpen) openTitleMenu(); } });
 }
 function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション。夢の タイトルは ステージ 1〜3・ぜんぶ あそぶ・オプション
   const dream=opTitle.dream, items= dream ? [{id:'s1', label:'ステージ 1'}, {id:'s2', label:'ステージ 2'}, {id:'s3', label:'ステージ 3'}, {id:'start', label:'ぜんぶ あそぶ', big:true}, {id:'options', label:'オプション', small:true}] : [{id:'start', label:'はじめから はじめる', big:true}, {id:'options', label:'オプション'}];
   opTitle.menu(items, id=>{
-    if(state!=='title' || optionsUI) return;
+    if(state!=='title' || panelUI) return;
     if(id==='start'){ if(canStart() && !pendingStart) beginRun(); }
     else if(id==='options'){ let reset=false;
-      optionsUI=OPT.createOptions({ volume:REC.getVolume(), onVolume:n=>{ REC.setVolume(n); if(actx) setAudioVolume(actx, OPT.VOLUMES[n]); }, onReset:()=>{ REC.resetRecords(); reset=true; },
-        onClose:()=>{ optionsUI=null; if(reset && opTitle.dream && !CLEARED_Q) whiteSwap(()=>{ if(state!=='title') return; opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); }); } });   /* 夢の タイトルで 記録を 消したら クリア前の タイトルへ */ }
-    /* ステージ 1〜3 (s1〜s3) は 次の 段階 (Task 4) で つなぐ。今は 押しても 何も しない */
+      panelUI=OPT.createOptions({ volume:REC.getVolume(), onVolume:n=>{ REC.setVolume(n); if(actx) setAudioVolume(actx, OPT.VOLUMES[n]); }, onReset:()=>{ REC.resetRecords(); reset=true; },
+        onClose:()=>{ panelUI=null; if(reset && opTitle.dream && !CLEARED_Q) whiteSwap(()=>{ if(state!=='title') return; opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); }); } });   /* 夢の タイトルで 記録を 消したら クリア前の タイトルへ */ }
+    else { const n=+id[1];   /* ステージ 1〜3: その面の ランキングと はじめる ボタン (ストーリー あり / なし・もどる、10/27 社長) */
+      panelUI=RK.createRanking({ stage:n, rows:REC.ranking(n, RIVALS[n]), onPick:p=>{ panelUI=null; if(p!=='back' && state==='title' && canStart() && !pendingStart) startSolo(n, p==='story'); } }); }
   });
 }
 function goTitle(){   // タイトルに もどる (3 面の結果): 白 → 天国の タイトル画面 (おばけが うろうろ)。タップで 導入から
   whiteSwap(()=>{
-    setBooster(false); resetRun(); setStage(1); openingSeen=false; titleOpening=true;
+    setBooster(false); resetRun(); setStage(1); openingSeen=false; titleOpening=true; soloStage=0;
     if(talk){ talk.dispose(); talk=null; } if(op) op.dispose(); op=OP.createOpening({renderer, getKit:()=>KIT, actx});
     if(opTitle) opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); $('hud').style.visibility='hidden'; state='title';
     if(ERRLOG) logSend({title:'back'});
@@ -1858,7 +1882,7 @@ for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audio
 window.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') lane=Math.max(0,lane-1); else if(e.key==='ArrowRight') lane=Math.min(LANES-1,lane+1);
   else if(e.key===' '||e.key==='Enter'){ if(e.repeat || (e.target instanceof Element && e.target.closest('button'))) return;   /* ボタンに 合わせた Enter・Space は ボタンに 任せる (オプションで Enter → 始まって しまった)・長押しの くり返しは 受けない (Codex 指摘 10/27) */
-    if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !optionsUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
+    if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !panelUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
   else if((e.key==='c'||e.key==='C') && stage>=2){ camMode2= camMode2==='watch' ? 'follow' : 'watch'; pop(camMode2==='watch' ? 'カメラ: みまもる' : 'カメラ: おばけに あわせる', true); }
 });
 
