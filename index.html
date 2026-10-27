@@ -1832,14 +1832,14 @@ function beginIntro(n, from=0){   // 2 面・3 面のはじめ: 天国の会話�
   if(ERRLOG) logSend({intro:n, from});
 }
 let panelUI=null;   // 開いている 板 (オプション・ランキング)
-let soloStage=0;   // 夢の タイトルで 選んだ 面 (その面だけ 遊ぶ。0 = 通し)
+let soloStage=0, pendingT=0;   // 夢の タイトルで 選んだ 面 (その面だけ 遊ぶ。0 = 通し) / ストーリー なしで 曲・部品を 待っている 秒
 function startSolo(n, story){   // ステージ n だけ 遊ぶ (10/27 社長): ストーリー あり = その面の 天国の 会話から (1 面は いつもの 導入から)、なし = 白 → 会話なしで すぐ (曲・部品が 読めたら 走る)
   if(story && n===1){ soloStage=1; beginRun(); return; }   /* 1 面の ストーリー = いつもの 導入 (夢の 雲が 広がって 天国の 会話 → 雲へ 飛び込む) */
   whiteSwap(()=>{
     if(state!=='title') return;
     soloStage=n;
     if(story){ if(opTitle){ opTitle.dispose(); opTitle=null; } beginIntro(n); return; }   /* 2 面・3 面の はじめの 天国の 会話 → その面 */
-    setBooster(false); resetRun(); setStage(n);
+    setBooster(false); resetRun(); setStage(n); resetCourse(); resetPlates(); pendingT=0;   /* コースも その面の 物に (起動時と 同じ。始まるまでの 待ちの 間も 毎コマ 動くので、前の 面の コースの まま だと 3 面で 止まった、Codex 指摘 10/27) */
     if(talk){ talk.dispose(); talk=null; } if(op){ op.dispose(); op=null; } if(opTitle){ opTitle.dispose(); opTitle=null; } openingSeen=true;
     $('title').hidden=true; $('tap').hidden=true; $('hud').style.visibility=''; pendingStart=true;   /* state は title の まま (タップで 始まらない = pendingStart)、frame で 読めたら startRun */
     if(ERRLOG) logSend({solo:n});
@@ -2091,6 +2091,7 @@ const fpsEl=$('fps'), FPS_ON=Q.get('fps')==='1'; if(FPS_ON) fpsEl.hidden=false; 
 const clockEl=$('songclock'), CLOCK_ON=Q.get('time')==='1'; if(CLOCK_ON) clockEl.hidden=false;   // ?time=1 で 左下に 録音の何分何秒を鳴らしているか (10/2 社長: 曲の切り所を耳で決めるため)
 function songClock(){ const g=bgmSegs.find(o=>stageT>=o.at && stageT<o.at+o.len); if(!g) return '--:--'; const d=Math.floor((g.offset+stageT-g.at)*10)/10, m=Math.floor(d/60); return m+':'+String((d-m*60).toFixed(1)).padStart(4,'0'); }
 function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
+  if(pendingStart && !canStart()){ pendingT+=raw; if(pendingT>10){ bgmLoadId++; bgmFail=true; if(ERRLOG) logSend({err:'bgm timeout, solo start without music', stage}); } }   /* 10 秒 待っても 曲が 読めなければ 曲なしで 始める (止まったまま に しない。導入の 後と 同じ) */
   if(pendingStart && canStart()){ pendingStart=false; startRun(); }   /* 次の面: 曲・部品が 読めたら 始める (10/20) */
   if(curtain) curtainStep(Math.min(0.05,raw));
   if(pendingTalk){ const n=pendingTalk; pendingTalk=0; beginIntro(n); }   /* 試しの入口 ?talk=N */

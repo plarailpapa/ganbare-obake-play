@@ -33,7 +33,7 @@ const CSS = `
 `;
 function injectCss(){ if(document.getElementById('ranking-css')) return; const st = document.createElement('style'); st.id = 'ranking-css'; st.textContent = CSS; document.head.appendChild(st); }
 
-const nameHtml = r => r.you ? 'あなた' + (r.date ? `<small>${+r.date.slice(5, 7)}/${+r.date.slice(8, 10)}</small>` : '') : r.kana ? rubyHtml(`{${r.name}|${r.kana}}`) : r.name;
+const nameHtml = r => r.you ? 'あなた' + (typeof r.date === 'string' && r.date.length === 10 ? `<small>${+r.date.slice(5, 7)}/${+r.date.slice(8, 10)}</small>` : '') : r.kana ? rubyHtml(`{${r.name}|${r.kana}}`) : r.name;
 
 export function createRanking({ stage, rows, onPick }){
   injectCss();
