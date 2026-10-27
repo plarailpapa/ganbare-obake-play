@@ -1620,8 +1620,8 @@ function bgmPrepare(){   // 音の出口と タブ切り替えの見張り (1 �
   alog('版 10/23-c  音 '+actx.state+'  '+actx.sampleRate+' Hz'); actx.onstatechange=()=>alog('音 → '+actx.state);
   document.addEventListener('visibilitychange', ()=>{
     if(!actx) return;
-    if(document.hidden){ if(bgmOn || state==='opening') actx.suspend().catch(()=>{}); }   /* 導入の声も 一緒に止める (10/19) */
-    else if(bgmOn || state==='opening') audioResume();
+    if(document.hidden){ if(bgmOn || state==='opening' || ending3) actx.suspend().catch(()=>{}); }   /* 導入・目覚めの場面の 声も 一緒に止める (10/19・10/27 Codex 指摘) */
+    else if(bgmOn || state==='opening' || ending3) audioResume();
     else if(bgmWanted && bgmReady && state==='run') bgmPlay();
   });
 }
@@ -1865,7 +1865,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   }
   else if(state==='finish' && nurseryOn3()){   // 子ども部屋の ゴール: 飛び去り・ピカーン・宇宙の色は なし。白い幕 (最後の和音で 真っ白) の まま 曲が 鳴り終わるのを 待ち、0.6 秒後に 結果発表 (白い幕は 後ろに 残す。エンディングは ここに 挟む)
     finishT+=dtReal; if(goal3T<0){ if(songRemaining()<=0){ goal3T=0; bgmHalt(); } } else goal3T+=dtReal;   /* 曲の時計だけで 決める (実時間の 保険は タブを 隠して 戻った時に 余韻を 切るので 使わない。曲が 無い・止まった時も 時計は 進む、Codex 指摘 10/27) */
-    if((goal3T>=0 || songRemaining()<=ENDING3_LEAD) && !ending3 && !resultShown) startEnding(); if(ending3) ending3.update(dtReal); }   // オルゴールの 余韻が 聞こえなく なったら すぐ エンディング (灰色へ → むにゃむにゃ → 目が開く → ばあ！)、終わったら 結果発表
+    if((goal3T>=0 || songRemaining()<=ENDING3_LEAD) && !ending3 && !resultShown) startEnding(); if(ending3) ending3.update(Math.min(0.05, dtReal)); }   // オルゴールの 余韻が 聞こえなく なったら すぐ エンディング (灰色へ → むにゃむにゃ → 目が開く → ばあ！)、終わったら 結果発表。場面の 時計は 1 コマ 0.05 秒まで (タブから 戻った時に 止まっていた 時間を 足さない = 声と ずれない、Codex 指摘 10/27)
   else if(state==='finish'){   // 宇宙へ: おばけは加速しながら レールを駆け上がる。空は暗く、遠くまで見えるように
     finishT+=dtReal;
     if(!blast){ if(stage>=2){ v*=Math.exp(0.25*dtReal); const ds=moveSpeed(v)*dtReal; s+=ds; ensureCourse(s, moveSpeed(v)); if(stage===2) updateSmall2(ds, dtReal); } else { v+=LAUNCH_ACC*dtReal; s+=v*dtReal; ensureCourse(s, v); } tidyCourse(launchS);   // 見守るカメラより後ろの区間だけ片づける (軌道は残す)。2 面: 打ち上げはなく そのまま先へ加速
