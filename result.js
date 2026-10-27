@@ -29,9 +29,8 @@ const CSS = `
 .rs-speed{position:absolute;left:0;right:0;top:calc(7vh + env(safe-area-inset-top));text-align:center;color:#fff;font-weight:900;font-size:clamp(34px,9vw,72px);-webkit-text-stroke:.16em #3a7ad8;paint-order:stroke fill}
 .rs-speed rt{font-size:.3em;-webkit-text-stroke:.1em #3a7ad8}
 .rs-speed small{font-size:.5em}
-.rs-tag{display:block;margin:4px auto 0;width:max-content;font-size:clamp(12px,3.2vw,16px);font-weight:bold;color:#fff;-webkit-text-stroke:0;border-radius:10px;padding:2px 12px;background:rgba(255,120,40,.85)}
+.rs-tag{display:inline-block;margin-left:.3em;vertical-align:baseline;font-size:max(.26em,11px);font-weight:bold;color:#fff;-webkit-text-stroke:0;border-radius:.6em;padding:.12em .55em;background:rgba(255,120,40,.85);white-space:nowrap}   /* 「○○ km」の 右下に 小さく (下の 褒め言葉と 重ならない、10/27 社長) */
 .rs-tag.rec{background:rgba(230,40,90,.9);animation:rs-pop .6s ease}
-.rs-tag.rank{background:rgba(60,120,220,.9)}
 @keyframes rs-pop{40%{transform:scale(1.25)}}
 .rs-praise{position:absolute;left:8px;right:8px;top:calc(7vh + clamp(52px,13vw,106px) + env(safe-area-inset-top));text-align:center;color:#fff;font-weight:900;font-size:clamp(20px,5.6vw,42px);-webkit-text-stroke:.14em #ff9a2e;paint-order:stroke fill}
 .rs-praise rt{font-size:.38em;-webkit-text-stroke:.1em #ff9a2e}
@@ -81,7 +80,7 @@ export function createResult(root, { actx, faces }){
   return {
     show(d){
       clear(); root.hidden = false; root.className = 'rs-root' + (d.god ? ' rs-god' : '');
-      const tags = (d.booster ? '<span class="rs-tag">ブースターつき</span>' : '') + (d.rank ? `<span class="rs-tag rank">ランキング ${d.rank}い！</span>` : '') + (d.record ? '<span class="rs-tag rec">しんきろく！</span>' : '');   /* rank = ライバルと 自分の 記録を 合わせた 順位 (10 位まで、10/27 社長) */
+      const tags = (d.booster ? '<span class="rs-tag">ブースターつき</span>' : '') + (d.record ? '<span class="rs-tag rec">しんきろく！</span>' : '');   /* 順位の 札は 出さない (速さと 重なる・青は 合わない、10/27 社長)。しんきろくは 新記録の 時だけ */
       let h = '<canvas class="rs-conf"></canvas>'
         + `<div class="rs-speed"><ruby>時速<rt>じそく</rt></ruby> ${fmt(d.kmh)} <small>km</small>${tags}</div>`
         + (d.praise ? `<div class="rs-praise">${nameHtml(d.praise)}より はやい！</div>` : '')

@@ -162,6 +162,7 @@ function glowTex(){
 
 const WANDER_FACES = ['egao', 'hee', 'shobon', 'egao', 'odoroki', 'muhyojo', 'egao', 'eehatena', 'ganbaru'];   // タイトルで うろうろする おばけの 表情の順 (笑ったり 困ったり)
 const GH = 30, GZ = -170, GY = -24;   // うろうろする おばけの 高さ・奥行き・高さの中心 (カメラから 約 175 先、画面の 上から 約 6 割 = 題名の 絵と ボタンの 間。−40 = 下から 3 割 では ボタンと 重なった、10/27 社長)
+const GY_DREAM = -2;   // 夢の タイトルを 縦持ちで 見る時の 高さの中心 (縮めた 画面の 上から 約 48% = 題名の 下・雲の 中ほど。−24 だと 雲の 下に はみ出た、10/27 社長)
 
 // 自転の説明の地球 (設計書 5 章): 雲の海の上、画面の上の方。回る速さは 見て分かるように縮めてある (本物の 1 日 1 周ではない)
 const ER = 100, EC = new THREE.Vector3(0, 75, -620), TILT = THREE.MathUtils.degToRad(23.4);
@@ -241,7 +242,7 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
   ghost.renderOrder = 10; ghost.scale.set(GH * 0.75, GH, 1); ghost.position.set(0, GY, GZ); scene.add(ghost);
   const gw = { x:0, vx:0, target:0, next:1.5, face:'egao', faceAt:2.5, fi:0, dir:0, hop:-1, fade:-1 };
 
-  let t = 0, flashT = -1, mode = title ? 'title' : 'talk', diveT = -1;
+  let t = 0, flashT = -1, mode = title ? 'title' : 'talk', diveT = -1, dream = false;   // dream = 夢の タイトル (縦持ちの 時は おばけを 雲の 中に 収める)
   if(!title) ghost.visible = false;
   const look = new THREE.Vector3(), fwd = new THREE.Vector3(), side = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), q1 = new THREE.Quaternion(), north = new THREE.Vector3(), east = new THREE.Vector3();
   const DIVE_TURN = 1.6, DIVE_SEC = 3.2, dv = { p0:new THREE.Vector3(), l0:new THREE.Vector3(), p:new THREE.Vector3(), n:new THREE.Vector3(), c:new THREE.Vector3(), R:2, fit:1 };   // 1 面への出発: 日本を こちらへ 回す 秒 / 全体の秒 / 計算の置き場 (p・n = 回し終えた時の 日本、c = カメラの 行き先)
@@ -342,7 +343,7 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
   }
 
   function wander(dt){
-    const halfW = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * (-GZ), range = Math.max(0, Math.min(70, halfW * 0.8 - GH * 0.4));   // 画面の幅に合わせて うろうろの幅を狭める (スマホの縦長)
+    const port = dream && camera.aspect < 1, halfW = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * (-GZ), range = Math.max(0, Math.min(70, halfW * (port ? 0.55 : 0.8) - GH * 0.4));   // 画面の幅に合わせて うろうろの幅を狭める (スマホの縦長)
     gw.next -= dt; if(gw.next <= 0){ gw.target = (Math.random() * 2 - 1) * range; gw.next = 3 + Math.random() * 3; }
     gw.target = Math.max(-range, Math.min(range, gw.target));
     const want = Math.max(-14, Math.min(14, (gw.target - gw.x) * 0.9));
@@ -351,7 +352,7 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
     gw.faceAt -= dt; if(gw.faceAt <= 0){ gw.fi = (gw.fi + 1) % WANDER_FACES.length; gw.face = WANDER_FACES[gw.fi]; gw.faceAt = 2.5 + Math.random() * 1.5; gw.hop = 0; }
     ghost.material.map = ghostTex[gw.face][gw.dir];
     let sq = 1; if(gw.hop >= 0){ gw.hop += dt; const k = gw.hop / 0.35; sq = 1 + 0.08 * Math.sin(Math.min(1, k) * Math.PI); if(k >= 1) gw.hop = -1; }   // 表情が変わる時に 小さく跳ねる
-    ghost.position.set(gw.x, GY + 4 * Math.sin(t * 2.2) + (sq - 1) * 30, GZ);
+    ghost.position.set(gw.x, (port ? GY_DREAM : GY) + 4 * Math.sin(t * 2.2) + (sq - 1) * 30, GZ);   // 夢の タイトルの 縦持ちは 高く・幅も 狭く (雲の 下に はみ出た、10/27 社長)
     ghost.scale.set(GH * 0.75 / Math.sqrt(sq), GH * sq, 1);
     ghost.material.rotation = Math.max(-0.2, Math.min(0.2, -gw.vx * 0.012));   // 進む向きに 少し傾く
   }
@@ -428,5 +429,5 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
   let spaceK = 0, spaceTo = 0;
   const ext = extra ? extra({ scene, camera, glow, ghostTex, speedEl, sparkle:() => sparkle(actx), loader, earthFit, space:on => { spaceTo = on ? 1 : 0; }, credit }) : null;
   resize(window.innerWidth, window.innerHeight);
-  return { scene, camera, update, setMode, cue, dive, depart, resize, dispose, musicCredit:s => { creditMusic = s || ''; showCredit(); }, get mode(){ return mode; } };
+  return { scene, camera, update, setMode, setDream(on){ dream = on; }, cue, dive, depart, resize, dispose, musicCredit:s => { creditMusic = s || ''; showCredit(); }, get mode(){ return mode; } };
 }

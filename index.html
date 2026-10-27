@@ -28,6 +28,7 @@
   #mom3 rt{font-size:.5em;letter-spacing:0}
   #roll3{position:fixed;left:16px;right:16px;top:calc(64px + env(safe-area-inset-top));height:38%;pointer-events:none;opacity:0;transition:opacity .6s;z-index:2;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent)}   /* 子ども部屋の スタッフロール: 縦持ち = 上側 (右上の 速さの下)、横長 = 左の 帯 (下の 字幕の上まで) */
   @media (min-aspect-ratio:1/1){ #roll3{left:max(16px,3vw);right:max(16px,3vw);top:calc(64px + env(safe-area-inset-top));bottom:calc(110px + env(safe-area-inset-bottom));height:auto} #roll3 .in{display:grid;grid-template-columns:30vw 1fr 30vw;align-items:start} #roll3 .ca,#roll3 .cl,#roll3 .ce{grid-column:1} #roll3 .cr{grid-column:3;grid-row:2} }   /* 横長: はじめ (つくった ひと〜AI) は 左の 帯だけ、素材は 左と 右の 帯に 分けて 同時に、最後の スペシャルサンクスは 左 (10/27 社長)。縦持ちは 上の 帯に 1 列 */
+  @media (max-aspect-ratio:999/1000){ #roll3 .in{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;align-items:start} #roll3 .ca,#roll3 .ce{grid-column:1 / -1} #roll3 .cl{grid-column:1} #roll3 .cr{grid-column:2;grid-row:2} }   /* 縦持ち: 素材の 所からは 左右 2 列 (1 列だと 長くて 駆け足に なった、10/27 社長) */
   #roll3 .in{position:absolute;left:0;right:0;top:0;text-align:center;color:#fff;font-size:clamp(11px,2.3vmin,15px);line-height:1.55;text-shadow:0 0 5px rgba(30,16,50,.95),0 1px 2px rgba(0,0,0,.9);will-change:transform}
   #roll3 img{display:block;width:min(72%,220px);height:auto;margin:0 auto 1.4em}
   #roll3 h4{margin:1.5em 0 .35em;font-size:.82em;font-weight:normal;color:#ffe2a0;letter-spacing:.14em}
@@ -1808,9 +1809,9 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   const rest=Math.max(1, goal-kmh).toLocaleString('en-US'), remainLine= stage===1 ? '{自転|じてん}まで あと '+rest+' km！' : '{公転|こうてん}まで あと '+rest+' km！';
   const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'title', label:'タイトルに もどる', big:true}] :   /* 3 面の 合格 (エンディングの 後) は タイトルへ だけ (10/27 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
   const soloButtons= ok ? [{id:'retry', label:'もういちど', big:true}, {id:'title', label:'タイトルに もどる'}] : [...buttons, {id:'title', label:'タイトルに もどる'}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎへ は 出さず タイトルへ (10/27 設計書) */
-  const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage]) : null;   /* 速さを 面ごとの 上位 10 件へ。ライバルと 合わせて 10 位以内なら「ランキング ◯い！」、自分の 1 位を 超えたら「しんきろく！」 */
+  const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage]) : null;   /* 速さを 面ごとの 上位 10 件へ (ランキングの 板に 出る)。自分の 1 位を 超えたら「しんきろく！」(順位の 札は 出さない、10/27 社長) */
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
-  resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:!!(sc && sc.best), rank: sc ? sc.rank : 0, god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons: soloStage ? soloButtons : buttons, confetti:ok,
+  resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:!!(sc && sc.best), god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons: soloStage ? soloButtons : buttons, confetti:ok,
     onButton:id=>{ if(ERRLOG) logSend({button:id}); if(id==='retry') retry(false); else if(id==='booster') retry(true); else if(id==='next') goNext(); else goTitle(); } });
   if(ERRLOG) logSend({result: ok ? 'ok' : 'ng', kmh, stage, fail:failCount[stage]});
 }
@@ -1848,7 +1849,9 @@ function startSolo(n, story){   // ステージ n だけ 遊ぶ (10/27 社長): 
   });
 }
 function makeTitle(){   // 天国の タイトルの 文字・ボタン。クリア済みなら 夢の タイトル (眠る 赤ちゃんの 夢の 雲の 中、10/27 社長「一度 クリアしたら ずっと」)
-  return OP.createTitle($('optitle'), { dream: CLEARED_Q || REC.isCleared(), babies:BABIES, canvas:cv, onTap:()=>{ if(state==='title' && canStart() && !pendingStart && !panelUI && !opTitle.menuOpen) openTitleMenu(); } });
+  const t=OP.createTitle($('optitle'), { dream: CLEARED_Q || REC.isCleared(), babies:BABIES, canvas:cv, onTap:()=>{ if(state==='title' && canStart() && !pendingStart && !panelUI && !opTitle.menuOpen) openTitleMenu(); } });
+  if(op) op.setDream(t.dream);   /* 夢の 雲の 中に うろうろの おばけを 収める (縦持ち) */
+  return t;
 }
 function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション。夢の タイトルは ステージ 1〜3・ぜんぶ あそぶ・オプション
   const dream=opTitle.dream, items= dream ? [{id:'s1', label:'ステージ 1'}, {id:'s2', label:'ステージ 2'}, {id:'s3', label:'ステージ 3'}, {id:'start', label:'ぜんぶ あそぶ', big:true}, {id:'options', label:'オプション', small:true}] : [{id:'start', label:'はじめから はじめる', big:true}, {id:'options', label:'オプション'}];
@@ -2047,8 +2050,8 @@ const starGeo=new THREE.BufferGeometry(); const starAng=new Float32Array(STAR_CA
   starGeo.setAttribute('position', new THREE.BufferAttribute(pos,3).setUsage(THREE.DynamicDrawUsage)); starGeo.setAttribute('color', new THREE.BufferAttribute(col,3)); starGeo.setAttribute('size', new THREE.BufferAttribute(size,1)); starGeo.setAttribute('phase', new THREE.BufferAttribute(phase,1)); }
 const tunnelStars=new THREE.Points(starGeo, starMat); tunnelStars.frustumCulled=false; tunnelStars.visible=false; scene.add(tunnelStars);   // (stars は宇宙の星空で使用済みの名前)
 let starT=-1, starOut=0; const SF=mkFrame(), STAR_DELAY=2;   // starT = トンネルが出てからの秒数 (−1 = 出ていない)、starOut = 消え具合 0→1。STAR_DELAY = 加速レーンが止まってから 出すまでの秒数 (9/15 社長: 少し早い → 2 秒遅く)
-function updateStarTunnel(dt){
-  const songOn= (state==='run' && songRemaining()<=FINISH_LEAD+PLATE_QUIET-STAR_DELAY) || state==='finish', warpOn= stage===2 && state==='run' && warp2>=0, launchOut= blast || segFor(s).phase==='launch';   // 曲の終わりのトンネル / 2 面の惑星から惑星へのワープ (10/1)
+function updateStarTunnel(dt){   // 子ども部屋 (3 面の 最後) では 出さない: ベッドに 落ちた 後に カラフルな キラキラが 残った (縦持ち、10/27 社長)
+  const songOn= !(stage===3 && nurseryOn3()) && ((state==='run' && songRemaining()<=FINISH_LEAD+PLATE_QUIET-STAR_DELAY) || state==='finish'), warpOn= stage===2 && state==='run' && warp2>=0, launchOut= blast || segFor(s).phase==='launch';   // 曲の終わりのトンネル / 2 面の惑星から惑星へのワープ (10/1)
   const on= songOn || warpOn;
   if(!on){ if(starT>=0){ starT=-1; starOut=0; tunnelStars.visible=false; } return; }
   if(songOn && !launchOut && starOut>0 && starOut<1) starOut=0;   /* ワープの消えかけから 曲の終わりのトンネルに切り替わったら 出し直す (Codex 指摘 10/1) */
