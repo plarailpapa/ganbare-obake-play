@@ -27,6 +27,7 @@ const CSS = `
 @keyframes rs-in{from{opacity:0}}
 .rs-conf{position:absolute;inset:0;width:100%;height:100%}
 .rs-speed{position:absolute;left:0;right:0;top:calc(7vh + env(safe-area-inset-top));text-align:center;color:#fff;font-weight:900;font-size:clamp(34px,9vw,72px);-webkit-text-stroke:.16em #3a7ad8;paint-order:stroke fill}
+.rs-num{display:inline-block;white-space:nowrap}
 .rs-speed rt{font-size:.3em;-webkit-text-stroke:.1em #3a7ad8}
 .rs-speed small{font-size:.5em}
 .rs-tag{display:inline-block;margin-left:.3em;vertical-align:baseline;font-size:max(.26em,11px);font-weight:bold;color:#fff;-webkit-text-stroke:0;border-radius:.6em;padding:.12em .55em;background:rgba(255,120,40,.85);white-space:nowrap}   /* 「○○ km」の 右下に 小さく (下の 褒め言葉と 重ならない、10/27 社長) */
@@ -76,19 +77,25 @@ const nameHtml = p => rubyHtml(p.kana ? '{' + p.name + '|' + p.kana + '}' : p.na
 export function createResult(root, { actx, faces }){
   if(!document.getElementById('rs-css')){ const st = document.createElement('style'); st.id = 'rs-css'; st.textContent = CSS; document.head.appendChild(st); }
   let stopConf = null, gen = 0, voice = null;   // gen = 表示の番号 (閉じた後に 遅れて届いた声を 鳴らさない・次の画面を 変えない、Codex 指摘 10/20)
+  const fitSpeed = () => {   // 速さと 札を 1 行に 収める: 画面の 幅に 入りきらない 時だけ 文字を 小さく (札が 次の 行に 回って 褒め言葉と 重なった、Codex 指摘 10/27)
+    const sp = root.querySelector('.rs-speed'), num = sp && sp.firstChild; if(!num) return;
+    sp.style.fontSize = ''; for(let i = 0; i < 2; i++){ const w = num.getBoundingClientRect().width, avail = innerWidth - 16; if(w <= avail) break;   /* 札の 字は 11px より 小さく しないので 2 回 合わせる */
+      sp.style.fontSize = (parseFloat(getComputedStyle(sp).fontSize) * avail / w).toFixed(1) + 'px'; }
+  };
+  addEventListener('resize', fitSpeed);
   function clear(){ gen++; if(voice){ try{ voice.stop(); }catch(e){} voice = null; } if(stopConf){ stopConf(); stopConf = null; } root.innerHTML = ''; root.className = ''; root.hidden = true; }
   return {
     show(d){
       clear(); root.hidden = false; root.className = 'rs-root' + (d.god ? ' rs-god' : '');
       const tags = (d.booster ? '<span class="rs-tag">ブースターつき</span>' : '') + (d.record ? '<span class="rs-tag rec">しんきろく！</span>' : '');   /* 順位の 札は 出さない (速さと 重なる・青は 合わない、10/27 社長)。しんきろくは 新記録の 時だけ */
       let h = '<canvas class="rs-conf"></canvas>'
-        + `<div class="rs-speed"><ruby>時速<rt>じそく</rt></ruby> ${fmt(d.kmh)} <small>km</small>${tags}</div>`
+        + `<div class="rs-speed"><span class="rs-num"><ruby>時速<rt>じそく</rt></ruby> ${fmt(d.kmh)} <small>km</small>${tags}</span></div>`
         + (d.praise ? `<div class="rs-praise">${nameHtml(d.praise)}より はやい！</div>` : '')
         + `<div class="rs-line">${rubyHtml(d.ok ? d.okLine : (d.remainLine || ''))}</div>`
         + `<div class="rs-ch rs-obake"><div class="rs-fr"><img alt="" src="${d.ok ? faces.obake.egao : faces.obake.eehatena}"></div></div>`;   /* 足りない時は 口開け (えー！？) の顔 (10/20 社長) */
       if(d.god) h += `<div class="rs-ch rs-kami"><div class="rs-fr"><img alt="" src="${faces.kami.egao}"></div></div><div class="rs-box"><span class="rs-nm">かみさま</span>${rubyHtml(d.god.line.text)}</div>`;
       h += '<div class="rs-btns">' + d.buttons.map(b => `<button type="button" class="rs-btn ${b.big ? 'rs-big' : 'rs-small'}" data-id="${b.id}">${b.label}</button>`).join('') + '</div>';
-      root.innerHTML = h;
+      root.innerHTML = h; fitSpeed();
       const btns = root.querySelector('.rs-btns');
       root.style.setProperty('--rs-bh', btns.getBoundingClientRect().height + 'px');   // 神様の言葉の箱は ボタンの上に
       let done = false;
