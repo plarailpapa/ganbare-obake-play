@@ -16,7 +16,7 @@ const CSS = `
 .op-confirm p{margin:0 0 8px;font-size:14px;line-height:1.5}
 .op-panel .op-close{margin-top:16px;padding:.55em 2.2em;border-color:#f29a1f;background:#f29a1f;color:#fff}
 `;
-function injectCss(){ if(document.getElementById('op-css')) return; const st = document.createElement('style'); st.id = 'op-css'; st.textContent = CSS; document.head.appendChild(st); }
+function injectCss(){ if(document.getElementById('options-css')) return; const st = document.createElement('style'); st.id = 'options-css'; st.textContent = CSS; document.head.appendChild(st); }
 
 export function createOptions({ volume, onVolume, onReset, onClose }){
   injectCss();

@@ -1846,7 +1846,8 @@ cv.addEventListener('pointerdown', e=>{
 for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audioResume(), {passive:true});   /* iPhone は 指を離した時 (pointerup / touchend) しか 音を出す許可にならない。導入の会話の間も 曲・声が鳴るように いつでも 許可を取る (10/23 社長: iPhone で 1 面の前の 天国の曲が 鳴らない。前は 面の曲が要る時だけ) */
 window.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') lane=Math.max(0,lane-1); else if(e.key==='ArrowRight') lane=Math.min(LANES-1,lane+1);
-  else if(e.key===' '||e.key==='Enter'){ if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !optionsUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
+  else if(e.key===' '||e.key==='Enter'){ if(e.repeat || (e.target instanceof Element && e.target.closest('button'))) return;   /* ボタンに 合わせた Enter・Space は ボタンに 任せる (オプションで Enter → 始まって しまった)・長押しの くり返しは 受けない (Codex 指摘 10/27) */
+    if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !optionsUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
   else if((e.key==='c'||e.key==='C') && stage>=2){ camMode2= camMode2==='watch' ? 'follow' : 'watch'; pop(camMode2==='watch' ? 'カメラ: みまもる' : 'カメラ: おばけに あわせる', true); }
 });
 

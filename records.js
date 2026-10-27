@@ -4,8 +4,9 @@ const KEY = 'ganbare-obake-records-v1', TOP = 10;
 let mem = null;
 function load(){
   if(mem) return mem;
-  try{ const o = JSON.parse(localStorage.getItem(KEY) || '{}'); mem = o && typeof o === 'object' ? o : {}; }catch(_){ mem = {}; }
-  if(!mem.scores || typeof mem.scores !== 'object') mem.scores = {};
+  try{ const o = JSON.parse(localStorage.getItem(KEY) || '{}'); mem = o && typeof o === 'object' && !Array.isArray(o) ? o : {}; }catch(_){ mem = {}; }
+  const sc = mem.scores && typeof mem.scores === 'object' && !Array.isArray(mem.scores) ? mem.scores : {}; mem.scores = {};
+  for(const k of ['1', '2', '3']) if(Array.isArray(sc[k])) mem.scores[k] = sc[k].filter(s => s && typeof s === 'object' && Number.isFinite(s.kmh));   // 形の おかしい 記録は 捨てる (JSON としては 正しくても 壊れている 時、Codex 指摘 10/27)
   return mem;
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(mem)); }catch(_){} }
