@@ -179,11 +179,12 @@ export function nurseryWorld(scene, world, P, opts, out){   // world = 世界の
   const nl = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), color:0xffc98a, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false })); nl.position.copy(p3(-600, 860, N.room.z1 - 160)); nl.scale.setScalar(700 * MM3); root.add(nl);
   crib(root, out);
   scene.fog = new THREE.Fog(0x24163a, 250 * MM3, 2200 * MM3);   // 夜の 紫の もや: 床の上からは 部屋の奥が 見えない (何か分からない、社長)
-  const Cw = new THREE.Vector3(), cp = new THREE.Vector3();
+  const Cw = new THREE.Vector3(), cp = new THREE.Vector3(); let fk = 0, fkT = -1e9;   // 画面の形の 係数 (なめらかに 追う) と その時刻
   out.frame = (cam, aspect) => { scene.fog.near = 1e6; scene.fog.far = 2e6;   /* 部屋を 見渡す カメラ (確かめ用 ?room=1・引いていく カメラの 行き先)。もやは なし */
     /* 部屋の中、手前の壁ぎわの 壁より 低い所 (高さ 2.25 m) から 45° 見下ろす: 下向きの 見え方は すべて 壁に 当たるので 部屋の 外 (まっくら) は 映らない (10/27 社長「壁の外が 見えると CG らしさが 上がる」)。
        横長 = 部屋の まん中寄り (らせん・ベッド・メリー・ラグ・本棚が 全部 入る)、縦持ち = ベッドの 正面 (横幅が 狭いので ベッドと らせんの 後半)。間の 形は その間 */
-    const R = N.room, k = Math.min(1, Math.max(0, aspect - 0.5)), x = N.crib.x + (-1250 - N.crib.x) * k, h = R.h - 150, z = R.z0 + 50;
+    const now = performance.now() / 1000, kt = Math.min(1, Math.max(0, aspect - 0.5)); fk += (kt - fk) * Math.min(1, (now - fkT) * 3); fkT = now;   // 途中で 縦 ↔ 横 に 回しても 約 0.5 秒で すっと 移る (瞬間移動しない、Codex 指摘 10/27)。久しぶりに 呼ばれた時は すぐ 合わせる
+    const R = N.room, x = N.crib.x + (-1250 - N.crib.x) * fk, h = R.h - 150, z = R.z0 + 50;
     world.updateMatrixWorld(); root.localToWorld(p3(x, h, z, cp)); root.localToWorld(p3(x, 0, z + h / Math.tan(FRAME_PITCH), Cw));   // カメラ / 見る点 (画面の まん中 = 床)
     cam.position.copy(cp); cam.up.set(0, 1, 0).transformDirection(root.matrixWorld); cam.lookAt(Cw); cam.updateProjectionMatrix(); cam.updateMatrixWorld(); };
   const CINE_A = 8, CINE_B = 24, NEAR_A = 25, NEAR_B = 33, NEAR_D = 30;   // 引き始め・部屋の 見下ろしに 着く・らせんの 着地点へ 寄り始め (らせんで 下り始める 所)・寄り終わり (子ども部屋の 始まりから 秒。8 秒までは 何の場所か 分からない 低い カメラ、10/27 社長「子供部屋と わからない区間を 長く」) / 寄り終わりの 着地点までの 距離 (mm。見下ろしの 向きの まま ぐっと 寄って 画面いっぱい → 白、10/27 社長)
