@@ -23,6 +23,7 @@
   #flash{position:fixed;inset:0;background:radial-gradient(circle at 82% 46%, rgba(255,255,255,.95) 0%, rgba(255,240,180,.5) 25%, rgba(255,240,180,0) 60%);opacity:0;pointer-events:none;z-index:1}
   #flash.blue{background:radial-gradient(circle at 50% 50%, rgba(225,238,255,.95) 0%, rgba(90,140,255,.55) 35%, rgba(40,80,200,0) 75%)}   /* 海王星の雲に突っ込んだ瞬間の 青い光 (10/4) */
   #flash.on{animation:flashbg .8s ease-out forwards}
+  #white3{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:1}   /* 子ども部屋の 終わり: らせんの 着地点へ ぐっと 寄りながら 画面が 真っ白に (10/27 社長) */
   @keyframes flashbg{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
   #target{position:absolute;left:16px;top:calc(14px + env(safe-area-inset-top));font-size:14px;opacity:.95}
   #ladder{position:absolute;left:16px;top:calc(40px + env(safe-area-inset-top));display:flex;gap:3px;max-width:58%;flex-wrap:wrap}   /* 段が 15 個になったので 小さめ・折り返し可 */
@@ -73,6 +74,7 @@
   <div id="tap">タップで はじめる</div>
   <div id="finish" class="panel" hidden><h1>FINISH！</h1><p id="fin2"></p><p style="font-size:12px;opacity:.8">タップで もういちど</p></div>
   <div id="flash"></div>
+  <div id="white3"></div>
   <div id="credit"></div>
 </div>
 <div id="optitle" hidden></div>
@@ -1531,11 +1533,20 @@ function swapWorld3(){ const old=views3.get(pi3); if(old){ old.dispose(); views3
 function canStart(){ return kitsReady && (stage!==3 || bgmReady || bgmFail); }   // 3 面は 曲の長さで 世界の長さを決めるので 曲が読めるまで (読めないと決まるまで) 始めない (Codex 指摘 10/8: 仮の 300 秒で決めると 子ども部屋に届かない)
 function nurseryOn3(){ const r=plan3[pi3]; return stage===3 && pass3!==false && !!r && r.def.key==='nursery'; }   // 子ども部屋に 入っている (最後の輪を 足りる速さで くぐった時だけ。足りない時 (pass3 = false) は 天の川。確かめ用 ?world=5 で 子ども部屋から 始めた時は 輪を通らない = pass3 が null のまま → 入っている扱い)
 function nurseryT0(){ return plan3[pi3].t0; }   // 子ども部屋の 始まりの時刻 (曲の時計。nurseryOn3() の時だけ 使う)
-function nurseryLight3(){   // 子ども部屋を 遠くから見る時: おばけ (約 1 mm) を 光の点 (いつも 同じくらいの 見かけ) と 光の筋 (通った跡、古いほど 薄い) で 見せる (設計書 3 章。2 面の 特別カメラの 光の尾と 同じ作り)
-  const gp=ghost.position; ghostGlow.visible=true; ghostGlow.material.opacity=0.9; const gw=Math.max(1, camera.position.distanceTo(gp)*0.007)/ghost.scale.x; ghostGlow.scale.set(gw, gw, 1);   // 光の玉は ほたるくらいの 小さな点 (2 面の 3 分の 1。大きいと おばけが おもちゃ並みに 見えて 部屋が 巨大に見えない、10/27 社長)。おばけの子なので おばけの大きさの分を 割り戻す
+function nurseryLight3(a=1){   // a = 濃さ (0〜1、カメラが 離れるにつれて ふわっと)。子ども部屋を 遠くから見る時: おばけ (約 1 mm) を 光の点 (いつも 同じくらいの 見かけ) と 光の筋 (通った跡、古いほど 薄い) で 見せる (設計書 3 章。2 面の 特別カメラの 光の尾と 同じ作り)
+  const gp=ghost.position; ghostGlow.visible=a>0; ghostGlow.material.opacity=0.9*a; ov2Trail.visible=a>0; ov2Trail.material.opacity=a; if(a<=0) return; const gw=Math.max(1, camera.position.distanceTo(gp)*0.007)/ghost.scale.x; ghostGlow.scale.set(gw, gw, 1);   // 光の玉は ほたるくらいの 小さな点 (2 面の 3 分の 1。大きいと おばけが おもちゃ並みに 見えて 部屋が 巨大に見えない、10/27 社長)。おばけの子なので おばけの大きさの分を 割り戻す
   let n=0; const put=(x, y, z)=>{ if(n>=OV2_PTS) return; trailXYZ[n*3]=x; trailXYZ[n*3+1]=y; trailXYZ[n*3+2]=z; n++; };
   trailPts.length=0; for(const p of ghHist) trailPts.push(p); trailPts.push(gp); if(trailPts.length<2) put(gp.x, gp.y, gp.z); else { trailCurve.points=trailPts; const N=(trailPts.length-1)*OV2_SUB; for(let i=0;i<=N;i++){ trailCurve.getPoint(i/N, _ovT); put(_ovT.x, _ovT.y, _ovT.z); } }
-  setTrail2(n, 3); ov2Trail.visible=true; }   // 光の筋も 細く (3 画素)
+  setTrail2(n, 3); }   // 光の筋も 細く (3 画素)
+function ghostBody3(on){ for(const c of ghost.children) if(c.isMesh) c.visible=on; boosterFx.visible=on && boosterOn; }   // おばけの 体 (と ブースター) を 出す・消す。光の点は そのまま
+function railFade3(f){ for(let k=0;k<LANES;k++){ const m=railMats[k], tr=f<1; if(m.transparent!==tr){ m.transparent=tr; m.needsUpdate=true; } m.opacity=f; m.visible=f>0; glowMats[k].opacity=0.22*f; glowMats[k].visible=f>0; } surf2Mat.opacity=0.10*f; rib2Mat.opacity=0.35*f; surf2Mat.visible=rib2Mat.visible=f>0; }   // レール 3 本と その間の 光る面・輪郭線を うすく (f = 濃さ 0〜1、10/27 社長「周りの エフェクトが 残る」)。材質は 全部の面で 共通 → 1 で 元どおり
+let cine3=false; const WHITE3_A=30.5, WHITE3_B=33;   // 子ども部屋の 引くカメラを 使っている (描く範囲を 元へ 戻すため) / 画面が 白く なり始める・真っ白 (子ども部屋の 始まりから 秒。カメラが 着地点の 3 cm 手前まで 寄る 33 秒に 合わせる)
+function nurseryCam3(){   // 子ども部屋の 上へ 引き続ける カメラ (nursery3.js の cine) と 遠くからの おばけの 光。使った コマは true
+  const w= nurseryOn3() ? views3.get(pi3) : null, on=!!(w && w.placed && w.cine && w.cine(stageT, camera, camera.aspect, nurseryT0(), ghost.position));
+  if(!on){ if(cine3){ cine3=false; camera.near=1; camera.updateProjectionMatrix(); nurseryLight3(0); ghostBody3(true); railFade3(1); scene.visible=true; $('white3').style.opacity=0; } return false; }   // やり直し・タイトルへ: 3 面の ふつうの 描く範囲へ
+  const tn=stageT-nurseryT0(), home=tn>=plan3[pi3].def.path.times.bed, d=camera.position.distanceTo(ghost.position), fade= home ? Math.min(1, Math.max(0, (d-240)/360)) : 1; cine3=true; ghostBody3(!home); railFade3(fade);   // ベッドに 着いたら 体を消す (寄った カメラに 止まった おばけが 見えると 違う感じ、10/27 社長。着く時は カメラが 約 70 cm 先なので 消えても 分からない)。レール 3 本・光の点・光の筋も カメラが 約 50 cm → 20 cm に 寄る間 (約 28.4〜29.5 秒) に 消す (10/27 社長「コースが 3 本線で 残る」「光る球・点々が 残る」)
+  nurseryLight3(home ? fade : Math.min(1, Math.max(0, (d-40)/160))); scene.visible=!(home && fade<=0);   // 消え切ったら コース側 (レール・おばけ・光・輪などの 効果) は 丸ごと 描かない = 部屋だけ
+  const tw=Math.min(1, Math.max(0, (tn-WHITE3_A)/(WHITE3_B-WHITE3_A))); $('white3').style.opacity=tw*tw*(3-2*tw); return true; }   // 着地点へ 寄りながら なめらかに 真っ白へ   // 光は カメラが 約 3 cm → 17 cm 離れる間に ふわっと 出る
 function clearWorlds3(){ sparks.length=0; sparkMesh.count=0; for(const w of views3.values()) w.dispose(); views3.clear(); if(lost3){ lost3.dispose(); lost3=null; } lost3On=false; pass3=null; gates3=[]; pi3=0; view3Due=-1; gateA3=0; gate3.visible=false; }
 let move3=S3.V3_MOVE;   // 3 面の おばけの実際の進み (m/秒)。世界ごとの速さ (planWorlds の move。② は コースの長さ ÷ 時間) へ なめらかに寄せる (速度計の数字とは 別)
 function resetWorlds3(){ clearWorlds3(); view3(0); view3(1); move3=(plan3[0] && plan3[0].move) || S3.V3_MOVE; }
@@ -1711,7 +1722,7 @@ function finishRun(){   // 曲の終わり 5 秒前: 結果を用意し、時速
   spaceDark0=parseFloat($('space').style.opacity)||0; launchS=s; ghostGlow.visible=true; shadow.visible=false;   // 空の暗さは ここから 6 秒で 1 へ (update で)
 }
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
-function resetRun(){ bgmStop(); ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
+function resetRun(){ bgmStop(); $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
 const EARTH2_KMH = S2.PLANETS2.find(p=>p.name==='地球').kmh, GOAL3_KMH = 830000;   // 2 面の合格 = 地球の公転 (時速 107,200)、3 面の「おいぬいた」= 太陽系の公転
 function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め言葉・ボタン・足りない時の 神様
@@ -1858,6 +1869,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   shadow.position.copy(G.p).addScaledVector(G.r, laneX).addScaledVector(G.u, 0.12); shadow.quaternion.copy(ghost.quaternion); shadow.rotateX(-Math.PI/2); shadow.scale.setScalar(gsc);
 
   if(state==='finish'){   // 見守るカメラ: その場に残り 少しずつ後ろ・上へ引きながら おばけを見送る
+    if(stage===3 && nurseryCam3()){ stars.position.copy(camera.position); space2.position.copy(camera.position); updateFx(dt); return; }   // 子ども部屋は FINISH の後も 見下ろしの まま (ゴールの 光 → 白 は Task 5)
     camera.position.copy(launchCam.pos).addScaledVector(launchCam.u, finishT*1.5).addScaledVector(launchCam.t, -finishT*2.5);
     const target= blast ? blastLook : gp, dist=camera.position.distanceTo(gp);
     camera.far=Math.max(stage>=2 ? CAM_FAR2 : 8000, dist*1.5+2000);   // 遠ざかる おばけが描画距離の外で消えないように (2 面は 本物の速さで 数百 km 先まで飛ぶ、Codex 指摘 10/1)
@@ -1901,6 +1913,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     else camera.lookAt(stage>=2 ? C.p : C.p.clone().addScaledVector(G.r, laneX*0.5));
   }
   camera.fov += ((FOV_LOW+(FOV_MIN-FOV_LOW)*gf+FOV_KICK*kick+FOV_SPEED*spR+FOV2*k2+10*satW)-camera.fov)*k; camera.updateProjectionMatrix();
+  if(stage===3) nurseryCam3();   // 子ども部屋: 約 4 秒から 上へ 引き続ける カメラに 置き換える (後ろからの カメラは 下で 計算し続け、引き始めの 位置に 使う)
   if(stage===1){ scene.fog.far=Math.min(AHEAD_MAX*0.9, 700+v*3); scene.fog.near=scene.fog.far*0.18; }   // 速いほど 遠くまで見える (作ってある範囲まで。FINISH 後は 上の分岐で別扱い)
   stars.position.copy(camera.position); space2.position.copy(camera.position); if(stage===2){ updateSun2(dt); placeSun2(); }
   updateFx(dt);

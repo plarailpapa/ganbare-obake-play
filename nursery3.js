@@ -5,14 +5,16 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const MM3 = 1.2;
+const ENTRY = {x:300, z:1500}, GK = Math.log((1 + Math.sqrt(5)) / 2) / (Math.PI / 2), GOLD = {rs:2520, ra:400, re:60, b0:184 * Math.PI / 180 - Math.atan(GK)};   // コースの入口 = ドアの前 / 黄金の らせん (4 分の 1 回るごとに 半径 1/φ、10/27 社長「黄金の回転」): 始まりの 半径・下り始める 半径・終わりの 半径 (ベッドの まん中 近く)・始まりの 角度 (ドアの前から 真下より 4° 右へ 走り出す 向きに なる 角度)
+const GC = {x:ENTRY.x + GOLD.rs * Math.cos(GOLD.b0), z:ENTRY.z - GOLD.rs * Math.sin(GOLD.b0)};   // らせんの 中心 (約 −2155, 932) = ベッドと メリーの 中心
 export const NURSERY = {
   room:{x0:-3200, x1:800, z0:-1200, z1:1800, h:2400},          // 部屋の壁 (X・Z の位置、mm) と 高さ。横 4 m × 奥 3 m (+X の壁 = 見下ろしの 左、+Z の壁 = 上)
   door:{x:300, w:800, h:2000},                                  // ドア (+Z の壁の 左寄り = 左上)
-  entry:{x:300, z:1500},                                        // コースの入口 = ドアの前 (ここから 部屋の中 = −Z へ 走り出す)
+  entry:ENTRY,                                                  // コースの入口 = ドアの前 (ここから 部屋の中 = −Z へ 走り出す)
   desk:{x:200, z:-900, w:1200, d:600, h:720},                   // 机 (左下の 角): 天板の まん中・横 (X)・奥行き (Z)・高さ (床から)
-  crib:{x:-2845, z:600, w:650, d:1200, h:950, mattress:450},    // ベビーベッド (右の壁ぎわ。壁から 30 mm 離す = 壁側の脚を 登れる、10/27): 柵の高さ・マットレスの上面 (床から)
-  merry:{x:-2845, z:600, y:1450, r:200},                        // メリーの 輪の高さ (床から)・半径
-  rug:{x:-1650, z:-50, r:550, h:12}                             // まるい ラグ (まん中より 下。コースの 下の方の 通り道 (z −800) の 上)
+  crib:{x:GC.x, z:GC.z, w:650, d:1200, h:950, mattress:450},    // ベビーベッド (右寄り。黄金の らせんの 中心に 置くため 右の壁から 約 72 cm 離す、10/27 社長 A 案): 柵の高さ・マットレスの上面 (床から)
+  merry:{x:GC.x, z:GC.z, y:1450, r:200},                        // メリーの 輪の高さ (床から)・半径
+  rug:{x:-450, z:450, r:550, h:5}                               // まるい ラグ (厚さ 5 mm。12 mm は 段差が 目立った、10/27 社長) (ドア寄りの 上の方。らせんは ラグの 左下の 端を 約 90 cm 横切る = 中心は 通らない、10/27 社長)
 };
 const FLOOR_Y = -0.45;   // 床 = root の y −0.45 (root の原点 = レールの まん中、3 面の ほかの世界と同じく 地面から 0.45 上)
 export const p3 = (x, h, z, out = new THREE.Vector3()) => out.set(x * MM3, h * MM3 + FLOOR_Y, z * MM3);   // mm (h = 床からの高さ) → 部屋の座標の 単位
@@ -49,14 +51,14 @@ const BLOCK_COLS = ['#e05a4f', '#f2c14e', '#4f86e0', '#5cbf75', '#d9b07a', '#f3e
 function archGeo(w, h, d, r){ const s = new THREE.Shape(); s.moveTo(-w / 2, 0); s.lineTo(-r, 0); s.absarc(0, 0, r, Math.PI, 0, true); s.lineTo(w / 2, 0); s.lineTo(w / 2, h); s.lineTo(-w / 2, h); s.closePath();   // 門の上の 半円に くりぬいた積み木
   const g = new THREE.ExtrudeGeometry(s, { depth:d, bevelEnabled:false, curveSegments:12 }); g.translate(0, 0, -d / 2); return g; }
 function prismGeo(w, h, d){ const s = new THREE.Shape(); s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(0, h); s.closePath(); const g = new THREE.ExtrudeGeometry(s, { depth:d, bevelEnabled:false }); g.translate(0, 0, -d / 2); return g; }   // 三角の屋根
-function blocks(root){   // ラグの上の 積み木あそび (飾り。コースが 門の トンネルを くぐり、塔の間を すり抜ける、10/27 社長「真ん中の積み木も コースに」): 門 2 つ・塔 3 本・散らばった 積み木。置き場所は コースから 6 cm 以上 (門は 左右 約 2.5 cm)
+function blocks(root){   // ラグの上の 積み木あそび (飾り): らせんが ラグの 端を 横切る所に 門 2 つ (トンネル、らせんの 向きに 回す) と その先の 両脇に 互い違いの 塔 3 本 (通り道から 12.5 cm)、ラグの 中ほど (通り道から 24 cm 以上) に 散らばった 積み木 (10/27 社長「ラグの中心を 通らなくても 積み木と 会える」)。置き場所は らせんの 試算から
   const L = [], b = NURSERY.rug.h;   // [形, x, h (下の面の 高さ、床から), z, 色, 回転]
   const put = (k, x, y, z, c, ry = 0) => L.push([k, x, y, z, c, ry]);
-  for(const [x, z, c] of [[-1450, 230, 4], [-1455, 150, 2]]){ put('pillar', x - 60, b, z, c); put('pillar', x + 60, b, z, c); put('arch', x, b + 120, z, (c + 3) % 7); }   // 門 (2 つ続きの トンネル。柱の間 60 mm)
+  for(const [x, z, ry, c] of [[7, 483, -2.638, 4], [-35, 412, -2.602, 2]]){ const cx = Math.cos(ry) * 60, cz = -Math.sin(ry) * 60; put('pillar', x - cx, b, z - cz, c, ry); put('pillar', x + cx, b, z + cz, c, ry); put('arch', x, b + 120, z, (c + 3) % 7, ry); }   // 門 (柱の間 60 mm。門の 向き = らせんの 進む向き)
   const tower = (x, z, ks) => { let y = b; ks.forEach((k, i) => { put(k, x, y, z, (i * 2 + 1) % 7, i * 0.3); y += k === 'pillar' ? 120 : 60; }); };
-  tower(-1700, 0, ['pillar', 'cube', 'pillar', 'cube', 'roof']); tower(-1640, -320, ['pillar', 'cube', 'pillar', 'roof']); tower(-1971, -339, ['cube', 'pillar', 'roof']);   // 塔 (コースの 左右に 互い違い)
+  tower(-240, 326, ['pillar', 'cube', 'pillar', 'cube', 'roof']); tower(-127, 62, ['pillar', 'cube', 'pillar', 'roof']); tower(-406, 122, ['cube', 'pillar', 'roof']);   // 塔 (らせんの 左右に 互い違い)
   const R = seeded(2210);
-  for(const [x, z] of [[-1950, 150], [-2050, -50], [-1850, 300], [-1300, -250], [-1400, -420], [-1250, 100], [-1550, -480], [-2050, 200], [-1330, -60], [-1600, 330]]) put(['cube', 'cube', 'pillar', 'roof'][(R() * 4) | 0], x, b, z, (R() * 7) | 0, R() * Math.PI);   // 散らばった 積み木 (コースから 10 cm 以上)
+  for(const [x, z] of [[-700, 700], [-850, 450], [-600, 850], [-400, 800], [-900, 250], [-750, 150], [-300, 900], [-150, 700]]) put(['cube', 'cube', 'pillar', 'roof'][(R() * 4) | 0], x, b, z, (R() * 7) | 0, R() * Math.PI);   // 散らばった 積み木
   const G = { cube:new THREE.BoxGeometry(60, 60, 60).translate(0, 30, 0), pillar:new THREE.BoxGeometry(60, 120, 60).translate(0, 60, 0), arch:archGeo(180, 60, 60, 38), roof:prismGeo(60, 40, 60) };
   for(const k in G){ const items = L.filter(o => o[0] === k); if(!items.length) continue; const geo = bakeNight(G[k].scale(MM3, MM3, MM3)), im = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color:NIGHT, vertexColors:true }), items.length), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), col = new THREE.Color();
     items.forEach((o, i) => { im.setMatrixAt(i, m4.compose(p3(o[1], o[2], o[3], v), q.setFromAxisAngle(AY, o[5]), one)); im.setColorAt(i, col.set(BLOCK_COLS[o[4]])); });
@@ -92,8 +94,8 @@ function crib(root, out){ const C = NURSERY.crib, g = new THREE.Group(); g.posit
   bx(C.w - 40, 120, C.d - 40, 0, C.mattress - 60, 0, '#f6efe6');   // マットレス (から。赤ちゃんは 見せない、社長)
   const glowM = new THREE.SpriteMaterial({ map:glowTex(), color:0xfff2cf, transparent:true, opacity:0.25, blending:THREE.AdditiveBlending, depthWrite:false });   // うっすら光る ベッド (Task 4 で ゴールに向けて 明るく)
   const glow = new THREE.Sprite(glowM); glow.position.set(0, (C.mattress + 40) * MM3, 0); glow.scale.set(C.d * 1.1 * MM3, C.d * 0.9 * MM3, 1); g.add(glow);
-  const M = NURSERY.merry, poleX = hw;   // メリー: 部屋の側の 柵から 柱を立て、腕で ベッドの まん中の上へ
-  bx(25, M.y + 200 - C.h, 25, poleX, (C.h + M.y + 200) / 2, 0, '#f2f2f6'); bx(poleX, 25, 25, poleX / 2, M.y + 200, 0, '#f2f2f6');
+  const M = NURSERY.merry, poleX = -hw;   // メリー: 壁側の 柵から 柱を立て、腕で ベッドの まん中の上へ (らせんは 柱から 30 cm 以上 離れる)
+  bx(25, M.y + 200 - C.h, 25, poleX, (C.h + M.y + 200) / 2, 0, '#f2f2f6'); bx(hw, 25, 25, poleX / 2, M.y + 200, 0, '#f2f2f6');
   const merry = new THREE.Group(); merry.position.set(0, M.y * MM3, 0); g.add(merry);   // 回る所 (輪と ぶら下がる 星・月・雲・ハート)
   merry.add(mesh(new THREE.TorusGeometry(M.r * MM3, 6 * MM3, 8, 48).rotateX(Math.PI / 2), '#f7d6e8'));
   const hub = mesh(new THREE.CylinderGeometry(4 * MM3, 4 * MM3, 200 * MM3, 6), '#f2f2f6'); hub.position.y = 100 * MM3; merry.add(hub);
@@ -112,38 +114,27 @@ function hang(k, c){ const s = new THREE.Shape(), r = 35;   // メリーに ぶ�
   const m = mesh(g, c); if(k === 'cloud'){ for(const [x, y] of [[-26, -4], [26, -4]]){ const b = mesh(new THREE.SphereGeometry(22 * MM3, 14, 10), c); b.position.set(x * MM3, y * MM3, 0); m.add(b); } } return m; }
 function glowTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.4, 'rgba(255,255,255,0.35)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
 
-/* コース (社長 10/26・10/27: 床 → ベビーベッドを 駆け上がる → メリーで くるっと → ベッドの中へ)。部屋の座標 (mm) で 作り、root の座標 (= 世界の入口の座標) に 直した 道のり。レールの まん中は 面から 0.45 (床なら y 0)
-   ドアの前の 入口から 部屋の中へ 走り出し → ラグに のぼって 積み木の 門を くぐり 塔の間を すり抜け → おもちゃの そばを 右へ (z −800) (10/27 社長) → 右の壁ぞいに 上へ曲がり ベッドの 壁側・下の端の 脚へ → 脚を 駆け上がる (10/27 社長) → 脚の上で 宙へ (光のレール) → のぼりながら 壁側から メリーの まわりへ → まわる (半径 260 mm = つり飾りの外・柱の内) → まわりながら 下りて 飾りの下へ (回るのは 合わせて 3/4 周、10/27 社長「半周〜3/4 周」) → ベッドの まん中へ 斜め下に 飛び込む (この先 nextCtrl3 が まっすぐ伸ばす分は マットレスと 床の下に 隠れる)
-   marks = 道のりの印 (stage3.js の times と 組で 着く時刻を決める): climb = 駆け上がり始め・merry = メリーを 回り始め・down = 下り始め・bed = 終わり */
+/* コース (社長 10/26・10/27): 黄金の らせん (「黄金の回転」、4 分の 1 回るごとに 半径が 1/φ)。部屋の座標 (mm) で 作り、root の座標 (= 世界の入口の座標) に 直した 道のり。レールの まん中は 面から 0.45 (床なら y 0)
+   ドアの前の 入口から 真下 (4° 右) へ 走り出し、左回りに 約 2 周 (半径 2.52 m → 6 cm) して ベッドの上の メリーへ 吸い込まれ、らせんの まま ベッドの まん中へ 下りる (10/27 社長「ストンと 下りずに 黄金の 螺旋を 続けながら 降りる」。最後は 斜め 45° 下向き = この先 nextCtrl3 が まっすぐ伸ばす分は マットレスと 床の下に 隠れる)
+   途中: ラグの 左下の 端で 積み木の 門 (2 つ続き) を くぐり、そこから レールが ふわっと 浮き上がって 塔の間を 抜け、らせんに 沿って ゆっくり のぼり (いちばん急な所で 約 22°)、メリーの 高さで 回り、半径 40 cm から 下り始めて つり飾り (半径 16〜24 cm・高さ 1.24 m より上) の 下を くぐる (半径 25 cm で 高さ 約 1.17 m)
+   marks = 道のりの印 (stage3.js の times と 組で 着く時刻を決める): climb = 浮き上がり始め・merry = メリーの 高さに 着く・down = 下り始め・bed = 終わり */
 let nPath = null;
 export function nurseryPath(){ if(nPath) return nPath;
-  const C = NURSERY.crib, M = NURSERY.merry, xw = C.x - C.w / 2, zF = C.z - C.d / 2 - 22.5 - 0.45 / MM3, rb = 60, rf = 150, rl = 260, yl = M.y, zb = -800, E = NURSERY.entry;   // 壁側の脚の x・脚の 下側の面 (レールの まん中、mm) / 床から 脚への 曲がり・脚から 宙への 曲がり / メリーの まわりの 半径・高さ / 下の方の 通り道の z / 入口
-  const P = [], U = [], at = {}, v = new THREE.Vector3();
-  const add = (x, y, z, ux = 0, uy = 1, uz = 0) => { P.push(new THREE.Vector3((E.x - x) * MM3, y * MM3, (E.z - z) * MM3)); U.push(new THREE.Vector3(-ux, uy, -uz)); };   // 部屋の座標 (mm) → root の座標 (部屋は 180° 回して 置く)。上の向き (なければ 真上)
-  const piece = (n, f) => { for(let i = 1; i <= n; i++) f(i / n); }, mark = k => { at[k] = P.length - 1; };   // 区間を n 個の点に (約 5 mm ごと)
+  const C = NURSERY.crib, M = NURSERY.merry, RG = NURSERY.rug, SL = 1230, sOf = r => (GOLD.rs - r) * Math.hypot(1, GK) / GK, SM = sOf(587), SA = sOf(GOLD.ra), SE = sOf(GOLD.re), yb = C.mattress + 2;   // 水平の 道のり (mm、らせんの 始まりから): 浮き上がり始め (2 つめの 門の 先)・メリーの 高さに 着く (半径 約 59 cm)・下り始め・終わり / マットレスの 2 mm 上
+  const P = [], U = [], at = {};
+  const add = (x, y, z, ux = 0, uy = 1, uz = 0) => { P.push(new THREE.Vector3((ENTRY.x - x) * MM3, y * MM3, (ENTRY.z - z) * MM3)); U.push(new THREE.Vector3(-ux, uy, -uz)); };   // 部屋の座標 (mm) → root の座標 (部屋は 180° 回して 置く)。上の向き (なければ 真上)
+  const mark = k => { at[k] = P.length - 1; };
+  const ss = k => { k = Math.min(1, Math.max(0, k)); return k * k * (3 - 2 * k); };
   const herm = (a, b, ma, mb, u) => { const u2 = u * u, u3 = u2 * u; return (2 * u3 - 3 * u2 + 1) * a + (u3 - 2 * u2 + u) * ma + (-2 * u3 + 3 * u2) * b + (u3 - u2) * mb; };   // a → b を なめらかに (始まりと終わりの 傾き つき)
-  const line = (x0, z0, x1, z1) => piece(Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 5)), u => add(x0 + (x1 - x0) * u, 0, z0 + (z1 - z0) * u));   // 床の まっすぐ
-  const arc = (cx, cz, r, a0, a1) => piece(Math.max(2, Math.ceil(Math.abs(a1 - a0) * r / 5)), u => { const a = a0 + (a1 - a0) * u; add(cx + r * Math.cos(a), 0, cz + r * Math.sin(a)); });   // 床の 曲がり
-  const bez = (b0, b1, b2, b3, n) => { const c = new THREE.CubicBezierCurve3(b0, b1, b2, b3); piece(n, u => { c.getPoint(u, v); add(v.x, v.y, v.z); }); };
-  const ring = (a, r, y) => add(M.x + r * Math.cos(a), y, M.z + r * Math.sin(a));
-  const RG = NURSERY.rug, rugY = (x, z) => { const k = Math.min(1, Math.max(0, (RG.r + 10 - Math.hypot(x - RG.x, z - RG.z)) / 30)); return RG.h * k * k * (3 - 2 * k); };   // ラグの上は 12 mm 高い (ふちで なめらかに のぼる)
-  const fl = new THREE.CatmullRomCurve3([[E.x, E.z], [E.x, 1150], [0, 750], [-700, 600], [-1250, 560], [-1450, 380], [-1450, 230], [-1480, 60], [-1650, -130], [-1820, -340], [-1950, -560], [-2150, -760], [-2450, zb], [xw + 300, zb]].map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');   // 床: ドアの前から 部屋の中へ → ラグに のぼって 積み木の 門 (2 つ続き) を くぐり 塔の間を すり抜け → ラグを 下りて おもちゃの そばを 右へ (画面の右 = −X)
-  for(const p of fl.getSpacedPoints(Math.ceil(fl.getLength() / 5))) add(p.x, rugY(p.x, p.z), p.z);
-  arc(xw + 300, zb + 300, 300, -Math.PI / 2, -Math.PI);                                       // 右の壁ぞいに 上向き
-  line(xw, zb + 300, xw, zF - rb);
-  mark('climb');
-  piece(19, u => { const a = -Math.PI / 2 + u * Math.PI / 2; add(xw, rb + rb * Math.sin(a), zF - rb + rb * Math.cos(a), 0, -Math.sin(a), -Math.cos(a)); });   // 床から 脚の面へ (上の向き = 曲がりの 中心の方)
-  piece(178, u => add(xw, rb + (C.h - rb) * u, zF, 0, 0, -1));                               // 脚を 駆け上がる
-  piece(48, u => { const a = u * Math.PI / 2; add(xw, C.h + rf * Math.sin(a), zF + rf - rf * Math.cos(a), 0, Math.sin(a), -Math.cos(a)); });   // 脚の上で 宙へ (外へ 曲がる)
-  const g0 = new THREE.Vector3(xw, C.h + rf, zF + rf), g3 = new THREE.Vector3(M.x - rl, yl, M.z);
-  bez(g0, g0.clone().setZ(g0.z + 160), g3.clone().setZ(g3.z - 160), g3, 130);                // のぼりながら メリーの まわりへ (壁側から 入る)
-  mark('merry');
-  const lp = 210 * Math.PI / 180, d2 = 60 * Math.PI / 180, y2 = 1150, a2 = Math.PI - lp - d2;
-  piece(195, u => ring(Math.PI - lp * u, rl, yl));                                            // メリーの まわりを 回る
-  mark('down');
-  piece(80, u => ring(Math.PI - lp - d2 * u, rl, herm(yl, y2, 0, 0, u)));                    // まわりながら 下りて つり飾りの下へ
-  const b0 = new THREE.Vector3(M.x + rl * Math.cos(a2), y2, M.z + rl * Math.sin(a2)), b3 = new THREE.Vector3(M.x, C.mattress + 2, M.z), dn = b3.clone().sub(b0).setY(0).normalize().setY(-1).normalize();   // ベッドの まん中 (マットレスの 2 mm 上) へ 斜め 45° 下に 飛び込む
-  bez(b0, b0.clone().add(new THREE.Vector3(Math.sin(a2), 0, -Math.cos(a2)).multiplyScalar(150)), b3.clone().addScaledVector(dn, -250), b3, 160);
+  const rugY = (x, z) => RG.h * ss((RG.r + 410 - Math.hypot(x - RG.x, z - RG.z)) / 400);   // ラグの上は 5 mm 高い (ふちの 41 cm 手前から じわっと のぼり 始め = コースに 沿って 約 48 cm・約 2 秒・1° 弱、10/27 社長「段差を 超える所が 急」。ふちの 1 cm 手前で のぼり 切る = レールの 横幅の分も ふちで 埋まらない、10/27 社長「角で めり込んで いる」)
+  const yAt = (s, x, z) => s <= SL ? rugY(x, z) : s <= SA ? Math.max(rugY(x, z), M.y * ss((s - SL) / (SM - SL))) : herm(M.y, yb, 0, -(SE - SA), (s - SA) / (SE - SA));   // 高さ: 門まで ラグ・床 → ふわっと 浮き上がって メリーの 高さへ → 下り始めから 終わりへ (終わりの 傾き 45° 下)
+  let b = GOLD.b0 + 5 / (GOLD.rs * Math.hypot(1, GK)), s = 0, px = ENTRY.x, pz = ENTRY.z;   // b = らせんの 角度 (始まりの点は 下の add、1 歩目は 5 mm 先から)
+  add(px, 0, pz);
+  for(;;){ const r = GOLD.rs * Math.exp(-GK * (b - GOLD.b0)); if(r < GOLD.re) break;   // 真上から見た 黄金の らせん (画面で 左回り。画面の右 = −X)
+    const x = GC.x - r * Math.cos(b), z = GC.z + r * Math.sin(b); s += Math.hypot(x - px, z - pz); px = x; pz = z;
+    add(x, yAt(s, x, z), z);
+    if(s > SL && !at.climb) mark('climb'); if(s > SM && !at.merry) mark('merry'); if(s > SA && !at.down) mark('down');
+    b += 5 / (r * Math.hypot(1, GK)); }
   mark('bed');
   const cum = new Float64Array(P.length); for(let i = 1; i < P.length; i++) cum[i] = cum[i - 1] + P[i].distanceTo(P[i - 1]);
   const find = sl => { let lo = 0, hi = P.length - 1; while(hi - lo > 1){ const m = (lo + hi) >> 1; if(cum[m] <= sl) lo = m; else hi = m; } return lo; }, frac = (sl, i) => (sl - cum[i]) / Math.max(1e-9, cum[i + 1] - cum[i]);
@@ -165,43 +156,53 @@ function room(root){ const R = NURSERY.room, w = R.x1 - R.x0, d = R.z1 - R.z0, c
   const knob = mesh(new THREE.SphereGeometry(30 * MM3, 12, 8), '#e8c86a'); knob.position.copy(p3(D.x + D.w / 2 - 90, 1000, R.z1 - 60)); root.add(knob);
 }
 
-/* 組み立て (stage3.js の buildWorld から)。out.nursery = { bedGlow, merry }、out.frame(cam, aspect) = 最後の 見下ろし (確かめ用 ?room=1・Task 3 の カメラの 行き先) */
-const FRAME_ROLL = 0.28, FRAME_TILT = (+new URLSearchParams(location.search).get('tilt') || 35) * Math.PI / 180;   // 横長の 見下ろしで 左に空ける 割合 (スタッフロールの場所) / 真上から 手前 (−Z) へ 倒す角度: 35° = 駆け上がる・メリーへ のぼる・ベッドへ 飛び込む 上下の動きが 約 6 割の大きさで 見える (12° では 止まって見える、10/27 社長)。手前の壁は 裏から見るので 描かれない (ドールハウスの 見え方)。確かめ用 ?tilt=度 で 見比べ
+/* 組み立て (stage3.js の buildWorld から)。out.nursery = { bedGlow, merry }、out.frame(cam, aspect) = 部屋を 見渡す カメラ (部屋の中の 低い所から。確かめ用 ?room=1・引いていく カメラの 行き先)、out.cine = 引いて 寄る カメラ */
+const FRAME_PITCH = (+new URLSearchParams(location.search).get('pitch') || 45) * Math.PI / 180;   // 部屋を 見渡す カメラの 見下ろす 角度 (水平から。確かめ用 ?pitch=度)
 export function nurseryWorld(scene, world, P, opts, out){   // world = 世界の root (入口の座標)
   const N = NURSERY, Dk = N.desk, root = new THREE.Group(); root.rotation.y = Math.PI; root.position.set(N.entry.x * MM3, 0, N.entry.z * MM3); world.add(root);   // 部屋 (この中は 部屋の座標)。180° 回して 入口 (world の原点) = ドアの前
   room(root);
   placeModel(root, out, 'assets/nursery/desk.glb', p3(Dk.x, 0, Dk.z), Math.PI, [Dk.w, Dk.h, Dk.d]);   // 机 (左下の 角。模型の 横長を X に)
-  placeModel(root, out, 'assets/nursery/chairDesk.glb', p3(Dk.x, 0, Dk.z + Dk.d / 2 + 160), Math.PI, [520, 950, 520]);   // いす (机の下へ 少し 入れる = 入口から 180 mm 離す、Codex 指摘 10/27)
+  placeModel(root, out, 'assets/nursery/chairDesk.glb', p3(Dk.x, 0, Dk.z + Dk.d / 2 + 10), Math.PI, [520, 950, 520]);   // いす (机の下へ 押し込む = らせんから 40 cm 以上、10/27)
   placeModel(root, out, 'assets/nursery/lampRoundTable.glb', p3(Dk.x + 350, Dk.h, Dk.z - 150), 0, [230, 450, 230]);   // 机の ランプ
   placeModel(root, out, 'assets/nursery/books.glb', p3(Dk.x - 350, Dk.h, Dk.z - 100), 0.2, [300, 220, 160]);   // 机の 本
   const bear = plush('bear', 180, '#b07a52'); bear.position.copy(p3(Dk.x + 120, Dk.h, Dk.z + 50)); bear.rotation.y = 0.3; root.add(bear);   // 机の上の 小さな クマ
   placeModel(root, out, 'assets/nursery/rugRound.glb', p3(N.rug.x, 0, N.rug.z), 0, [N.rug.r * 2, N.rug.h, N.rug.r * 2]);
   blocks(root);
   const bigBear = plush('bear', 380, '#c08a5c'), bigBun = plush('bunny', 330, '#f4f0f6'), bun = plush('bunny', 180, '#f2d6e4');   // 床の ぬいぐるみ (飾り。おもちゃは コースの そば 7〜20 cm に 並べる、10/27 社長「おもちゃの近くを通って」)
-  bigBear.position.copy(p3(-1150, 0, 300)); bigBear.rotation.y = -Math.PI / 2; bigBun.position.copy(p3(-2150, 0, 1450)); bigBun.rotation.y = Math.PI * 0.9; bun.position.copy(p3(-3050, 0, -1050)); bun.rotation.y = 0.4; root.add(bigBear, bigBun, bun);   // 大きな クマは ラグの 入口の横で 積み木の方 (−X) を 向く
-  placeModel(root, out, 'assets/car/taxi.glb', p3(-2450, 0, -620), 0.6, [70, 60, 130]); placeModel(root, out, 'assets/car/sedan.glb', p3(-600, 0, 400), -0.9, [70, 55, 130]);   // 床の おもちゃの車
+  bigBear.position.copy(p3(-1000, 0, -760)); bigBun.position.copy(p3(-1450, 0, 1450)); bigBun.rotation.y = Math.PI * 0.9; bun.position.copy(p3(-3050, 0, -1050)); bun.rotation.y = 0.4; root.add(bigBear, bigBun, bun);   // 大きな クマは らせんの 下の側で 通り道 (+Z) を 向く (浮き上がった レールが 頭の横を 通る)
+  placeModel(root, out, 'assets/car/taxi.glb', p3(-2450, 0, -620), 0.6, [70, 60, 130]); placeModel(root, out, 'assets/car/sedan.glb', p3(450, 0, 700), -0.9, [70, 55, 130]);   // 床の おもちゃの車
   const ball = mesh(new THREE.SphereGeometry(70 * MM3, 20, 14), '#ef6f6c'); ball.position.copy(p3(-2800, 70, -980)); root.add(ball);
-  placeModel(root, out, 'assets/nursery/cardboardBoxOpen.glb', p3(-2400, 0, -1035), 0, [420, 300, 320]);   // おもちゃ箱 (右下)
+  placeModel(root, out, 'assets/nursery/cardboardBoxOpen.glb', p3(-2400, 2, -1035), 0, [420, 300, 320]);   // おもちゃ箱 (右下)。床から 2 mm 浮かせる (底が 床と 重なって ちらついた、10/27 社長)
   placeModel(root, out, 'assets/nursery/pillow.glb', p3(-1950, 0, -1060), 0.2, [300, 120, 300]);
-  placeModel(root, out, 'assets/nursery/bookcaseOpenLow.glb', p3(-1500, 0, N.room.z1 - 160), Math.PI, [800, 600, 300]);   // 本棚 (上の壁、ドアの右)
-  placeModel(root, out, 'assets/nursery/lampRoundTable.glb', p3(-1500, 600, N.room.z1 - 160), 0, [180, 330, 180]);   // 常夜灯 (本棚の上)
-  const nl = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), color:0xffc98a, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false })); nl.position.copy(p3(-1500, 860, N.room.z1 - 160)); nl.scale.setScalar(700 * MM3); root.add(nl);
+  placeModel(root, out, 'assets/nursery/bookcaseOpenLow.glb', p3(-600, 0, N.room.z1 - 160), Math.PI, [800, 600, 300]);   // 本棚 (上の壁、ドアの すぐ右、10/27 社長)
+  placeModel(root, out, 'assets/nursery/lampRoundTable.glb', p3(-600, 600, N.room.z1 - 160), 0, [180, 330, 180]);   // 常夜灯 (本棚の上)
+  const nl = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), color:0xffc98a, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false })); nl.position.copy(p3(-600, 860, N.room.z1 - 160)); nl.scale.setScalar(700 * MM3); root.add(nl);
   crib(root, out);
   scene.fog = new THREE.Fog(0x24163a, 250 * MM3, 2200 * MM3);   // 夜の 紫の もや: 床の上からは 部屋の奥が 見えない (何か分からない、社長)
-  const Cw = new THREE.Vector3(), up = new THREE.Vector3(), back = new THREE.Vector3(), q = new THREE.Vector3();
-  out.frame = (cam, aspect) => { scene.fog.near = 1e6; scene.fog.far = 2e6;   /* 見下ろしでは もやを なくす (高い所からだと 部屋が全部 もやに埋もれて 紫の四角になる、10/23 社長) */
-    const R = N.room, port = aspect < 1, m = 0.04, xs = port ? [R.x0, -1200] : [R.x0, R.x1], t = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));   /* 横長 = 部屋全体を 右に寄せ 左を空ける。縦持ち = ベッドを中心に 部屋の右半分、下の壁を 画面の下へ (上が 空く) (社長 10/26) */
-    const L = port ? -1 + m : -1 + 2 * FRAME_ROLL, Rt = 1 - m, B = -1 + m, T = 1 - m;   // 収める枠 (画面の座標 −1〜1。右 = 右の壁)
-    world.updateMatrixWorld(); up.set(0, 1, 0).transformDirection(root.matrixWorld); back.set(0, 0, -1).transformDirection(root.matrixWorld); cam.up.set(0, 0, 1).transformDirection(root.matrixWorld); cam.updateProjectionMatrix();   // 上 = ドア (+Z)
-    /* 部屋の角 (床と 壁の上) を 実際に 画面へ映して 枠に合わせる (傾きと 遠近の分も 合う、Codex 指摘 10/27): 距離 D は 収まる/はみ出す で 半分ずつ 絞り込み、各 D で 見る点を ずらして 枠の まん中 (縦持ちは 下の壁を 下端) へ */
-    const place = (cx, cz, D) => { root.localToWorld(p3(cx, 0, cz, Cw)); cam.position.copy(Cw).addScaledVector(up, D * MM3 * Math.cos(FRAME_TILT)).addScaledVector(back, D * MM3 * Math.sin(FRAME_TILT)); cam.lookAt(Cw); cam.updateMatrixWorld(); };
-    const box = () => { let x0 = 9, x1 = -9, y0 = 9, y1 = -9; for(const x of xs) for(const z of [R.z0, R.z1]) for(const h of [0, R.h]){ root.localToWorld(p3(x, h, z, q)).project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); } return [x0, x1, y0, y1]; };
-    let cx = (xs[0] + xs[1]) / 2, cz = (R.z0 + R.z1) / 2, lo = (R.h + 300) / Math.cos(FRAME_TILT), hi = 60000, b;   // 見る点 (床、mm)。D = そこから カメラまで (mm、カメラは 壁より 上)
-    const center = D => { const De = D - R.h / Math.cos(FRAME_TILT);   // 画面の端を決めるのは 壁の上の角 → ずらす量は そこまでの距離で
-      for(let it = 0; it < 4; it++){ place(cx, cz, D); b = box(); cx += ((L + Rt) / 2 - (b[0] + b[1]) / 2) * De * t * cam.aspect; cz -= (port ? B - b[2] : (B + T) / 2 - (b[2] + b[3]) / 2) * De * t / Math.cos(FRAME_TILT); }   // 画面の右 = root の −X
-      place(cx, cz, D); b = box(); };
-    for(let k = 0; k < 18; k++){ const D = (lo + hi) / 2; center(D); if(b[1] - b[0] > Rt - L || b[3] - b[2] > T - B) lo = D; else hi = D; }
-    center(hi); };
+  const Cw = new THREE.Vector3(), cp = new THREE.Vector3();
+  out.frame = (cam, aspect) => { scene.fog.near = 1e6; scene.fog.far = 2e6;   /* 部屋を 見渡す カメラ (確かめ用 ?room=1・引いていく カメラの 行き先)。もやは なし */
+    /* 部屋の中、手前の壁ぎわの 壁より 低い所 (高さ 2.25 m) から 45° 見下ろす: 下向きの 見え方は すべて 壁に 当たるので 部屋の 外 (まっくら) は 映らない (10/27 社長「壁の外が 見えると CG らしさが 上がる」)。
+       横長 = 部屋の まん中寄り (らせん・ベッド・メリー・ラグ・本棚が 全部 入る)、縦持ち = ベッドの 正面 (横幅が 狭いので ベッドと らせんの 後半)。間の 形は その間 */
+    const R = N.room, k = Math.min(1, Math.max(0, aspect - 0.5)), x = N.crib.x + (-1250 - N.crib.x) * k, h = R.h - 150, z = R.z0 + 50;
+    world.updateMatrixWorld(); root.localToWorld(p3(x, h, z, cp)); root.localToWorld(p3(x, 0, z + h / Math.tan(FRAME_PITCH), Cw));   // カメラ / 見る点 (画面の まん中 = 床)
+    cam.position.copy(cp); cam.up.set(0, 1, 0).transformDirection(root.matrixWorld); cam.lookAt(Cw); cam.updateProjectionMatrix(); cam.updateMatrixWorld(); };
+  const CINE_A = 8, CINE_B = 24, NEAR_A = 25, NEAR_B = 33, NEAR_D = 30;   // 引き始め・部屋の 見下ろしに 着く・らせんの 着地点へ 寄り始め (らせんで 下り始める 所)・寄り終わり (子ども部屋の 始まりから 秒。8 秒までは 何の場所か 分からない 低い カメラ、10/27 社長「子供部屋と わからない区間を 長く」) / 寄り終わりの 着地点までの 距離 (mm。見下ろしの 向きの まま ぐっと 寄って 画面いっぱい → 白、10/27 社長)
+  const cineCam = new THREE.PerspectiveCamera(), cs = { on:false, dA:1, dirA:new THREE.Vector3(), upA:new THREE.Vector3(), offA:new THREE.Vector3() }, lB = new THREE.Vector3(), lL = new THREE.Vector3(), dirB = new THREE.Vector3(), dir = new THREE.Vector3(), look = new THREE.Vector3(), anc = new THREE.Vector3(), qd = new THREE.Quaternion(), qs = new THREE.Quaternion();
+  out.cine = (t, cam, aspect, t0, gp) => {   /* 上へ 引き続ける カメラ (設計書 2・3 章): CINE_A 秒の ふだんの カメラ (おばけの後ろ) から CINE_B 秒の 部屋の 見下ろし (frame) へ。遠ざかる割合が 一定 (10/21 の 銀河の引きと 同じ。酔わない)・行き先は 毎コマ 画面の形で 計算し直す (縦 ↔ 横 でも 切れない)。NEAR_A〜NEAR_B 秒は おばけが ストンと 落ちるのに 合わせて ベッドへ 寄る (10/27 社長「一度 引いた カメラが ベッドに 寄って行っても いい」)。gp = おばけ (世界の座標)。戻り値 = このカメラを 使ったか */
+    const tn = t - t0, u = (tn - CINE_A) / (CINE_B - CINE_A); if(u < 0){ cs.on = false; return false; }
+    if(!cs.on){ cs.on = true; cs.dA = Math.max(1, cam.position.distanceTo(gp)); cs.dirA.copy(cam.position).sub(gp).normalize(); cs.upA.copy(cam.up); cam.getWorldDirection(cs.offA).multiplyScalar(cs.dA).add(cam.position).sub(gp); }   // 引き始めの カメラを 覚える (offA = 見ていた所 − おばけ: ふだんの カメラは 少し先を 見ている)
+    cineCam.fov = cam.fov; cineCam.aspect = cam.aspect; out.frame(cineCam, aspect); lB.copy(Cw);   // 部屋の 見下ろし (Cw = frame が 見る点)
+    const dB = Math.max(cs.dA, cineCam.position.distanceTo(lB)); dirB.copy(cineCam.position).sub(lB).normalize();
+    const k = Math.min(1, u), e = k * k * (3 - 2 * k); let dist = cs.dA * Math.pow(dB / cs.dA, e); const w = ((dist - cs.dA) / Math.max(1e-6, dB - cs.dA)) ** 2;   /* w = 見る点を 部屋の まん中へ 寄せる 割合 (距離の 2 乗: 近い間に 寄せると 縦持ちで おばけが 画面の端へ 出た) */
+    const sd = Math.min(1, k / 0.6), sw = sd * sd * (3 - 2 * sd);   // 向きは 前半で 後ろから → 斜め上からへ 回し終える
+    qd.setFromUnitVectors(cs.dirA, dirB); qs.identity().slerp(qd, sw); dir.copy(cs.dirA).applyQuaternion(qs);
+    anc.copy(gp).lerp(lB, w); look.copy(anc).addScaledVector(cs.offA, 1 - sw);   // 基準: はじめは おばけ → 十分 離れてから 見下ろしの まん中へ (おばけは いつも 画面の 中ほど)。見る所は 引き始めの 向き (少し先) から なめらかに (カクッと しない)
+    if(tn > NEAR_A){ const T = nurseryPath(); world.localToWorld(T.at(T.len, lL));   // らせんの 着地点へ 寄る: 部屋の 見下ろしから 同じ 向きの まま 一定の割合で 近づき (NEAR_B 秒に 着地点の NEAR_D 手前)、見る点も 着地点へ (距離の 2 乗で 早めに = 着地点が 画面の まん中へ)
+      const k2 = Math.min(1, (tn - NEAR_A) / (NEAR_B - NEAR_A)); dist = dB * Math.pow(NEAR_D * MM3 / dB, k2 * k2 * (3 - 2 * k2)); anc.lerpVectors(lB, lL, 1 - (dist / dB) ** 2); look.copy(anc); }
+    cam.position.copy(anc).addScaledVector(dir, dist); cam.up.copy(cs.upA).lerp(cineCam.up, sw).normalize(); cam.lookAt(look);
+    cam.near = Math.max(1, dist * 0.05); cam.updateProjectionMatrix();   // 描く範囲の 手前は 離れるほど 遠く (奥行きの 精度。約 1,000 倍の 幅)
+    const f = Math.sqrt(Math.max(1, dist / (cs.dA * 4))); scene.fog.near = 250 * MM3 * f; scene.fog.far = 2200 * MM3 * f;   // もやは 引き始めの 4 倍 離れるまで そのまま、その後 引くにつれて 晴れる (子ども部屋だと 分かるのは 16〜18 秒ごろ)
+    return true; };
   const M = out.nursery.merry;
   return [(cam, dt) => { M.rotation.y += dt * 0.6; }];   // メリーは いつも ゆっくり 回る
 }

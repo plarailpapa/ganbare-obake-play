@@ -43,7 +43,7 @@ export const WORLDS3=[
     rival:{name:'ガルーダ'}},
   {key:'east',     name:'悟空と日本の神々', kana:'ごくうと にほんの かみがみ', sec:35, legs:[[999,0,0]], sky:{top:'#2a2010', bot:'#c89040', band:0}, rival:{name:'孫悟空'}},   /* ④ 仏教の世界 (悟空・お釈迦様) と 高天原 (日本の神々) を 1 つに (10/12 社長)。名前は 仮 (世界を作る時に決める) */
   {key:'nursery',  name:'？？？の世界', sec:60, legs:[[999,0,0]], sky:{top:'#0d0718', bot:'#1c1030', band:0, stars:false}, look:'nursery',
-    path:{type:'nursery', times:{climb:18, merry:23, down:26.5, bed:30}}},   /* ドアの前から 床 (積み木の 門と 塔・おもちゃの そば) → ベッドの 壁側の脚を 駆け上がる → メリーを 3/4 周 → ベッドの中へ (10/26・10/27 社長)。times = 子ども部屋の始まりから 各印に 着く秒 (設計書 2 章の表。区間ごとに 速さを決める) */   /* ⑤ 子ども部屋 (名前は 伏せる、10/21 社長)。最後の輪を 時速 830,000 km 以上で くぐった時だけ。足りなければ 代わりに ① と同じ 天の川 (index.html の lost3) */
+    path:{type:'nursery', times:{climb:5, merry:23, down:25, bed:28}}},   /* ドアの前から 黄金の らせん (左回り 約 2 周): 積み木の 門 → レールが ふわっと 浮き上がり → メリーの 高さで 回って → らせんの まま ベッドの まん中へ 下りる (10/26・10/27 社長)。times = 子ども部屋の始まりから 各印に 着く秒 (設計書 2 章の表。区間ごとに 速さを決める) */   /* ⑤ 子ども部屋 (名前は 伏せる、10/21 社長)。最後の輪を 時速 830,000 km 以上で くぐった時だけ。足りなければ 代わりに ① と同じ 天の川 (index.html の lost3) */
 ];
 export const MUSIC3={   /* 3 面の曲の時刻表 (設計書 2026-10-12-ganbare-obake-stage3-music-sync-design.md)。仮の曲 = ジムノペディ第 1 番。時刻 = ステージの時計 (秒、1 曲目の頭の無音を切った所 = 0)。notes = 加速の輪を置く 右手の音 (社長の耳で記録 ?tap=1 → 録音の打鍵に合わせた 75 個)。gates = 世界の切り替え (世界の数 − 1。87.1 = 旋律の休みの まん中、ほかは 音の時刻)。曲を変えたら ?tap=1 で 記録し直す */
   notes:[10.58, 12.74, 14.79, 17.03, 19.41, 21.59, 23.87, 26.32, 28.84, 30.93, 32.93, 35.07, 37.12, 39.28, 41.4, 43.6, 46.14, 48.53, 50.5, 52.45, 54.62, 57.01, 59.15, 61.18, 63.17, 65.44, 67.73, 69.99, 72.11, 74.31, 76.26, 78.31, 80.45, 81.3, 82.39, 85.18, 89.01, 91.44, 93.83, 96.21, 98.7, 100.79, 102.8, 104.93, 107.16, 109.32, 111.61, 113.79, 116.22, 118.25, 120.26, 122.35, 124.5, 126.59, 128.76, 130.8, 133.18, 135.5, 137.49, 139.48, 141.62, 144.01, 146.15, 148.25, 150.27, 152.45, 154.62, 156.69, 159.55, 161.91, 163.91, 166.14, 167.8, 169.36, 170.1],
@@ -309,7 +309,7 @@ export function buildWorld(P, opts){   // P = planWorlds の 1 行、opts = {mob
   if(def.look==='castle') ticks.push(...castleWorld(scene, root, P, opts, out));   // ② 城の大広間 と 3 体の像 (10/12)
   if(def.look==='india') ticks.push(...indiaWorld(scene, root, P, opts, out));   // ③ 亀と象の塔 と 大蛇 (10/13)
   if(def.look==='nursery') ticks.push(...nurseryWorld(scene, root, P, opts, out));   // ⑤ 子ども部屋 (10/22。天井なしの 部屋の中、夜)
-  return {P, scene, bg, root, placed:false, focus:out.focus, nursery:out.nursery, frame:out.frame,
+  return {P, scene, bg, root, placed:false, focus:out.focus, nursery:out.nursery, frame:out.frame, cine:out.cine,
     tick(cam, dt){ bg.position.copy(cam.position); for(const f of ticks) f(cam, dt); },
     dispose(){ out.dead=true; scene.traverse(o=>{ if(o.isInstancedMesh) o.dispose(); if(o.geometry && !o.isSprite) o.geometry.dispose(); for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map) m.map.dispose(); m.dispose(); } }); } };   /* 光の板 (Sprite) の形は three.js 全体の共用なので 捨てない */
 }
