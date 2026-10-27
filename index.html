@@ -7,6 +7,7 @@
 <style>
   html,body{margin:0;height:100%;overflow:hidden;font-family:'Hiragino Maru Gothic ProN','BIZ UDPGothic','Yu Gothic',sans-serif;
     background:linear-gradient(#141036 0%,#3a2560 30%,#b45a7a 55%,#ff9a5c 72%,#ffd9a0 100%);}   /* 夕暮れの空 (3D の背景は透明にして この色を見せる) */
+  body{isolation:isolate}   /* 夢の タイトルの 夜空 (z-index −1) を この 背景の 上・3D の 画面の 下に 描く (無いと 背景の 後ろに 隠れて 夕暮れが 見えた、Codex 指摘 10/27) */
   canvas{display:block;position:fixed;inset:0;touch-action:none;z-index:0}
   #hud{position:fixed;inset:0;pointer-events:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:1}
   #speed{position:absolute;right:16px;top:calc(12px + env(safe-area-inset-top));text-align:right;transform-origin:right top;
