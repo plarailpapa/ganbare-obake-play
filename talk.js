@@ -3,6 +3,9 @@
 // 文の中の {漢字|かな} は ふりがな付きの漢字になる
 
 export const VOICE_PAD = 0.8;   // 声の終わりから 次の行まで (秒)
+let outNode = null, outVol = 1;   // 全部の 音の 出口 = 音の 大きさの つまみ (オプション、10/27 社長)。曲・声・効果音は actx.destination でなく ここへ つなぐ
+export function audioOut(actx){ if(!outNode){ outNode = actx.createGain(); outNode.gain.value = outVol; outNode.connect(actx.destination); } return outNode; }
+export function setAudioVolume(actx, v){ outVol = v; if(outNode) outNode.gain.setTargetAtTime(v, actx.currentTime, 0.05); }
 const TAP_GAP = 0.25, END_GAP = 0.4;   // 行が出てから この秒数は タップを受けない (連打で 2 行進まない) / 「タップで しゅっぱつ！」が出てから この秒数は受けない
 const NAMES = { obake:'おばけ', kami:'かみさま', mama:'おかあさん' };
 
@@ -49,7 +52,7 @@ export function textWait(src){   // 文字だけの時の 待ち時間 (秒)。�
 }
 
 const voiceCache = new Map();   // 声のファイル → 読み込み (AudioBuffer か null)。タイトル画面の間から 先読みしておく (最初の行に 間に合うように、Codex 指摘 10/19)
-function loadSound(actx, url){   // 声・効果音を 1 回だけ読む (読めない時は null)
+export function loadSound(actx, url){   // 声・効果音を 1 回だけ読む (読めない時は null)。エンディングの 歓声も 使う (片づけで ふわっと 消すため 自分で 鳴らす、10/27)
   if(!voiceCache.has(url)) voiceCache.set(url, fetch(url).then(r => r.ok ? r.arrayBuffer() : null)
     .then(ab => ab && new Promise(ok => actx.decodeAudioData(ab, ok, () => ok(null)))).catch(() => null));
   return voiceCache.get(url);
@@ -62,7 +65,7 @@ export function playSound(actx, url, vol = 1, valid = () => true){   // 1 回 �
   if(!actx) return Promise.resolve(null);
   return loadSound(actx, url).then(buf => {
     if(!buf || actx.state !== 'running' || !valid()) return null;
-    const s = actx.createBufferSource(), g = actx.createGain(); g.gain.value = vol; s.buffer = buf; s.connect(g).connect(actx.destination); s.onended = () => g.disconnect(); s.start();
+    const s = actx.createBufferSource(), g = actx.createGain(); g.gain.value = vol; s.buffer = buf; s.connect(g).connect(audioOut(actx)); s.onended = () => g.disconnect(); s.start();
     return s;
   });
 }
@@ -80,7 +83,7 @@ export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, end
   root.querySelector('.tk-go').textContent = endPrompt;
   for(const who of ['obake', 'kami']) for(const url of Object.values(faces[who] || {})){ const im = new Image(); im.src = url; }   // 表情の差し替えで ちらつかないよう 先に読む
 
-  const gain = actx ? actx.createGain() : null; if(gain){ gain.gain.value = 1; gain.connect(actx.destination); }
+  const gain = actx ? actx.createGain() : null; if(gain){ gain.gain.value = 1; gain.connect(audioOut(actx)); }
   const voices = new Map(); let src = null;
   let lines = [], idx = -1, t = 0, wait = 0, cueSec = 0, phase = 'idle', endT = 0, cast = ['obake'], layout = 'stage', enterIdx = 0;
   const face = { obake: null, kami: null };

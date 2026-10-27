@@ -1,6 +1,6 @@
 // エンディング (10/27): 子ども部屋で 真っ白に なった後、赤ちゃんの目から 見た景色。目を閉じて むにゃむにゃ → 瞬きしながら 目が開く → 白い世界に ぼんやり 人影 → タップで ばあ！ (赤ちゃんの 絵の 顔に 寄った所から 上半身まで 引く) → 歓声・おしまい → タップで 結果発表
 // 設計書 docs/superpowers/specs/2026-10-27-ganbare-obake-ending-design.md 2・3 章
-import { createTalk, preloadVoices, playSound } from './talk.js';
+import { createTalk, preloadVoices, loadSound, audioOut } from './talk.js';
 
 const LINES = [   // 声の台本 (10/26 版。声優さんの連絡で「人を」「いくぞ！」)。おばけの 顔の絵は 出さない (cast なし = 赤ちゃんの目から 見た 景色)
   { id:'e-04', who:'obake', cast:[], text:'むにゃむにゃ… どうやら {地球|ちきゅう}に {追|お}いついたみたい…' },
@@ -67,12 +67,13 @@ export function createEnding({ root, talkRoot, actx, faces, onDone, log }){   //
   root.className = 'ed-root'; root.hidden = false;
   root.innerHTML = '<div class="ed-shadows"><div class="ed-sh"><i></i></div><div class="ed-sh"><i></i></div></div><div class="ed-lid"></div><div class="ed-baa"><div class="ed-bg"></div><img class="ed-baby" src="assets/ending/baa.png" width="1143" height="1600" alt="" draggable="false"><div class="ed-owari">おしまい</div></div>';   // ばあ！の 絵は 先に 読んでおく。人影 2 つ (お父さんと お母さんが 左右から すぐ近くで のぞき込む。左右対称だと 怖いので 左 = 近く 大きく 低め、右 = 奥で 小さく 高め・少し 遅れて 出る。赤ちゃんの 目なので 大きく ぼかす。灰色で 陽炎のように ゆらゆら、目鼻は なし = 怖く しない)
   const lid = root.querySelector('.ed-lid'), baa = root.querySelector('.ed-baa'), bg = root.querySelector('.ed-bg'), baby = root.querySelector('.ed-baby'), VOICE_DIR = 'assets/voice/';
-  let talk = null, done = false, t = 0, baaT = -1, cheered = false;
+  let talk = null, done = false, t = 0, baaT = -1, cheered = false; const snd = [];   // snd = 鳴らした 音 (片づけで ふわっと 消す。歓声は 約 4 秒 = おしまいの 後の タップでは まだ 鳴っている、Codex 指摘 10/27)
+  const play = (url, vol) => { if(actx) loadSound(actx, url).then(buf => { if(!buf || done || actx.state !== 'running') return; const s = actx.createBufferSource(), g = actx.createGain(); g.gain.value = vol; s.buffer = buf; s.connect(g).connect(audioOut(actx)); s.onended = () => g.disconnect(); s.start(); snd.push({ s, g }); }); };
   const startBaa = () => {   // タップで ばあ！ (とばす も 同じ): 会話を 片づけ、声と 一緒に 背景と 赤ちゃんの 絵を ぱっと 出す
     if(baaT >= 0 || done) return; baaT = 0;
     if(talk){ talk.dispose(); talk = null; }
     root.classList.add('ed-hide', 'ed-baa-on'); placeBaby(0);
-    if(actx) playSound(actx, VOICE_DIR + 'e-08.mp3', 1, () => !done);
+    play(VOICE_DIR + 'e-08.mp3', 1);
     if(log) log('baa');
   };
   const placeBaby = k => {   // k = 引く 割合 0〜1。顔の まん中に 大きく 寄った所 → 上半身の 枠が 収まる所 (縦持ち・横長 どちらでも 毎コマ 画面の 形で 計算)
@@ -90,7 +91,7 @@ export function createEnding({ root, talkRoot, actx, faces, onDone, log }){   //
       t += dt;
       if(baaT >= 0){
         baaT += dt; placeBaby(Math.min(1, baaT / ZOOM));
-        if(!cheered && baaT >= CHEER_AT){ cheered = true; if(actx) playSound(actx, 'assets/ending/cheer.mp3', 0.8, () => !done); }
+        if(!cheered && baaT >= CHEER_AT){ cheered = true; play('assets/ending/cheer.mp3', 0.8); }
         if(baaT >= OWARI_AT) root.classList.add('ed-owari-on');
         return;
       }
@@ -102,6 +103,10 @@ export function createEnding({ root, talkRoot, actx, faces, onDone, log }){   //
       }
       if(talk) talk.update(dt);
     },
-    dispose(){ if(talk){ talk.dispose(); talk = null; } done = true; root.innerHTML = ''; root.className = ''; root.hidden = true; }
+    dispose(){
+      if(talk){ talk.dispose(); talk = null; } done = true; root.innerHTML = ''; root.className = ''; root.hidden = true;
+      const t0 = actx ? actx.currentTime : 0;
+      for(const { s, g } of snd.splice(0)){ g.gain.setValueAtTime(g.gain.value, t0); g.gain.linearRampToValueAtTime(0, t0 + 0.5); try{ s.stop(t0 + 0.55); }catch(_){} }   // 鳴っている 声・歓声を 0.5 秒で 消す (結果発表・タイトルへ 持ち越さない)
+    }
   };
 }

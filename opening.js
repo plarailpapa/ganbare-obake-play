@@ -1,6 +1,7 @@
 // 導入 (10/19): タイトル画面 (雲の上を おばけが うろうろ) → 雲の上の天国で 神様と新人おばけの会話 → 自転の説明 → 1 面へ。設計書 docs/superpowers/specs/2026-10-16-ganbare-obake-opening-design.md
 import * as THREE from 'three';
 import { cloudTex } from './stage3.js';
+import { audioOut } from './talk.js';
 
 const CH = 'assets/chara/';
 export const FACES = {
@@ -28,7 +29,7 @@ export const OPENING_LINES = [   // 台本 (設計書 3 章)。声は assets/voi
 
 export function sparkle(actx){   // 杖の キラキラの音 (高い音 5 つを 0.06 秒ずつ ずらす)
   if(!actx || actx.state !== 'running') return;
-  const t0 = actx.currentTime, out = actx.createGain(); out.gain.value = 0.12; out.connect(actx.destination);
+  const t0 = actx.currentTime, out = actx.createGain(); out.gain.value = 0.12; out.connect(audioOut(actx));
   [1568, 2093, 2637, 3136, 4186].forEach((f, i) => {
     const o = actx.createOscillator(), e = actx.createGain(), t = t0 + i * 0.06;
     o.type = 'sine'; o.frequency.value = f;
@@ -44,8 +45,16 @@ const OP_CSS = `
 .ot-logo{position:absolute;left:0;right:0;top:calc(9vh + env(safe-area-inset-top));text-align:center;font-size:clamp(38px,11vw,96px)}
 .ot-logo img{width:min(92vw,640px);height:auto;animation:ot-bob 2.4s ease-in-out infinite}
 @keyframes ot-bob{50%{transform:translateY(-.12em)}}
-.ot-tap{position:absolute;left:0;right:0;bottom:calc(13vh + env(safe-area-inset-bottom));text-align:center;font-size:clamp(18px,5vw,30px);font-weight:bold;color:#fff;text-shadow:0 0 6px rgba(80,60,0,.75),0 0 2px #000;animation:ot-blink 1.4s ease-in-out infinite}
-@keyframes ot-blink{50%{opacity:.4}}
+.ot-tap{position:absolute;left:50%;bottom:calc(13vh + env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:88vw;box-sizing:border-box;text-align:center;font-size:clamp(18px,5vw,30px);font-weight:bold;color:#e0782a;padding:.3em 1.3em;border-radius:999px;background:rgba(255,250,240,.85);box-shadow:0 2px 14px rgba(160,110,60,.28);animation:ot-blink 1.6s ease-in-out infinite}   /* 白い 雲の 上でも 読めるよう クリーム色の まるい 帯に だいだい色の 字 (10/27 社長「白地に 白で 見にくい、柔らかく」) */
+@keyframes ot-blink{50%{opacity:.6}}
+.ot-menu{position:absolute;left:0;right:0;bottom:calc(8vh + env(safe-area-inset-bottom));display:none;flex-direction:column;align-items:center;gap:12px}
+.ot-menu-on .ot-menu{display:flex;animation:ot-up .45s cubic-bezier(.25,.6,.3,1)}
+.ot-menu-on .ot-tap{display:none}
+@keyframes ot-up{from{opacity:0;transform:translateY(16px)}}
+.ot-btn{pointer-events:auto;font:inherit;font-weight:bold;font-size:clamp(16px,4.4vw,22px);padding:.5em 1.6em;border:0;border-radius:999px;background:#fff;color:#c0603a;box-shadow:0 3px 0 rgba(170,110,50,.4),0 6px 16px rgba(0,0,0,.15);cursor:pointer;touch-action:manipulation}
+.ot-btn.ot-big{background:#f29a1f;color:#fff;font-size:clamp(19px,5.4vw,28px);box-shadow:0 4px 0 #c46f0a,0 8px 18px rgba(0,0,0,.18)}
+.ot-btn:active{transform:translateY(2px)}
+@media (min-aspect-ratio:1/1) and (max-height:560px){ .ot-logo img{width:auto;height:42vh} .ot-menu{flex-direction:row;bottom:calc(16vh + env(safe-area-inset-bottom))} }   /* 横長の 低い 画面: 題名を 小さめに、ボタンは 横に 並べる (題名・操作の ヒントと 重ならない) */
 .ot-hint{position:absolute;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));text-align:right;font-size:clamp(11px,3vw,14px);line-height:1.5;color:#4a5a7a;opacity:.85}
 .op-speed{position:fixed;left:0;right:0;top:calc(5vh + env(safe-area-inset-top));z-index:36;text-align:center;pointer-events:none;font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;font-weight:900;font-size:clamp(26px,7vw,52px);color:#fff;-webkit-text-stroke:.12em #3a7ad8;paint-order:stroke fill;opacity:0;transition:opacity .4s ease}
 .op-speed rt{font-size:.38em;-webkit-text-stroke:.1em #3a7ad8}
@@ -58,10 +67,16 @@ export function createTitle(root){   // タイトルの文字 (題名・タッ�
   injectCss();
   root.className = 'ot-root'; root.hidden = false;
   root.innerHTML = '<div class="ot-logo"><img src="assets/title-logo.png" alt="がんばれおばけ！"></div>'   /* 題名は 絵 (10/26 社長から 届いた 文字の絵。余白を切って 横 1200) */
-    + '<div class="ot-tap"></div><div class="ot-hint">ひだり / みぎ を タップで レールを うつる<br>かそくを ふむと はやくなる！</div>';
-  const tap = root.querySelector('.ot-tap');
+    + '<div class="ot-tap"></div><div class="ot-menu"></div><div class="ot-hint">ひだり / みぎ を タップで レールを うつる<br>かそくを ふむと はやくなる！</div>';
+  const tap = root.querySelector('.ot-tap'), menuEl = root.querySelector('.ot-menu');
   return {
     setText(s){ tap.textContent = s; },
+    menu(items, onPick){   // 「タップで はじめる」の 後の ボタン (10/27 社長: 最初の タップで 音が 使えるように なり、ここから タイトルの 曲が 鳴る)。items = [{ id, label, big }]
+      menuEl.innerHTML = items.map(b => `<button class="ot-btn${b.big ? ' ot-big' : ''}" data-id="${b.id}">${b.label}</button>`).join('');
+      menuEl.onclick = e => { const b = e.target.closest('button'); if(b) onPick(b.dataset.id); };
+      root.classList.add('ot-menu-on');
+    },
+    get menuOpen(){ return root.classList.contains('ot-menu-on'); },
     hide(){ root.classList.add('ot-out'); },
     dispose(){ root.innerHTML = ''; root.className = ''; root.hidden = true; }
   };
@@ -88,7 +103,7 @@ function glowTex(){
 }
 
 const WANDER_FACES = ['egao', 'hee', 'shobon', 'egao', 'odoroki', 'muhyojo', 'egao', 'eehatena', 'ganbaru'];   // タイトルで うろうろする おばけの 表情の順 (笑ったり 困ったり)
-const GH = 30, GZ = -170, GY = -40;   // うろうろする おばけの 高さ・奥行き・高さの中心 (カメラから 約 175 先、画面の下の方)
+const GH = 30, GZ = -170, GY = -24;   // うろうろする おばけの 高さ・奥行き・高さの中心 (カメラから 約 175 先、画面の 上から 約 6 割 = 題名の 絵と ボタンの 間。−40 = 下から 3 割 では ボタンと 重なった、10/27 社長)
 
 // 自転の説明の地球 (設計書 5 章): 雲の海の上、画面の上の方。回る速さは 見て分かるように縮めてある (本物の 1 日 1 周ではない)
 const ER = 100, EC = new THREE.Vector3(0, 75, -620), TILT = THREE.MathUtils.degToRad(23.4);

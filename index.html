@@ -103,7 +103,9 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import * as S2 from './stage2.js';   // 2 面 (宇宙・惑星レース) の計算と表 (9/30)
 import * as S3 from './stage3.js';   // 3 面 (神々の世界めぐり) の表・作り手・世界の景色 (10/8)
-import { createTalk, preloadVoices, playSound, rubyHtml } from './talk.js';   // 会話の画面 (導入・面のはじめ・エンディングで共通、10/19)
+import { createTalk, preloadVoices, playSound, rubyHtml, audioOut, setAudioVolume } from './talk.js';   // 会話の画面 (導入・面のはじめ・エンディングで共通、10/19)・音の 出口 (音の 大きさの つまみ)
+import * as REC from './records.js';   // 遊びの 記録 (クリア・ハイスコア・音の 大きさ、10/27)
+import * as OPT from './options.js';   // オプションの 板 (音の 大きさ・画面の 向き・記録を 消す、10/27)
 import * as OP from './opening.js';   // 導入 (天国の会話と 自転の説明、10/19)
 import * as RS from './result.js';   // 結果発表の画面 (10/20)
 import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
@@ -1558,7 +1560,7 @@ function railFade3(f){ for(let k=0;k<LANES;k++){ const m=railMats[k], tr=f<1; if
 const MOM3=[{id:'e-01', at:5, len:2.4, text:'どんな {子|こ}に なってほしいかって？'}, {id:'e-02', at:8.4, len:8.0, text:'それは かしこくって、スポーツが できて、やさしくって…'}, {id:'e-03', at:17.4, len:8.6, text:'でも {元気|げんき}に {育|そだ}ってくれたら {何|なに}も いらないわ'}];   // お母さんの声 (子ども部屋の 始まりから 秒・声の長さ。前の声の 終わり + 1 秒、e-03 は 約 26 秒で 終わる)
 const MOM3_DUCK=0.6, MOM3_RAMP=0.6, MOM3_LATE=1.0;   // 声の間の オルゴールの 大きさ (倍) / 下げる・戻す 秒 / 声が 遅れても 鳴らす 秒 (それより 遅い時は 字幕だけ)
 let duck3=null, duckV=1, mom3i=-1, mom3Tok=0, mom3Pre=false; const mom3Done=new Set(), mom3Srcs=[];
-function bgmOut(){ if(!duck3){ duck3=actx.createGain(); duck3.connect(actx.destination); } return duck3; }   // 曲の 出口 (曲を 鳴らし直しても 下げた分が 消えないよう 別の つまみ)
+function bgmOut(){ if(!duck3){ duck3=actx.createGain(); duck3.connect(audioOut(actx)); } return duck3; }   // 曲の 出口 (曲を 鳴らし直しても 下げた分が 消えないよう 別の つまみ)
 function mom3Step(){   // 毎コマ (3 面): 子ども部屋の お母さんの声・字幕・オルゴールを 下げる。時刻は 曲の時計 (タブを隠すと 声も 一緒に 止まる)
   const on=nurseryOn3(), tn= on ? stageT-nurseryT0() : -1, i= on ? MOM3.findIndex(m=>tn>=m.at && tn<m.at+m.len) : -1, el=$('mom3');
   if(on && !mom3Pre && actx){ mom3Pre=true; preloadVoices(actx, 'assets/voice/', MOM3); }   // 子ども部屋に 入ったら 先に 読んでおく
@@ -1621,8 +1623,8 @@ function bgmPrepare(){   // 音の出口と タブ切り替えの見張り (1 �
   alog('版 10/23-c  音 '+actx.state+'  '+actx.sampleRate+' Hz'); actx.onstatechange=()=>alog('音 → '+actx.state);
   document.addEventListener('visibilitychange', ()=>{
     if(!actx) return;
-    if(document.hidden){ if(bgmOn || state==='opening' || ending3) actx.suspend().catch(()=>{}); }   /* 導入・目覚めの場面の 声も 一緒に止める (10/19・10/27 Codex 指摘) */
-    else if(bgmOn || state==='opening' || ending3) audioResume();
+    if(document.hidden){ if(bgmOn || state==='opening' || ending3 || titleMus) actx.suspend().catch(()=>{}); }   /* 導入・目覚めの場面の 声・タイトルの 曲も 一緒に止める (10/19・10/27 Codex 指摘) */
+    else if(bgmOn || state==='opening' || ending3 || titleMus) audioResume();
     else if(bgmWanted && bgmReady && state==='run') bgmPlay();
   });
 }
@@ -1653,10 +1655,19 @@ let heaven=null;   // 鳴らしている 天国の曲 { src, g }
 function heavenPlay(){   // 読めるまでは 無音で待ち、読めたら ふわっと
   if(op) op.musicCredit(HEAVEN_BGM.credit);
   if(!actx || heaven) return;
-  const h=heaven={src:null, g:actx.createGain()}; h.g.gain.value=0; h.g.connect(actx.destination);
+  const h=heaven={src:null, g:actx.createGain()}; h.g.gain.value=0; h.g.connect(audioOut(actx));
   alog('天国の曲を 呼ぶ (音 '+actx.state+')');
   bgmBuf(HEAVEN_BGM.src).then(buf=>{ if(heaven!==h){ alog('天国の曲: もう いらない'); return; } const s=actx.createBufferSource(), t0=actx.currentTime; alog('天国の曲を 鳴らす (音 '+actx.state+')'); s.buffer=buf; s.loop=true; s.connect(h.g); s.start(t0); h.src=s; h.g.gain.setValueAtTime(0, t0); h.g.gain.linearRampToValueAtTime(HEAVEN_BGM.vol, t0+1.5); }).catch(err=>console.error('BGM', HEAVEN_BGM.src, err));
 }
+const TITLE_BGM = {src:'bgm/twinkle-musicbox-short.mp3', vol:0.45, credit:'音楽: きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)'};   // タイトル画面の 曲 (10/27 社長「タイトルの 音楽を オルゴールの きらきら星に」)。子ども部屋と 同じ 音源を くり返す
+let titleMus=null;   // 鳴らしている タイトルの 曲 { src, g }。タイトル画面の 間だけ (frame で 見張る)
+function titleMusicPlay(){   // 読めるまでは 無音で待ち、読めたら ふわっと (最初に 開いた 時は 音の 許可 = 最初の タップまで 鳴らない)
+  if(op) op.musicCredit(TITLE_BGM.credit);
+  if(!actx || titleMus) return;
+  const h=titleMus={src:null, g:actx.createGain()}; h.g.gain.value=0; h.g.connect(audioOut(actx));
+  bgmBuf(TITLE_BGM.src).then(buf=>{ if(titleMus!==h) return; const s=actx.createBufferSource(), t0=actx.currentTime; s.buffer=buf; s.loop=true; s.connect(h.g); s.start(t0); h.src=s; h.g.gain.setValueAtTime(0, t0); h.g.gain.linearRampToValueAtTime(TITLE_BGM.vol, t0+1.5); }).catch(err=>console.error('BGM', TITLE_BGM.src, err));
+}
+function titleMusicStop(fade){ const h=titleMus; titleMus=null; if(!h) return; const t0=actx.currentTime; h.g.gain.cancelScheduledValues(t0); h.g.gain.setValueAtTime(h.g.gain.value, t0); h.g.gain.linearRampToValueAtTime(0, t0+fade); if(h.src) h.src.stop(t0+fade+0.05); setTimeout(()=>h.g.disconnect(), (fade+0.3)*1000); }   // タイトルを 離れたら ふわっと 消す
 function heavenStop(fade){   // 出発で ふわっと消す (読み込み中なら 鳴らさずに終わる)
   const h=heaven; heaven=null; if(!h) return;
   const t0=actx.currentTime; h.g.gain.cancelScheduledValues(t0); h.g.gain.setValueAtTime(h.g.gain.value, t0); h.g.gain.linearRampToValueAtTime(0, t0+fade);
@@ -1806,6 +1817,14 @@ function beginIntro(n, from=0){   // 2 面・3 面のはじめ: 天国の会話�
   talk.start(n===2 ? IN.S2_LINES : IN.S3_LINES, from, {enter:'up'}); heavenPlay();
   if(ERRLOG) logSend({intro:n, from});
 }
+let optionsUI=null;   // 開いている オプションの 板
+function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション
+  opTitle.menu([{id:'start', label:'はじめから はじめる', big:true}, {id:'options', label:'オプション'}], id=>{
+    if(state!=='title' || optionsUI) return;
+    if(id==='start'){ if(canStart() && !pendingStart) beginRun(); }
+    else optionsUI=OPT.createOptions({ volume:REC.getVolume(), onVolume:n=>{ REC.setVolume(n); if(actx) setAudioVolume(actx, OPT.VOLUMES[n]); }, onReset:()=>REC.resetRecords(), onClose:()=>{ optionsUI=null; } });
+  });
+}
 function goTitle(){   // タイトルに もどる (3 面の結果): 白 → 天国の タイトル画面 (おばけが うろうろ)。タップで 導入から
   whiteSwap(()=>{
     setBooster(false); resetRun(); setStage(1); openingSeen=false; titleOpening=true;
@@ -1818,7 +1837,7 @@ function goTitle(){   // タイトルに もどる (3 面の結果): 白 → 天
 /* ==================== 入力 ==================== */
 cv.addEventListener('pointerdown', e=>{
   e.preventDefault();
-  if(state==='title'){ if(canStart() && !pendingStart) beginRun(); return; }
+  if(state==='title'){ if(canStart() && !pendingStart){ if(!opTitle) beginRun(); else if(!opTitle.menuOpen) openTitleMenu(); } return; }   /* 天国の タイトルは 最初の タップで ボタンを 出す (始めるのは ボタンで、10/27 社長)。試しの 入口の ふつうの タイトルは 今まで どおり */
   if(state==='opening') return;
   if(state==='finish') return;   // FINISH の後は 結果発表の ボタンで (画面のタップでは 何も起きない、10/20)
   const x=e.clientX/window.innerWidth;
@@ -1827,7 +1846,7 @@ cv.addEventListener('pointerdown', e=>{
 for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audioResume(), {passive:true});   /* iPhone は 指を離した時 (pointerup / touchend) しか 音を出す許可にならない。導入の会話の間も 曲・声が鳴るように いつでも 許可を取る (10/23 社長: iPhone で 1 面の前の 天国の曲が 鳴らない。前は 面の曲が要る時だけ) */
 window.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') lane=Math.max(0,lane-1); else if(e.key==='ArrowRight') lane=Math.min(LANES-1,lane+1);
-  else if(e.key===' '||e.key==='Enter'){ if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart){ if(canStart()) beginRun(); } }
+  else if(e.key===' '||e.key==='Enter'){ if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !optionsUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
   else if((e.key==='c'||e.key==='C') && stage>=2){ camMode2= camMode2==='watch' ? 'follow' : 'watch'; pop(camMode2==='watch' ? 'カメラ: みまもる' : 'カメラ: おばけに あわせる', true); }
 });
 
@@ -2009,7 +2028,7 @@ function updateStarTunnel(dt){
 function resize(){ const w=window.innerWidth, h=window.innerHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); sizePortal3(); if(op) op.resize(w,h); }
 window.addEventListener('resize', resize); resize();
 let kitsReady=false;   // 部品集の読み込みが終わるまで スタートを待つ (読み込めなくても 簡易の形で始められる)
-bgmPrepare(); bgmLoad(BGM_SETS[STAGE_Q]); if(actx) bgmBuf(HEAVEN_BGM.src).catch(()=>{}); $('tap').textContent='ぶひんを よみこみ中…';   /* 天国の曲も 先に読んでおく */
+bgmPrepare(); if(actx) setAudioVolume(actx, OPT.VOLUMES[REC.getVolume()]); bgmLoad(BGM_SETS[STAGE_Q]);   /* 音の 大きさは 覚えている 段で (オプション、10/27) */ if(actx) bgmBuf(HEAVEN_BGM.src).catch(()=>{}); $('tap').textContent='ぶひんを よみこみ中…';   /* 天国の曲も 先に読んでおく */
 preloadVoices(actx, 'assets/voice/', RS.FAIL_LINES);   /* 結果発表の 神様の声を 先に読んでおく (10/20) */
 if(OPENING_ON){   /* 1 面の入口は 天国の タイトル画面 (雲の上を おばけが うろうろ)。部品集を読んでいる間から 描く (10/19) */
   op=OP.createOpening({renderer, getKit:()=>KIT, actx}); opTitle=OP.createTitle($('optitle')); opTitle.setText($('tap').textContent); $('hud').style.visibility='hidden'; preloadVoices(actx, 'assets/voice/', OP.OPENING_LINES);   /* 声は タイトルの間に 先読み (最初の行に 間に合うように) */
@@ -2042,6 +2061,7 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   if(stage===2 && (state==='title' || state==='opening' || (state==='finish' && resultShown))) prep2Step();   /* 2 面の前の タイトル・会話の間に 惑星と小物の下ごしらえ (結果画面の間も = 「もういちど」で すぐ走る時のため、Codex 指摘。1 コマ 1 つずつ。走っている間・ゴールの飛び去りの間は しない) */
   if(boosterFx.visible){ const k=0.8+Math.random()*0.45; boosterFx.userData.flame.scale.set(0.55*k, 0.55*k, 1); }   /* ブースターの炎の ゆらぎ */
   if(quickMode && !boosterOn && state==='run' && stageT>(stage===3 ? plan3[0].t0 : 0)+5){ v=QUICK_KMH[stage][quickMode==='ok' ? 0 : 1]/3.6; finishRun(); }   /* 試しの入口 (?result=) */
+  if((state==='title' && !!op)!==!!titleMus){ if(titleMus) titleMusicStop(1); else titleMusicPlay(); }   /* 天国の タイトル画面の 間だけ オルゴールの きらきら星 (始める・面の 試しの 入口などで タイトルを 離れたら 1 秒で 消す) */
   if(op && (state==='opening' || state==='title')){ const dt=Math.min(0.05,raw); op.update(dt); if(talk) talk.update(dt); if(diving) diveStep(dt); if(op){ renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(op.scene, op.camera); } requestAnimationFrame(frame); return; }   /* タイトル画面と 導入の間は 天国の場面だけ描く (10/19)。talk.update で 導入が終わると op は片づいている */
   update(Math.min(0.05,raw), Math.min(2,raw));
   updateCloud2(); renderer.setClearColor(cloudK2>0.02 ? CLOUD2_COL : 0x000000, cloudK2>0.02 ? 1 : 0); renderer.info.reset(); renderer.clear();   /* 海王星の雲の中は 深い青で塗る (ふだんは 透明 = 後ろの宇宙の色) */
