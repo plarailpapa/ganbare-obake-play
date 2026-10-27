@@ -1545,16 +1545,16 @@ function ghostBody3(on){ for(const c of ghost.children) if(c.isMesh) c.visible=o
 function railFade3(f){ for(let k=0;k<LANES;k++){ const m=railMats[k], tr=f<1; if(m.transparent!==tr){ m.transparent=tr; m.needsUpdate=true; } m.opacity=f; m.visible=f>0; glowMats[k].opacity=0.22*f; glowMats[k].visible=f>0; } surf2Mat.opacity=0.10*f; rib2Mat.opacity=0.35*f; surf2Mat.visible=rib2Mat.visible=f>0; }   // レール 3 本と その間の 光る面・輪郭線を うすく (f = 濃さ 0〜1、10/27 社長「周りの エフェクトが 残る」)。材質は 全部の面で 共通 → 1 で 元どおり
 const MOM3=[{id:'e-01', at:5, len:2.4, text:'どんな {子|こ}に なってほしいかって？'}, {id:'e-02', at:8.4, len:8.0, text:'それは かしこくって、スポーツが できて、やさしくって…'}, {id:'e-03', at:17.4, len:8.6, text:'でも {元気|げんき}に {育|そだ}ってくれたら {何|なに}も いらないわ'}];   // お母さんの声 (子ども部屋の 始まりから 秒・声の長さ。前の声の 終わり + 1 秒、e-03 は 約 26 秒で 終わる)
 const MOM3_DUCK=0.6, MOM3_RAMP=0.6, MOM3_LATE=1.0;   // 声の間の オルゴールの 大きさ (倍) / 下げる・戻す 秒 / 声が 遅れても 鳴らす 秒 (それより 遅い時は 字幕だけ)
-let duck3=null, duckV=1, mom3i=-1, mom3Tok=0, mom3Src=null, mom3Pre=false; const mom3Done=new Set();
+let duck3=null, duckV=1, mom3i=-1, mom3Tok=0, mom3Pre=false; const mom3Done=new Set(), mom3Srcs=[];
 function bgmOut(){ if(!duck3){ duck3=actx.createGain(); duck3.connect(actx.destination); } return duck3; }   // 曲の 出口 (曲を 鳴らし直しても 下げた分が 消えないよう 別の つまみ)
 function mom3Step(){   // 毎コマ (3 面): 子ども部屋の お母さんの声・字幕・オルゴールを 下げる。時刻は 曲の時計 (タブを隠すと 声も 一緒に 止まる)
   const on=nurseryOn3(), tn= on ? stageT-nurseryT0() : -1, i= on ? MOM3.findIndex(m=>tn>=m.at && tn<m.at+m.len) : -1, el=$('mom3');
   if(on && !mom3Pre && actx){ mom3Pre=true; preloadVoices(actx, 'assets/voice/', MOM3); }   // 子ども部屋に 入ったら 先に 読んでおく
   if(i!==mom3i){ mom3i=i; if(i>=0){ el.innerHTML=rubyHtml(MOM3[i].text); el.style.opacity=1; } else el.style.opacity=0; }   // 字幕は ふわっと 出て 消える (消える間は 前の文のまま)
-  if(i>=0 && !mom3Done.has(i)){ mom3Done.add(i); const m=MOM3[i], tok=mom3Tok; if(tn-m.at<MOM3_LATE) playSound(actx, 'assets/voice/'+m.id+'.mp3', 1, ()=>tok===mom3Tok && nurseryOn3()).then(s=>{ if(s) mom3Src=s; }); }   // 1 回だけ
+  if(i>=0 && !mom3Done.has(i) && actx && actx.state==='running'){ mom3Done.add(i); const m=MOM3[i], tok=mom3Tok, late=()=>stageT-nurseryT0()-m.at; if(late()<MOM3_LATE) playSound(actx, 'assets/voice/'+m.id+'.mp3', 1, ()=>tok===mom3Tok && nurseryOn3() && late()<MOM3_LATE).then(s=>{ if(s) mom3Srcs.push(s); }); }   // 1 回だけ。音が 止まっている間 (タブから 戻った直後) は 待つ。読み込みが 遅れて 1 秒を 過ぎたら 鳴らさない (次の文と 重ねない、Codex 指摘 10/27)
   const a0=MOM3[0].at, e1=MOM3[MOM3.length-1].at+MOM3[MOM3.length-1].len, w= on ? Math.max(0, Math.min(1, (tn-a0+MOM3_RAMP)/MOM3_RAMP, (e1+MOM3_RAMP-tn)/MOM3_RAMP)) : 0, dk=1-(1-MOM3_DUCK)*w;   // 最初の声の 0.6 秒前から 下げ、最後の声の 後 0.6 秒で 戻す (間の 1 秒は 下げたまま)
   if(duck3 && Math.abs(dk-duckV)>0.002){ duckV=dk; duck3.gain.setTargetAtTime(dk, actx.currentTime, 0.03); } }
-function mom3Reset(){ mom3Tok++; mom3i=-1; mom3Pre=false; mom3Done.clear(); $('mom3').style.opacity=0; if(mom3Src){ try{ mom3Src.stop(); }catch(_){} mom3Src=null; } if(duck3){ duck3.gain.cancelScheduledValues(0); duck3.gain.value=1; } duckV=1; }   // もういちど・タイトルへ: 声を止め 字幕を消し 曲の大きさを 元へ
+function mom3Reset(){ mom3Tok++; mom3i=-1; mom3Pre=false; mom3Done.clear(); $('mom3').style.opacity=0; for(const s of mom3Srcs.splice(0)){ try{ s.stop(); }catch(_){} } if(duck3){ duck3.gain.cancelScheduledValues(0); duck3.gain.value=1; } duckV=1; }   // もういちど・タイトルへ: 声を止め 字幕を消し 曲の大きさを 元へ
 let cine3=false; const WHITE3_A=30.5, WHITE3_B=33;   // 子ども部屋の 引くカメラを 使っている (描く範囲を 元へ 戻すため) / 画面が 白く なり始める・真っ白 (子ども部屋の 始まりから 秒。カメラが 着地点の 3 cm 手前まで 寄る 33 秒に 合わせる)
 function nurseryCam3(){   // 子ども部屋の 上へ 引き続ける カメラ (nursery3.js の cine) と 遠くからの おばけの 光。使った コマは true
   const w= nurseryOn3() ? views3.get(pi3) : null, on=!!(w && w.placed && w.cine && w.cine(stageT, camera, camera.aspect, nurseryT0(), ghost.position));
