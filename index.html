@@ -34,6 +34,12 @@
   #roll3 h4{margin:1.5em 0 .35em;font-size:.82em;font-weight:normal;color:#ffe2a0;letter-spacing:.14em}
   #roll3 p{margin:.2em 0 .5em} #roll3 small{display:block;font-size:.8em;opacity:.85}
   #roll3 .ce p{font-size:1.3em;margin-top:.4em} #roll3 .ce h4{margin-top:2.6em}
+  #tilt3{position:fixed;inset:0;pointer-events:none;z-index:1}   /* 太陽に 追いつけ の 映画: HD-2D の ように 画面の 上下を ぼかし (ジオラマ風)、四隅を 暗く (10/28 社長) */
+  #tilt3[hidden]{display:none}
+  #tilt3 .t, #tilt3 .b{position:absolute;left:0;right:0;height:30%;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  #tilt3 .t{top:0;-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent)}
+  #tilt3 .b{bottom:0;-webkit-mask-image:linear-gradient(transparent,#000);mask-image:linear-gradient(transparent,#000)}
+  #tilt3::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%)}
   #white3{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:1}   /* 子ども部屋の 終わり: らせんの 着地点へ ぐっと 寄りながら 画面が 真っ白に (10/27 社長) */
   @keyframes flashbg{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
   #target{position:absolute;left:16px;top:calc(14px + env(safe-area-inset-top));font-size:14px;opacity:.95}
@@ -63,16 +69,26 @@
   @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   #credit{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));text-align:center;font-size:11px;opacity:.8;line-height:1.5}
   #foot{position:fixed;left:10px;bottom:calc(8px + env(safe-area-inset-bottom));font-size:11px;opacity:.6;color:#fff;pointer-events:none;z-index:1}
-  body.hud-calm #hud > :not(#white3):not(#mom3):not(#roll3), body.hud-calm #foot{opacity:0 !important;transition:opacity .8s !important}   /* 子ども部屋の スタッフロールから 結果発表まで: 速度などの 表示を ふわっと 消す (白い幕・字幕・スタッフロールは 残す、10/27 社長) */
+  body.hud-calm #hud > :not(#white3):not(#mom3):not(#roll3):not(#songclock):not(#fps), body.hud-calm #foot{opacity:0 !important;transition:opacity .8s !important}   /* 子ども部屋の スタッフロールから 結果発表まで: 速度などの 表示を ふわっと 消す (白い幕・字幕・スタッフロールは 残す、10/27 社長) */
   #space{position:fixed;inset:0;background:linear-gradient(#020208 0%,#07071c 45%,#151038 100%);opacity:0;z-index:0;pointer-events:none}   /* 高いほど・FINISH 後: 空が宇宙の色へ (3D の下に敷く) */
   #ozone{position:fixed;inset:0;background:linear-gradient(rgba(110,140,255,0) 0%,rgba(110,140,255,.45) 35%,rgba(170,120,255,.35) 65%,rgba(60,40,120,0) 100%);opacity:0;z-index:0;pointer-events:none}   /* オゾン層の 青紫の帯 */
   [hidden]{display:none!important}
+  #sign3{position:absolute;left:50%;top:calc(104px + env(safe-area-inset-top));transform:translateX(-50%);width:min(94vw,440px);box-sizing:border-box;display:flex;gap:6px;padding:8px 8px 10px;background:#1d6b43;border:3px solid #f4f4ec;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.45);opacity:0;transition:opacity .5s;text-shadow:none}   /* 3 面の 分かれ道の 案内標識 (10/28 社長「画面の 上に 高速道路の 案内標識」): 行き先の 絵 3 枚と 矢印。今いる レーンが 光る。速さの 数字の 下 */
+  #sign3.on{opacity:1}
+  #sign3 .c{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.55;transition:opacity .2s,transform .2s}
+  #sign3 .c b{font:bold 22px/1 sans-serif;color:#fff}
+  #sign3 .c img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px;border:3px solid rgba(255,255,255,.35);box-sizing:border-box;display:block}
+  #sign3 .c i{width:60%;height:4px;border-radius:2px}   /* レールの 色 (左 みどり・まん中 黄・右 赤) */
+  #sign3 .c.cur{opacity:1;transform:scale(1.07)}
+  #sign3 .c.cur img{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.9)}
+  #sign3 .c.off{visibility:hidden}   /* できていない 世界 = 行けない レーン */
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 </head>
 <body>
 <div id="space"></div>
 <div id="ozone"></div>
+<div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div id="hud">
   <div id="speed"><span class="u">じそく </span><span id="kmh">0</span><span class="u"> km</span><span id="gain"></span><span id="combo"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
@@ -82,6 +98,7 @@
   <div id="dist2" hidden style="position:absolute;left:16px;top:calc(76px + env(safe-area-inset-top));font-size:13px;opacity:.9"></div>
   <div id="pops"></div>
   <div id="ptitle"></div>
+  <div id="sign3"></div>
   <div id="title" class="panel"><h1>がんばれおばけ！</h1><p>3D 試作 4 ・ 空へ、そして 宇宙へ</p><p>ひだり / みぎ を タップで レールを うつる。<br>かそくを ふむと はやくなる！</p></div>
   <div id="tap">タップで はじめる</div>
   <div id="finish" class="panel" hidden><h1>FINISH！</h1><p id="fin2"></p><p style="font-size:12px;opacity:.8">タップで もういちど</p></div>
@@ -113,6 +130,7 @@ import * as OP from './opening.js';   // 導入 (天国の会話と 自転の説
 import * as RS from './result.js';   // 結果発表の画面 (10/20)
 import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
 import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会話と 3D の説明、10/20)
+import * as MV from './movie3.js';   // 3 面の 最後「太陽に 追いつけ！」の 映画 (立ち絵の おばけ、10/28)
 
 /* ==================== 調整ノブ ==================== */
 /* 単位: 長さは メートル、速さは 秒速 (m/s)。1 単位 = 1 m */
@@ -172,6 +190,14 @@ const STEP2_FIRST = 500, STEP2_ADD = 50;   // 2 面の加速 (km/h): 1 個目の
 const COMBO2_STEP = 50;   // 2 面の コンボ ボーナス (km/h): 続いている間 輪 1 個ごとに、10〜19 連続 +50・20〜29 連続 +100・30〜39 連続 +150 … (10/26 社長: 1 面と同じ。前は その瞬間に 1 回だけだった。3 面も 同じ考え方にする予定 = 3 面の速さを決め直す時に 数を決める)
 const STEP3_FIRST = 5000, STEP3_ADD = 500, COMBO3_STEP = 500;   // 3 面の加速 (km/h): 1 個目の輪で +5,000、くぐるたびに +500 ずつ増える。ボーナスは 続いている間 輪 1 個ごとに 10〜19 連続 +500・20〜29 連続 +1,000 … (10/26 社長: 2 面の 10 倍。108,000 → 830,000 に 全部くぐって 44 個目・5 個に 1 個逃すと 57 個目 / 輪は 約 70 個)
 function stepAdd(h){ return stage===3 ? (STEP3_FIRST+STEP3_ADD*(h-1))/3.6 : stage===2 ? (STEP2_FIRST+STEP2_ADD*(h-1))/3.6 : h*STEP_KMH/3.6; }   // h 個目の板・輪で 増える速さ (m/s。1 面・2 面の 定量の加速)
+function boostHit(){   // 板・輪を 踏んだ 時の 加速と 連続 (hits は 呼ぶ前に 数える。3 面の 世界が 変わる 輪も 同じ、10/28)
+  let add= stage>=2 ? stepAdd(hits) : BOOST_MODE==='step' ? stepAdd(hits) : BOOST_BASE+v*BOOST_RATE;   // 2 面: n 個目は +500 + 50(n−1) km/h、3 面: +5,000 + 500(n−1)。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
+  if(stage===1 && lastTrackStarted() && !planeRival.passed) add*=CATCHUP_RATE;   // 最後の曲に入っても飛行機を抜けていなければ 追い風 (1 面)
+  if(boosterOn) add*=BOOSTER_MUL[stage];   // 救済の やり直し: ブースターで ガンガン加速 (10/20)
+  const cn=combo+1, cb= stage===1 ? Math.floor(cn/10)*COMBO1_STEP : stage===2 ? Math.floor(cn/10)*COMBO2_STEP : stage===3 ? Math.floor(cn/10)*COMBO3_STEP : 0; add+=cb/3.6;   // コンボ ボーナス (この板で 何連続目か)。1 面・2 面とも 続いている間ずっと (10 連続ごとに 1 段ずつ増える)
+  v+=add;   // くぐったら その場で加速 (2 面も ためない、10/5 社長: くぐっても反応がないのはいけない)。上限なし (インフレは最後まで)
+  camKick=Math.min(1, camKick+CAM_KICK_ADD);
+  combo++; showGain(add, cb); if(combo%10===0) pop(combo+' れんぞく！', true); }   // 加速は右上に小さく。連続は 10 ごとに一言だけ (踏めなくても何も言わない)
 function realV(){ return v; }   // 本物の速さ (ensurePlates の中では v が 画面の流れの速さなので)
 const CAM_FAR2 = 250000, RIB2_GAP = 40; // 2 面の描画距離 (惑星は数十 km) / 断面の輪郭線の間隔 (m)
 
@@ -183,9 +209,11 @@ const BGM_TRACKS = [   /* 10/26 社長 (縦持ちで 遊んでもらって「間
 const BGM_TRACKS2 = [   /* 10/26 社長 (間延び → 3 分〜3 分 30 秒、B 案): 「木星」の 冒頭〜1:36 → 静かな所どうしを 3 秒 重ねて → 3:03 (有名な旋律の 少し前) 〜 4:55 を つないだ 1 本の曲 (holst-jupiter-short.mp3、3:25、終わりの 2 秒で 消える)。ラストスパート = 有名な旋律 (95 秒) から。下の 古い説明は 元の曲の時刻 */   // 2 面: ホルスト「木星」を 頭から 有名な旋律の終わりまで 切らずに (10/2 社長)。spurt = 曲の中の秒で「ラストスパート！」(有名な旋律の始まり 3:05)。end = 旋律の最後の和音が消える所 (4:55.3)、fadeOut = 終わりの この秒数で 音を小さく (社長「静かに終わってもいい」)。fadeIn 0 = 始まりの演奏が静かなので 最初から通常の音量で
   {src:'bgm/holst-jupiter-short.mp3', spurt:95.0, fadeIn:0, vol:1.0, credit:'ホルスト「木星」(組曲「惑星」より) ／ 演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)'},
 ];
-const BGM_TRACKS3 = [   // 3 面: 仮の曲 = サティ「ジムノペディ」第 1 番 (3:04、設計書 7 章の候補。曲は 作ってから決める、10/7 社長)。世界の長さは 曲の長さに合わせて伸び縮みする
-  {src:'bgm/satie-gymnopedie1.mp3', fadeIn:0, vol:1.0, credit:'サティ「ジムノペディ」第 1 番 ／ 演奏: Robin Alciatore (Musopen、パブリックドメイン)'},
-  {src:'bgm/twinkle-musicbox-short.mp3', startAt:S3.MUSIC3.gates[S3.MUSIC3.gates.length-1]+0.75, rise:5, vol:0.6, spurt:Infinity, credit:'きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)'}   /* 10/26 社長 A 案: 1 分 14 秒 → 約 38 秒 (きらきら星 1 回分 + 曲の本当の終わり方。子ども部屋は エンディングの一部。3 面ぜんぶで 約 3 分 34 秒) */,   // ⑤ 子ども部屋 (10/21 社長: 最後の輪を くぐって 1 拍 (オルゴールの 4 分音符 0.75 秒) おいてから、ほんとに ごく小さい音で始めて 5 秒かけて 少しずつ 大きく = 約 3 秒から じわっと 聞こえ 声 (5 秒) の前に 届く (10/27 社長、前は 14 秒で 声の間 ほぼ 聞こえなかった) =「？？？の世界」は はじめ 何か分からない。ジムノペディの 消えていく和音と 少し重なる)。startAt = ステージの時計で 始める秒 (前の曲の 続きでなく)。元の 2:26 の 1 回目と 4 回目 (終わり) を つないだ 1:14。spurt = Infinity: 3 面は「ラストスパート！」を出さない
+const BGM_TRACKS3 = [   // 3 面: ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の 行進」の 短い版 (2:47、10/28 社長が 選んだ。前は ジムノペディ)。世界の長さは 曲の 時刻表 (S3.MUSIC3) で 決まる
+  {src:'bgm/rossini-william-tell-finale-cut.mp3', fadeIn:0, vol:1.0, credit:'ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」／ 音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/'},
+];
+const BGM_NURSERY3 = [   /* 子ども部屋の 曲 (3 面の 当たりの 結果発表の「つぎへ」から 子ども部屋 & エンディング、10/28 社長。下の 説明の「最後の輪」= 子ども部屋の 始まり) */
+  {src:'bgm/twinkle-musicbox-short.mp3', startAt:S3.FOG3_SEC+0.75, rise:5, vol:0.6, spurt:Infinity, credit:'きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)'}   /* 10/26 社長 A 案: 1 分 14 秒 → 約 38 秒 (きらきら星 1 回分 + 曲の本当の終わり方。子ども部屋は エンディングの一部。3 面ぜんぶで 約 3 分 34 秒) */,   // ⑤ 子ども部屋 (10/21 社長: 最後の輪を くぐって 1 拍 (オルゴールの 4 分音符 0.75 秒) おいてから、ほんとに ごく小さい音で始めて 5 秒かけて 少しずつ 大きく = 約 3 秒から じわっと 聞こえ 声 (5 秒) の前に 届く (10/27 社長、前は 14 秒で 声の間 ほぼ 聞こえなかった) =「？？？の世界」は はじめ 何か分からない。ジムノペディの 消えていく和音と 少し重なる)。startAt = ステージの時計で 始める秒 (前の曲の 続きでなく)。元の 2:26 の 1 回目と 4 回目 (終わり) を つないだ 1:14。spurt = Infinity: 3 面は「ラストスパート！」を出さない
 ];
 const BGM_SETS = {1:BGM_TRACKS, 2:BGM_TRACKS2, 3:BGM_TRACKS3};
 const RISE_FLOOR = 0.005, BGM_GAP = 0.5, TRIM_LEVEL = 0.02, NO_TRACK_LEN = 120, BGM_VOL = 0.7, BGM_FADE = 2.0, NO_BGM_LEN = 300;
@@ -193,16 +221,19 @@ const RISE_FLOOR = 0.005, BGM_GAP = 0.5, TRIM_LEVEL = 0.02, NO_TRACK_LEN = 120, 
 /* ==================== 3D の下ごしらえ ==================== */
 const Q=new URLSearchParams(location.search), ERRLOG=Q.has('errlog'), ROOM_Q=Q.has('room');   /* ROOM_Q = 確かめ用 ?room=1: 3 面の 子ども部屋を 真上から 止めて見る (10/22) */   // ERRLOG = 確かめ用の記録 (?errlog=1、末尾の記録係)
 const ENDING_Q = Q.get('ending')==='1';   // 確かめ用: 子ども部屋に 入ったら すぐ エンディング (10/27)
+const NURSERY_Q = Q.get('nursery')==='1';   // 確かめ用: ?stage=3&nursery=1 で 子ども部屋 & エンディング から (3 面の 当たりの「つぎへ」の 先、10/28)
+let nursery3Run = NURSERY_Q;   // 3 面を 子ども部屋だけで 走る (当たりの 結果発表の「つぎへ」、10/28 社長)。曲は きらきら星
 const CLEARED_Q = Q.get('cleared')==='1';   // 確かめ用: クリア済みの 夢の タイトル (記録は 書かない、10/27)
 if(Q.get('save')==='reset') REC.resetRecords();   // 確かめ用: ?save=reset で 記録を 消してから 始める (10/27)
-const SCORE_Q = !['stage', 'world', 'kmh', 'result', 'planet', 'ending', 'room', 'talk', 'op'].some(k=>Q.has(k));   // ハイスコアを 貯めるのは ふつうに 遊んだ 時だけ (試しの 入口で 出した 速さは 入れない)
+const SCORE_Q = !['stage', 'world', 'w3', 'branch', 'draft', 'kmh', 'result', 'planet', 'ending', 'room', 'talk', 'op'].some(k=>Q.has(k));   // ハイスコアを 貯めるのは ふつうに 遊んだ 時だけ (試しの 入口で 出した 速さは 入れない)
 const BABIES = ['assets/ending/sleep-0.svg'];   // 夢の タイトルの 眠る 赤ちゃん (仮の 絵。社長が 依頼中の 絵が 届いたら 差し替え・何通りか あれば 並べる = 開くたびに 1 つ)
 const STAGE_Q = ({'2':2, '3':3})[Q.get('stage')] || 1;   // 試遊用: ?stage=2 で 2 面、?stage=3 で 3 面に直行 (9/30・10/8)
 const OPENING_ON = STAGE_Q===1, OP_FROM = Math.max(1, Math.min(OP.OPENING_LINES.length, parseInt(Q.get('op')||'1')||1)) - 1;   // 導入は 1 面の入口だけ。?op=N で セリフ N から (10/19)
 const REAL2 = Q.get('real')!=='0';              // 2 面の画面の流れ = 本物の速さそのまま (10/1 社長が試して決定: 輪と光の柱で 時速 30 万 km でも遊べた)。?real=0 で 縮めた流れ (V2_EXP) と見比べ
 const KMH2_Q = Q.has('kmh') ? Math.max(1360, +Q.get('kmh')||1360) : 0;   // 試し: ?kmh=100000 で 2 面を その時速から始める
 const PLANET_Q = Q.has('planet') ? Math.min(S2.PLANETS2.length-1, Math.max(0, Math.floor(+Q.get('planet')||0))) : -1;   // 試し: ?planet=N で 2 面を N 番目の惑星 (0 = 海王星 … 7 = 水星) の手前から、その惑星の 90% の速さで (10/2: 8 つの見た目を 5 分遊ばずに確かめる)
-const WORLD_Q = Q.has('world') ? Math.min(S3.WORLDS3.length-1, Math.max(0, Math.floor(+Q.get('world')||1)-1)) : 0;   // 試し: ?stage=3&world=N で 3 面を N 番目の世界から (設計書の丸数字のまま: 1 = 天の川 … 4 = 悟空と日本の神々、5 = 子ども部屋。中の番号は N−1)
+const DRAFT_Q = Q.get('draft')==='1', W3_Q = S3.W3[Q.get('w3')] ? Q.get('w3') : null, BRANCH_Q = Q.has('branch') ? Q.get('branch').split(',').map(x=>Math.max(0, Math.min(2, Math.floor(+x)||0))) : null;   // 確かめ用 (10/27): ?draft=1 = まだ できていない 世界も 仮の 世界で 選べる / ?w3=<key> = その 世界の 段から その 世界で 始める / ?branch=2,0,1,1 = 分かれ道 ①〜④ で 自動で その レーン (0 左・1 まん中・2 右)
+const WORLD_Q = W3_Q ? S3.LAYERS3.findIndex(l=>l.includes(W3_Q)) : Q.has('world') ? Math.min(S3.LAYERS3.length-1, Math.max(0, Math.floor(+Q.get('world')||1)-1)) : 0;   // 試し: ?stage=3&world=N で 3 面を N 番目の 段から (1 = 天の川、2〜4 = 分かれ道 ①〜③、5 = 銀河、6 = 太陽に 追いつけ。10/28 段の 組み直しで 子ども部屋の 特例は なくした、Codex 指摘)
 const PROBE3 = {neb:Q.get('neb')!=='0', gal:Q.get('gal')!=='0', win:Q.get('win')!=='0', statue:Q.get('statue')==='1', hall:Q.get('hall')!=='0'};   // 3 面の重さの見比べ (10/8 社長: 44 fps): ?neb=0 星雲なし / ?gal=0 眼下の銀河なし / ?win=0 輪の窓なし / ?statue=0 ② の像なし / ?hall=0 ② の大広間なし (10/12: 20 fps)
 let camMode2 = Q.get('cam')==='follow' ? 'follow' : 'watch';   // 2 面のカメラ: watch = 切り離して見守る (既定・酔いにくい) / follow = おばけに合わせて画面ごと回る (F-ZERO 風)。C キーで切り替え (社長の見比べ用、9/30 設計)
 // 見た目の切替 (9/14): ?shadow=0 で影なし、?fps=1 で速度計、?px=1 で描画の細かさを画面ドット等倍に (既定は 1.5 倍まで)
@@ -224,7 +255,9 @@ const WORLD_UP = new THREE.Vector3(0,1,0), _l = new THREE.Vector3(), _m = new TH
 /* 共有の材質・形 */
 const RAIL_COLORS=[0x4cd964, 0xffd54a, 0xff5a5a];   // レールの色: 左 みどり / まん中 黄 / 右 赤 (信号と同じ、9/11 社長)。空の加速ボックスと光の柱も同じ並び
 const railMats = RAIL_COLORS.map(c=>new THREE.MeshBasicMaterial({color:new THREE.Color(c).lerp(new THREE.Color(0xffffff), 0.35)}));   // 芯は少し白めの色、外側の管 (glowMats) でぼんやり光る (光の粒は 9/11 社長判断で廃止: ちゃちく見える)
-const glowMats = RAIL_COLORS.map(c=>new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.22, blending:THREE.AdditiveBlending, depthWrite:false}));
+const ADDFOG={value:0};   // 足し合わせて 光る レールの 霧: 1 = 遠いほど 光が 消える (子ども部屋の 霧の 間だけ。ふつうの 霧は 霧の 色を 足すので 霧の 中で 光の レールが 明るく 浮いて 先の 道が 見えた、10/28 社長)
+function addFog(m){ m.onBeforeCompile=sh=>{ sh.uniforms.addFog=ADDFOG; sh.fragmentShader='uniform float addFog;\n'+sh.fragmentShader.replace('#include <fog_fragment>', '#ifdef USE_FOG\n#ifdef FOG_EXP2\nfloat fogFactor = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );\n#else\nfloat fogFactor = smoothstep( fogNear, fogFar, vFogDepth );\n#endif\ngl_FragColor.rgb = addFog > 0.5 ? gl_FragColor.rgb * ( 1.0 - fogFactor ) : mix( gl_FragColor.rgb, fogColor, fogFactor );\n#endif'); }; m.customProgramCacheKey=()=>'addfog'; return m; }
+const glowMats = RAIL_COLORS.map(c=>addFog(new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.22, blending:THREE.AdditiveBlending, depthWrite:false})));
 const tieMat  = new THREE.MeshBasicMaterial({color:0x7fd0ff, transparent:true, opacity:0.55});
 const tieGeo  = new THREE.BoxGeometry((LANES-1)*LANE_W+0.8, 0.06, 0.25);
 const plateMap=(()=>{ const c=document.createElement('canvas'); c.width=64; c.height=128; const g=c.getContext('2d'); g.fillStyle='#c4c4c4'; g.fillRect(0,0,64,128);   // 加速板の模様: 明るい灰色の地 (インスタンスの色 = 橙などを掛ける。9/12 社長: 視認性が落ちたので明るく) に 白い山形の矢印 (≫) 3 つ
@@ -512,7 +545,7 @@ function setStage(n){   // 1 面 (夕暮れの地球) ⇄ 2 面・3 面 (宇宙)
   for(const mm of [ringMesh, ringGlowMesh, ringBeamMesh]){ mm.material.fog=!sp; mm.material.needsUpdate=true; }   // 2 面の輪は もやを通して光る (海王星の雲の中で 3.5 km 先から消えていた、10/4 社長)。1 面は 今のまま霧に溶ける
   beaconPts.renderOrder= sp ? 2 : 0;   // 2 面: 光の点を 半透明のもの・パイプの奥の光 (1) の後に描く (海王星の雲の筋に覆われて暗くならないように)。1 面は 今のまま
   $('title').querySelectorAll('p')[0].textContent= n===3 ? '3めん ・ かみがみの せかい' : two ? '2めん ・ わくせいレース' : '3D 試作 4 ・ 空へ、そして 宇宙へ';
-  rung=-1; buildLadderHUD(); if(bgmTracks!==BGM_SETS[n]){ bgmStop(); bgmLoad(BGM_SETS[n]); }
+  rung=-1; buildLadderHUD(); { const want= n===3 && nursery3Run ? BGM_NURSERY3 : BGM_SETS[n]; if(bgmTracks!==want){ bgmStop(); bgmLoad(want); } }   /* 3 面の 子ども部屋の 回は きらきら星 */
   if(two) S2.preloadPlanetTex(); else S2.clearPrebuilt();   // 惑星の模様を 裏で読み始める (何度呼んでもよい)。2 面以外へ移る時は 先に作った惑星を片づける (メモリを空ける)
   clearPlanets2(); clearWorlds3();   // 惑星 (遠景の形 と 奥行きだけの球) / 3 面の世界の景色 を片づける
 }
@@ -556,13 +589,14 @@ function laneWNow(){   // いまの作り手の状態での レール間隔 (地
 }
 let gen2=null, tailMeta=[];   // 2 面・3 面の作り手 / 持ち越す 3 制御点の「上向き・断面・印」
 function addSegment(v, light){   // 制御点を SEG_PTS 個のばし、なめらかな曲線を細かく刻んで 1 区間にする。light = 部品を作らない (すでに通り過ぎた区間)
-  if(tail.length<3){ const L0= stage>=2 ? S2.ctrlLen(ctx2().vm) : CTRL_LEN; /* 2 面: 作り手 (nextCtrl2) と同じ「いまの速さ」で (引数の v は呼び出し側の値なので使わない、Codex 再指摘 10/1) */ tail=[new THREE.Vector3(0,0.45,-2*L0), new THREE.Vector3(0,0.45,-L0), new THREE.Vector3(0,0.45,0)]; tailMeta=tail.map(()=>({up:new THREE.Vector3(0,1,0), bend:0, w:S2.LANE_W2, mark:null})); if(stage===3) gen2.s=L0; }   /* 3 面: 作り手の始まり (z = 0) は コースの距離で L0 (コースは 1 つ前の点 z = −L0 から数える) → 作り手の距離を コースの距離にそろえる (世界の切り替えの時刻が ずれない、Codex 指摘 10/12) */
+  if(tail.length<3){ const L0= stage===3 ? S3.ctrlLen3(ctx2().vm) : stage>=2 ? S2.ctrlLen(ctx2().vm) : CTRL_LEN; /* 2 面: 作り手 (nextCtrl2) と同じ「いまの速さ」で (引数の v は呼び出し側の値なので使わない、Codex 再指摘 10/1) */ tail=[new THREE.Vector3(0,0.45,-2*L0), new THREE.Vector3(0,0.45,-L0), new THREE.Vector3(0,0.45,0)]; tailMeta=tail.map(()=>({up:new THREE.Vector3(0,1,0), bend:0, w:S2.LANE_W2, mark:null})); if(stage===3) gen2.s=L0; }   /* 3 面: 作り手の始まり (z = 0) は コースの距離で L0 (コースは 1 つ前の点 z = −L0 から数える) → 作り手の距離を コースの距離にそろえる (世界の切り替えの時刻が ずれない、Codex 指摘 10/12) */
   const w0=laneWNow();
   const pts=[...tail], meta=[...tailMeta]; let sawClimb=gen.phase==='climb';
   for(let i=0;i<SEG_PTS;i++){
-    if(stage===3){ const c=S3.nextCtrl3(gen2, ctx2()); pts.push(c.p); meta.push(c); if(c.spawn) onGate3(c.ev); continue; }   // 3 面: 世界ごとの曲がり方。世界の終わりに ワープの輪の印 (10/8)
+    if(stage===3){ const c=S3.nextCtrl3(gen2, ctx2()); if(!c) break; pts.push(c.p); meta.push(c); if(c.spawn) onGate3(c.ev); continue; }   /* null = 分かれ道で 世界が まだ 決まって いない (コースは 輪で 止める、10/27) */   // 3 面: 世界ごとの曲がり方。世界の終わりに ワープの輪の印 (10/8)
     if(stage===2){ const c=S2.nextCtrl2(gen2, ctx2()); pts.push(c.p); meta.push(c); if(c.spawn) onEvent2(c.ev); continue; }   // 2 面: 宇宙の作り手 (向き・上向き・断面・惑星イベント)
     if(gen.phase==='climb') sawClimb=true; pts.push(newCtrlPoint(v)); }   // 上昇にかかる区間には 板を置かない (少し余分に休む)
+  if(pts.length===tail.length) return false;   // 3 面の 分かれ道で 止まって 1 点も 伸ばせなかった (ensureCourse は ここで やめる)
   const curve=new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
   const m=pts.length, tA=1/(m-1), tB=(m-2)/(m-1), N=(m-3)*14;   // 使うのは 2 点目 (= 前の区間の終点) → 最後から 2 点目。制御点 1 つ = 14 刻み
   const P=[], T=[], D=[]; let d=courseEnd;
@@ -594,7 +628,7 @@ const mkFrame=()=>({p:new THREE.Vector3(), t:new THREE.Vector3(), r:new THREE.Ve
 const F=mkFrame(), G=mkFrame(), C=mkFrame();
 const GH=mkFrame(), _pp={x:0, y:0, nx:0, ny:1};   // GH = おばけの立つ位置の枠 (レールの上)
 function railPoint(s, x, out){   // レール面の上の横位置 x (m) の 位置と向き。1 面 (平ら) は 中心線 + 右へ x と同じ。2 面は 断面の曲がりに沿って 位置と「上」が曲がる
-  frameAt(s, out); if(!out.b){ out.p.addScaledVector(out.r, x); return out; }
+  frameAt(s, out); if(!out.b){ out.p.addScaledVector(out.r, x); if(stage===3) out.p.addScaledVector(out.u, lift3(x, s)); return out; }
   S2.profilePos(x, out.b, laneWAt(s), _pp);
   out.p.addScaledVector(out.r, _pp.x).addScaledVector(out.u, _pp.y);
   _v.copy(out.r).multiplyScalar(_pp.nx).addScaledVector(out.u, _pp.ny).normalize(); out.u.copy(_v); out.r.crossVectors(out.t, out.u).normalize();
@@ -801,8 +835,10 @@ const SUN2_UP=Math.tan(10*Math.PI/180), SUN2_BIG=2, _sunF=mkFrame(), _sunT=new T
 function recomputeRung2(){ let k=-1; for(let i=0;i<S2.LADDER2.length;i++){ if(!passed2.has(S2.LADDER2[i].name)) break; k=i; } if(k!==rung){ rung=k; updateLadderHUD(); } }   // 段 = 先頭から続けて抜いた所まで
 function ctx2(){ const vm=moveSpeed(v); return {v, vm, songT:stageT, songLen:stageLen(), lead:Math.max(0, courseEnd-s)/Math.max(1, vm), hold:events2.length>0 || warp2>=0 || small2.some(r=>(r.active || (gen2 && gen2.next<S2.PLANETS2.length && r.ms<S2.PLANETS2[gen2.next].ms)) && !r.passed && !passed2.has(r.def.name))}; }   /* 速さの順で 次の惑星より前にいる 姿のある小物を 全部抜くまで 次の惑星を始めない (10/26 社長: 惑星の演出の間を短くしたら 小物 (冥王星・ケレス・ボイジャー) の出る隙間がなく 時速 4 万 km まで 抜けなかった・土星より後に出た) */   /* 姿のある小物を抜いている間も 次の惑星を始めない (10/7 冥王星: 抜く途中で 海王星の専用コースが始まると 隠れてしまう) */   // 2 面の作り手に渡す いまの様子。hold = 前の惑星が まだ残っている (特別カメラ中・ワープ中) → 次の惑星を始めない (10/5)
 function moveSpeed(vv){ return stage===3 ? move3 : stage===2 && !REAL2 ? V2_MOVE0*Math.pow(Math.max(1, vv/S2.V2_START), V2_EXP) : vv; }   // 画面の流れの速さ (m/s)。1 面は本物の速さそのまま。3 面は 速度計と切り離して ずっと一定 (10/8)
-function laneWAt(s){ const sg=segFor(s), f=Math.min(1,Math.max(0,(s-sg.s0)/Math.max(1e-6,sg.s1-sg.s0))); return sg.w0+(sg.w1-sg.w0)*f; }   // 距離 s での レール間隔
-function laneOff(k, s){ return (k-(LANES-1)/2)*laneWAt(s); }   // レール k の 横位置 (中央からのずれ)
+const L3={}, L3b={};   // 3 面の レーンの 並び (S3.lanes3 の 入れ物。面づくり用に もう 1 つ)
+function laneWAt(s){ if(stage===3) return S3.lanes3(plan3, s, L3).w; const sg=segFor(s), f=Math.min(1,Math.max(0,(s-sg.s0)/Math.max(1e-6,sg.s1-sg.s0))); return sg.w0+(sg.w1-sg.w0)*f; }   // 距離 s での レール間隔
+function laneOff(k, s){ if(stage===3){ const L=S3.lanes3(plan3, s, L3); return L.cx+(k-(LANES-1)/2)*L.w; } return (k-(LANES-1)/2)*laneWAt(s); }   // レール k の 横位置 (中央からのずれ)
+function lift3(x, s){ const L=S3.lanes3(plan3, s, L3); return L.cy+(x-L.cx)*L.ty; }   // 3 面の 分かれ道: 横の 位置 x の 上下の ずれ (m)。輪の 手前は 左が 上・右が 下・まん中は そのまま、輪の 後は 選んだ 線の 高さから 戻る (10/28 社長「高速道路の ジャンクション」)
 function basisAt(fr, sx=1, sy=sx, sz=sx){ return _m.makeBasis(_l.copy(fr.r).negate().multiplyScalar(sx), _v.copy(fr.u).multiplyScalar(sy), _sc.copy(fr.t).multiplyScalar(sz)); }   // 左・上・前 (右手系) の回転 + 幅・高さ・長さ の拡大縮小
 function buildSegment(seg){
   if(stage>=2){ buildSegment2(seg); return; }   // 2 面・3 面: 宇宙の光のレール
@@ -1002,21 +1038,24 @@ function buildSegment(seg){
     const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setAttribute('color', new THREE.BufferAttribute(col,3)); grp.add(new THREE.Points(g, cityMat));
   }
 }
-const surf2Mat=new THREE.MeshBasicMaterial({color:0x6fb8ff, transparent:true, opacity:0.10, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide});   // 2 面のレールの面 (うっすら光る。断面の形が分かるように)
-const rib2Mat=new THREE.LineBasicMaterial({color:0x9fd8ff, transparent:true, opacity:0.35, blending:THREE.AdditiveBlending, depthWrite:false});   // 断面の輪郭線 (40 m ごと。速さの目印にもなる)
+const surf2Mat=addFog(new THREE.MeshBasicMaterial({color:0x6fb8ff, transparent:true, opacity:0.10, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide}));   // 2 面のレールの面 (うっすら光る。断面の形が分かるように)
+const rib2Mat=addFog(new THREE.LineBasicMaterial({color:0x9fd8ff, transparent:true, opacity:0.35, blending:THREE.AdditiveBlending, depthWrite:false}));   // 断面の輪郭線 (40 m ごと。速さの目印にもなる)
 function buildSegment2(seg){   // 2 面: 光のレール 3 本 (色は 1 面と同じ) + レール面 (両端の外 半本ぶんまで = 円になると ぴったり閉じる) + 断面の輪郭線
   const grp=seg.group, fr=mkFrame(), J=24, edge=j=>(-1.5+3*j/J), o=seg.P[0];   // 面の横の刻み 24 (レール 3 本ぶんの幅 = 3w)
   let segTurn=0; for(let i=1;i<seg.T.length;i++) segTurn+=seg.T[i-1].angleTo(seg.T[i]); const segLen=seg.s1-seg.s0, nB=Math.ceil((seg.P.length-1)/2), nT=Math.max(nB, Math.min(nB*8, Math.ceil(Math.sqrt(segLen*segTurn/0.4)))), rows=[];
   for(let j=0;j<=nT;j++) rows.push(seg.s0+segLen*j/nT);   // レールの管と面の刻み: ふつうは 今までどおり 点 2 つおき。急カーブの区間だけ 細かく (曲がりが一定なら 弦と曲線のずれ 約 5 cm 以下の目安、最大 8 倍。水星では 約 800 m → 約 170 m)。管も面も おばけと同じ曲線 (railPoint) の上に (10/5 社長: 水星でレーンが揺れる)
+  const brk=new Set(); if(stage===3){ for(const r of plan3) if(r.lane!=null && r.s0>seg.s0 && r.s0<seg.s1) rows.push(r.s0-0.01, r.s0); rows.sort((a,b)=>a-b); for(const r of plan3) if(r.lane!=null) brk.add(rows.indexOf(r.s0-0.01)); }   /* 3 面: 分かれ道の 輪で 管も 面も 切る (輪の 手前の 3 本は そこで 終わり、輪の 後は 選んだ 線から 3 本が 出る、10/28 社長) */
   grp.position.copy(o);   // 形は 区間の始まり (o) からの位置で持つ (10/1: 本物の速さで 数千 km 進むと 画面の計算の細かさが足りず レールが震えるため。区間の位置は 細かい数で持てる)
-  for(let k=0;k<LANES;k++){ const pts=rows.map(sd=>{ railPoint(sd, laneOff(k, sd), fr); return fr.p.clone().sub(o); }), lc=new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5); lc.arcLengthDivisions=nT*2;
-    grp.add(new THREE.Mesh(new THREE.TubeGeometry(lc, nT, 0.11, 6, false), railMats[k]), new THREE.Mesh(new THREE.TubeGeometry(lc, nT, 0.34, 6, false), glowMats[k])); }
-  const pos=new Float32Array(rows.length*(J+1)*3), idx=[];
-  rows.forEach((sd,ri)=>{ const w=laneWAt(sd); for(let j=0;j<=J;j++){ railPoint(sd, edge(j)*w, fr); pos.set([fr.p.x-fr.u.x*0.05-o.x, fr.p.y-fr.u.y*0.05-o.y, fr.p.z-fr.u.z*0.05-o.z], (ri*(J+1)+j)*3); } });   // 面はレールの 5 cm 下
-  for(let ri=0;ri<rows.length-1;ri++) for(let j=0;j<J;j++){ const a=ri*(J+1)+j, c=a+J+1; idx.push(a,c,a+1, a+1,c,c+1); }
+  const runs=[]; let r0=0; rows.forEach((_,ri)=>{ if(brk.has(ri) || ri===rows.length-1){ runs.push(rows.slice(r0, ri+1)); r0=ri+1; } });
+  for(const run of runs) if(run.length>1) for(let k=0;k<LANES;k++){ const n=run.length-1, pts=run.map(sd=>{ railPoint(sd, laneOff(k, sd), fr); return fr.p.clone().sub(o); }), lc=new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5); lc.arcLengthDivisions=n*2;
+    grp.add(new THREE.Mesh(new THREE.TubeGeometry(lc, n, 0.11, 6, false), railMats[k]), new THREE.Mesh(new THREE.TubeGeometry(lc, n, 0.34, 6, false), glowMats[k])); }
+  const J3=8, hw=S3.LANE_W3/2, cols= stage===3 ? LANES*(J3+1) : J+1, cut=j=>stage===3 && j%(J3+1)===J3, colAt=(sd, j, w)=>{ if(stage!==3) return railPoint(sd, edge(j)*w, fr); const L=S3.lanes3(plan3, sd, L3b), sg=Math.floor(j/(J3+1))-(LANES-1)/2, f=(j%(J3+1))/J3, x=L.cx+sg*L.w, a= sg ? Math.max(hw, L.w-hw) : -hw, e=L.cx+(sg||1)*(a+(sg ? Math.min(2*hw, L.w) : 2*hw)*f); railPoint(sd, x, fr); fr.p.addScaledVector(fr.r, e-x); return fr; };   // 3 面: 面は レーンごとの 道 3 本 (ふだんは すき間なく 並び、分かれ道で 上下左右に 離れる = ジャンクション、10/28 社長)。道は 平ら (高さは レールの 所)。輪の 後で 3 本に 分かれる 間は 左右の 道が まん中の 道の 横から 生えて 広がる (重ならない)。cut = 道と 道の 間 (面も 輪郭線も つながない)
+  const pos=new Float32Array(rows.length*cols*3), idx=[];
+  rows.forEach((sd,ri)=>{ const w=laneWAt(sd); for(let j=0;j<cols;j++){ colAt(sd, j, w); pos.set([fr.p.x-fr.u.x*0.05-o.x, fr.p.y-fr.u.y*0.05-o.y, fr.p.z-fr.u.z*0.05-o.z], (ri*cols+j)*3); } });   // 面はレールの 5 cm 下
+  for(let ri=0;ri<rows.length-1;ri++) if(!brk.has(ri)) for(let j=0;j<cols-1;j++){ if(cut(j)) continue; const a=ri*cols+j, c=a+cols; idx.push(a,c,a+1, a+1,c,c+1); }
   const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setIndex(idx); grp.add(new THREE.Mesh(g, surf2Mat));
   const gap=Math.max(RIB2_GAP, Math.ceil((seg.s1-seg.s0)/1000/RIB2_GAP)*RIB2_GAP), rib=[];   // 輪郭線は 40 m ごと。ただし 1 区間 1,000 本まで (本物の速さで 区間が数十 km になっても 作る時に止まらないように)
-  for(let sd=Math.ceil(seg.s0/gap)*gap; sd<seg.s1; sd+=gap){ const w=laneWAt(sd); for(let j=0;j<J;j++){ railPoint(sd, edge(j)*w, fr); rib.push(fr.p.x-o.x, fr.p.y-o.y, fr.p.z-o.z); railPoint(sd, edge(j+1)*w, fr); rib.push(fr.p.x-o.x, fr.p.y-o.y, fr.p.z-o.z); } }
+  for(let sd=Math.ceil(seg.s0/gap)*gap; sd<seg.s1; sd+=gap){ const w=laneWAt(sd); for(let j=0;j<cols-1;j++){ if(cut(j)) continue; colAt(sd, j, w); rib.push(fr.p.x-o.x, fr.p.y-o.y, fr.p.z-o.z); colAt(sd, j+1, w); rib.push(fr.p.x-o.x, fr.p.y-o.y, fr.p.z-o.z); } }
   if(rib.length){ const rg=new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rib,3)); grp.add(new THREE.LineSegments(rg, rib2Mat)); }
 }
 function disposeSegment(seg){
@@ -1026,7 +1065,7 @@ function disposeSegment(seg){
 }
 function ensureCourse(s, v, all){   // s の先を十分に作る (ふだんは 1 コマに 2 区間まで。すぐ先が足りない時は 何区間でも。all = 最初にまとめて作る)
   const ahead=Math.min(stage===2 ? AHEAD_MAX2 : AHEAD_MAX, 700+v*9), urgent=s+Math.min(AHEAD_MAX*0.6, 300+v*2.5); let made=0;
-  while(courseEnd<s+ahead && (all || made<2 || courseEnd<urgent)){ addSegment(v, courseEnd<s-300); made++; }   // おばけがもう通り過ぎた区間は 部品を作らない (大きなコマ落ちの時)
+  while(courseEnd<s+ahead && (all || made<2 || courseEnd<urgent)){ if(addSegment(v, courseEnd<s-300)===false) break; made++; }   /* false = 3 面の 分かれ道で 止まっている (決まるまで 待つ) */   // おばけがもう通り過ぎた区間は 部品を作らない (大きなコマ落ちの時)
 }
 function tidyCourse(s){ while(segs.length>2 && segs[0].s1<s-400) disposeSegment(segs.shift()); }   // 遠く後ろは片づける (板の判定のあとで呼ぶ)
 function truncateCourse(keepUntil){   // keepUntil より先の (まだ遠くて見えていない) 区間を捨て、そこから作り直せるようにする
@@ -1046,7 +1085,7 @@ function startClimb(s, v){   // 飛行機を抜いた合図: 見えている先�
 function resetCourse(){
   for(const seg of segs) disposeSegment(seg); segs=[]; tail=[]; tailMeta=[]; courseEnd=0;
   Object.assign(gen, {x:0, z:0, yaw:0, turn:0, turnDir:0, turnAmp:1, left:0, alt:0.45, s:0, phase: stage>=2 ? 'space' : 'ground', nextTie:6, climbStart:0, climbY0:0, skyStart:0, launchStart:0, wavePh:0, stratoOn:false, stratoStart:0});
-  if(stage===3){ plan3=S3.planWorlds(stageLen()-FINISH_LEAD, WORLD_Q, S3.V3_MOVE, bgmReady && !bgmFail ? S3.MUSIC3 : null, START_S); gen2=S3.makeGen3(plan3); clearPlanets2(); resetWorlds3(); if(plan3[0]) plan3[0].org=S2.ctrlLen(moveSpeed(v)); /* 最初の世界の 道の原点の コース上の位置 (最初の 3 点の 持ち越し分、Codex 指摘 10/27: ?world=5 で 印が 30 ずれた) */ hotAirZones=[]; clearStartGate(); ensureCourse(0, moveSpeed(v), true); return; }   // 3 面: 世界の並びを 曲の長さに合わせて決め、始まりの世界の景色を作る (10/8)   /* 曲の時刻表が使える時は 世界の切り替えも 曲の時刻 (10/12) */
+  if(stage===3){ plan3= nursery3Run ? S3.planNursery3(S3.V3_MOVE, START_S) : S3.planWorlds(stageLen()-FINISH_LEAD, WORLD_Q, S3.V3_MOVE, bgmReady && !bgmFail ? S3.MUSIC3 : null, START_S, {draft:DRAFT_Q, pick:li=> W3_Q && S3.LAYERS3[li].includes(W3_Q) ? W3_Q : null}); gen2=S3.makeGen3(plan3); clearPlanets2(); resetWorlds3(); if(plan3[0]) plan3[0].org=S3.ctrlLen3(moveSpeed(v))+(plan3[0].pre||0); /* 最初の世界の 道の原点の コース上の位置 (最初の 3 点の 持ち越し分、Codex 指摘 10/27: ?world=5 で 印が 30 ずれた) */ hotAirZones=[]; clearStartGate(); ensureCourse(0, moveSpeed(v), true); return; }   // 3 面: 世界の並びを 曲の長さに合わせて決め、始まりの世界の景色を作る (10/8)   /* 曲の時刻表が使える時は 世界の切り替えも 曲の時刻 (10/12) */
   if(stage===2){ gen2=S2.makeGen2(); clearPlanets2(); if(PLANET_Q>=0){ gen2.next=PLANET_Q; for(const o of S2.LADDER2) if(o.ms<v) passed2.add(o.name); const prev=S2.PLANETS2[PLANET_Q-1]; if(prev) dist2=dist2From=warpFromD=warpToD=prev.dist; recomputeRung2(); }   /* 試し ?planet=N: それより遅い相手は 抜いたことにする */ hotAirZones=[]; clearStartGate(); ensureCourse(0, moveSpeed(v), true); return; }   // 2 面: スタートゲート・熱気球なし。先作りの距離も いまの速さで
   ensureCourse(0, V0, true);
   buildStartGate();
@@ -1184,20 +1223,26 @@ function distAfter(v, g, tau){ return g<1e-4 ? v*tau : v*(Math.exp(g*tau)-1)/g; 
 function timeToReach(v, g, dist){ return g<1e-4 ? dist/v : Math.log(1+g*dist/v)/g; }      // dist 先に着くまでの秒数
 let note3=0;   // 3 面: 次に置く 時刻表の音 (MUSIC3.notes の番号)
 const BEAT3_LAG= Q.has('lag') ? (+Q.get('lag')||0) : 0;   // 音の聞こえる遅れの調整 (秒、+ = 輪を遅らせる)。?lag=0.1 などで 耳で合わせて ここへ書く (設計書 3.4)
-function placeNotes3(vm){   // vm = 画面の流れの速さ (輪の大きさ、これまでと同じ)。3 面: 曲の時刻表の音ごとに 加速の輪を 1 つ。置く所 = その音の時刻の おばけの位置。先 PLATE_AHEAD_SEC 秒ぶんまで。世界の切り替えの前後 GATE3_CLEAR 秒の音は 世界が変わる輪が代わり (設計書 3.4)
+const TAP_Q=Q.has('tap');   // 確かめ用 ?tap=1: 拍を 記録する (3 面は 新しい 曲で、最後まで 曲を 切らない、10/28)
+function placeNotes3(vm){ if(TAP_Q || nursery3Run) return false;   /* 子ども部屋の 回は 加速の 輪なし */   /* 拍を 記録する 間は 加速の 輪を 出さない (前の 曲の 時刻表で 出ると まぎらわしい、10/28) */   // vm = 画面の流れの速さ (輪の大きさ、これまでと同じ)。3 面: 曲の時刻表の音ごとに 加速の輪を 1 つ。置く所 = その音の時刻の おばけの位置。先 PLATE_AHEAD_SEC 秒ぶんまで。世界の切り替えの前後 GATE3_CLEAR 秒の音は 世界が変わる輪が代わり (設計書 3.4)
   const N=S3.MUSIC3.notes, tEnd=stageT+PLATE_AHEAD_SEC; let placed=false;
   while(note3<N.length && freeIdx.length && state!=='finish' && songRemaining()>FINISH_LEAD+PLATE_QUIET){
     const tn=N[note3]+BEAT3_LAG; if(tn>tEnd) break;
-    if(tn<stageT+0.2 || plan3.some(o=>o.pi>0 && Math.abs(tn-o.t0)<GATE3_CLEAR)){ note3++; continue; }   // もう間に合わない音 (途中から始めた時) / 世界の切り替えの前後
+    const cu=plan3.find(o=>o.def.key==='catchup'); if(cu && tn>cu.t0-GATE3_CLEAR) break;   /* 太陽に 追いつけ (最後の 輪から 後) は 操作 なしの 映画 = 加速の 輪は 置かない (10/28 社長) */
+    const brn=plan3.find(o=>o.pi>0 && o.branch && tn>signT3(o)+0.05 && tn<o.t0);   // この 音が 分かれ道の 案内標識 〜 輪の 間か (標識が 出る 音の 輪は 置く = 踏んだ 瞬間に 標識)
+    if(tn<stageT+0.2 || plan3.some(o=>o.pi>0 && tn-o.t0>-GATE3_CLEAR && tn-o.t0<GATE3_AFTER) || (brn && tn<brn.t0-S3.SPREAD3_SEC)){ note3++; continue; }   /* 案内標識が 出ている 間は 置かない (選ぶのに 集中、10/28 社長) */   // もう間に合わない音 (途中から始めた時) / 世界の切り替えの前後
     const ps=S3.sAt3(plan3, tn); if(ps>courseEnd-5) break;   // コースが まだ そこまで無い → 次のコマで
-    const b={s:ps, lane:(Math.random()*LANES)|0, hit:false, idx:freeIdx.pop(), age:0, grow:Math.min(0.6, (tn-stageT)*0.5), box:false, ring:true, sc:Math.min(MARK_SCALE_MAX, 1+vm/MARK_SCALE_V)};   // 輪 (2 面と同じ。出てくる時に 着くまでの半分で育つ)
-    plates.push(b); setMarkColor(b, false); note3++; placed=true; }
+    const lanes= brn ? [0, 1, 2] : [(Math.random()*LANES)|0], grp= brn ? {hit:false} : null; if(freeIdx.length<lanes.length) break;   /* 行き先が 決まった 後 (レールが 広がる 間) は 3 本 全部に 置く = レーンを 移れなくても 曲に 合わせて 踏める (10/28 社長)。grp = 同じ 音の 輪 (どれか 1 つ 踏めば ほかを 逃しても 連続は 切れない) */
+    for(const ln of lanes){ const b={s:ps, lane:ln, grp, hit:false, idx:freeIdx.pop(), age:0, grow:Math.min(0.6, (tn-stageT)*0.5), box:false, ring:true, sc:Math.min(MARK_SCALE_MAX, 1+vm/MARK_SCALE_V)};   // 輪 (2 面と同じ。出てくる時に 着くまでの半分で育つ)
+      plates.push(b); setMarkColor(b, false); }
+    note3++; placed=true; }
   return placed; }
 function ensurePlates(s, v, dt){
   const step1= (stage===1 && BOOST_MODE==='step') || stage===2, ahead=Math.max(PLATE_AHEAD_MIN, distAfter(v, growth, PLATE_AHEAD_SEC)), limit= step1 ? courseEnd-5 : Math.min(s+ahead, courseEnd-5); let dirty=false;   // コースがある範囲にだけ敷く (1 面・2 面は 前に PLATE_AHEAD_N 枚まで。2 面も 10/26 から 定量の加速なので 同じ置き方)
   let k= step1 ? plates.reduce((n, o)=>n+(!o.hit && !o.missed ? 1 : 0), 0) : 0;   /* 1 面・2 面: まだ踏んでいない (前にある) 板・輪の数 */
-  if(stage===3 && plan3.music){ if(placeNotes3(v)) dirty=true; } else   // 3 面: 曲の時刻表が使える時は 音ごと (使えない時は これまでどおりの間隔)
+  if(stage===3 && (plan3.music || nursery3Run)){ if(placeNotes3(v)) dirty=true; } else   /* 子ども部屋の 回は 置かない (間隔で 置く 昔の 置き方へ 行かない、10/28 社長「子ども部屋に 加速の 輪が ある」) */   // 3 面: 曲の時刻表が使える時は 音ごと (使えない時は これまでどおりの間隔)
   while(nextPlate<limit && (!step1 || (k<PLATE_AHEAD_N && (nextPlate-s)/Math.max(v, 0.1)<songRemaining()-FINISH_LEAD-1)) && freeIdx.length && state!=='finish' && !ov2 && songRemaining()>FINISH_LEAD+PLATE_QUIET){   // 曲の終わりが近い / FINISH 後は 新しい板を置かない (9/15)
+    if(stage===3){ const cu=plan3.find(o=>o.def.key==='catchup'); if(cut3 || (cu && nextPlate>=cu.s0-GATE3_CLEAR*v)) break; }   /* 曲が 読めない 時も 太陽に 追いつけ (最後の 輪から 後) には 置かない (Codex 指摘 10/28) */
     const sg=segFor(nextPlate); if(sg.noPlates){ nextPlate=sg.s1+6; continue; }
     if(stage===3){ const gt=gates3.find(o=>Math.abs(nextPlate-(o.at ?? courseEnd))<GATE3_CLEAR*v); if(gt){ nextPlate=(gt.at ?? courseEnd)+GATE3_CLEAR*v+1; continue; } }   // 3 面: ワープの輪の前後には 加速の輪を置かない (v = 画面の流れの速さ。位置がまだ決まっていない入口は コースの先端のすぐ先)。+1 m = 境目を確実に越える (速さが端数だと 足し引きの丸めで「まだ近い」と判定され 同じ所を回り続けて 固まった、10/12)   // 上昇の見せ場には 板を置かない (操作なしで景色を楽しむ)
     const tau=timeToReach(v, growth, Math.max(0, nextPlate-s));   // この板に着く時刻 → その PLATE_SEC 秒後の位置が 次の板
@@ -1523,7 +1568,7 @@ function updateSmall2(ds, dt){   // ds = この コマで おばけが進んだ�
 /* ==================== 3 面 (神々の世界めぐり → 子ども部屋、10/7 設計書) ==================== */
 /* 世界の景色 (stage3.js の buildWorld) は いまの世界と 次の世界だけ作る (設計書 5 章: 使う少し前に)。世界の入口 (ワープの輪) の位置と向きは 作り手が先を作った時に 印で届く (onGate3)。景色は レールより先に 同じカメラで描き、奥行きは残す (神殿や像の前後で レールが正しく隠れる) */
 let plan3=[], gates3=[], pi3=0, view3Due=-1, gateA3=0, lost3=null, lost3On=false, pass3=null; const views3=new Map(), LOST3_SEC=3;   // lost3 = 最後の輪の 向こうの 天の川 (速さが 足りない時) / その世界へ 入った / 入ってから おしまいまでの 秒   // 世界の並び (planWorlds) / 届いた入口 {pi, p, q, at} / いまの世界 (並びの番号) / 次の世界を作る時刻 (曲の秒、−1 = 予定なし) / ワープの輪の濃さ (0〜1) / 作った景色 (番号 → 景色)
-const GATE3_R=20, GATE3_UP=2, GATE3_CLEAR=1.5, GATE3_SWAP=2;   // ワープの輪の半径 (m、レール 3 本を囲む) / コースの中心から上へ (m) / 輪の前後 この秒数は 加速の輪を置かない / カメラが 輪の面の この距離 (m) 手前に来たら 次の世界へ (手前の描画の限界 1 m より前 = 輪の中が 画面いっぱいの時に切り替える)
+const GATE3_R=20, GATE3_UP=2, GATE3_CLEAR=1.5, GATE3_SWAP=2, GATE3_AFTER=2.7;   /* GATE3_AFTER = 世界が 変わった 後 この 秒数は 加速の 輪を 置かない = 輪の 後の 最初の 1 拍 (約 1.8 秒) を 飛ばす (レーンの 固定が 外れる 1.5 秒 前後に 出ると 間に 合わない、10/28 社長) */   // ワープの輪の半径 (m、レール 3 本を囲む) / コースの中心から上へ (m) / 輪の前後 この秒数は 加速の輪を置かない / カメラが 輪の面の この距離 (m) 手前に来たら 次の世界へ (手前の描画の限界 1 m より前 = 輪の中が 画面いっぱいの時に切り替える)
 const gateMat3=new THREE.MeshBasicMaterial({color:0xfff2c8, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false}), gateGlowMat3=new THREE.MeshBasicMaterial({color:0xffd890, transparent:true, opacity:0.25, blending:THREE.AdditiveBlending, depthWrite:false});
 const gate3=new THREE.Group(); gate3.add(new THREE.Mesh(new THREE.TorusGeometry(GATE3_R, 0.5, 12, 160), gateMat3), new THREE.Mesh(new THREE.TorusGeometry(GATE3_R, 2.4, 12, 160), gateGlowMat3)); gate3.visible=false; scene.add(gate3);   // 大きな光の輪 (細く明るい芯 + 太く淡い光)
 const GF3=mkFrame(), _g3=new THREE.Vector3();
@@ -1538,21 +1583,73 @@ const portal3=new THREE.Mesh(new THREE.CircleGeometry(GATE3_R-0.3, 128), new THR
     }`}));   // 画面の画素の位置 (gl_FragCoord) で 置き場を読む = 同じカメラで描いた 次の世界の 同じ所
 portal3.frustumCulled=false; portal3.visible=false; portalScene3.add(portal3);
 const _frus3=new THREE.Frustum(), _pm3=new THREE.Matrix4(), _sph3=new THREE.Sphere();
-function gateOnScreen3(){ camera.updateMatrixWorld(); _pm3.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _frus3.setFromProjectionMatrix(_pm3); return _frus3.intersectsSphere(_sph3.set(gate3.position, GATE3_R)); }   // ワープの輪が カメラの見える範囲に入っているか (このコマのカメラで)
+function gateOnScreen3(p, r){ camera.updateMatrixWorld(); _pm3.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _frus3.setFromProjectionMatrix(_pm3); return _frus3.intersectsSphere(_sph3.set(p, r)); }   // ワープの輪 (中心 p・半径 r) が カメラの見える範囲に入っているか (このコマのカメラで)
+const RING3_R=4.2, RING3_UP=2.2, ringCore3=new THREE.TorusGeometry(RING3_R, 0.18, 10, 96), ringGlow3=new THREE.TorusGeometry(RING3_R, 0.9, 10, 96), ringDisc3=new THREE.CircleGeometry(RING3_R-0.2, 64), RF3=mkFrame();   // 分かれ道の 輪 (レーンごと、10/28): 半径 (m。となりの レーンの 輪とは 約 10 m 離れる) / レールから 中心までの 高さ (後ろの カメラ 3.2 m も 輪の 中を 通る)
+const rings3=RAIL_COLORS.map(c=>{ const g=new THREE.Group(), add=m=>{ g.add(m); return m; }, core=add(new THREE.Mesh(ringCore3, new THREE.MeshBasicMaterial({color:new THREE.Color(c).lerp(new THREE.Color(0xffffff), 0.35), transparent:true, blending:THREE.AdditiveBlending, depthWrite:false}))), glow=add(new THREE.Mesh(ringGlow3, new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.25, blending:THREE.AdditiveBlending, depthWrite:false}))), disc=add(new THREE.Mesh(ringDisc3, new THREE.MeshBasicMaterial({transparent:true, depthWrite:false, fog:false})));
+  disc.rotation.y=Math.PI; g.visible=false; scene.add(g); return {g, core, glow, disc, key:null}; });   // 輪の 色 = その レーンの レールの 色 (設計書 4)。中は 行き先の 1 枚絵 (円板を 後ろ向きに 回す = 絵が 左右 逆に ならない)
+const cards3=new Map();   // 行き先の 1 枚絵 (世界の key → {url = 案内標識の 絵, tex = 輪の 中の 絵})
+function card3(key){ let c=cards3.get(key); if(c) return c;   // 絵が できるまでは 世界の 空の 色と 世界の 色で 描いた 簡単な 絵 (設計書 4)
+  const d=S3.W3[key], sky=d.sky||{}, cv=document.createElement('canvas'), x=cv.getContext('2d'), W=320, H=200; cv.width=W; cv.height=H; const g=x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, sky.top||'#000'); g.addColorStop(1, sky.bot||'#223'); x.fillStyle=g; x.fillRect(0, 0, W, H);
+  let seed=[...key].reduce((a, ch)=>(a*31+ch.charCodeAt(0))%2147483646, 7)+1; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;   // 世界ごとに 決まった 並び
+  x.globalCompositeOperation='lighter'; for(let i=0;i<22;i++){ const cx=rnd()*W, cy=H*0.2+rnd()*H*0.8, r=12+rnd()*55, rg=x.createRadialGradient(cx, cy, 0, cx, cy, r); rg.addColorStop(0, d.color||'#fff'); rg.addColorStop(1, 'rgba(0,0,0,0)'); x.globalAlpha=0.3+rnd()*0.45; x.fillStyle=rg; x.fillRect(cx-r, cy-r, 2*r, 2*r); }
+  x.globalAlpha=1; x.globalCompositeOperation='source-over';
+  const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace; tex.repeat.set(H/W, 1); tex.offset.set((1-H/W)/2, 0);   // 輪の 円板には まん中の 正方形
+  c={url:cv.toDataURL('image/jpeg', 0.85), tex}; cards3.set(key, c); return c; }
+const SIGN3_SEC=7, SIGN3_HOLD=1.2, SIGN3_ARROW=['↖','↑','↘'];   // 案内標識: 輪の この秒数 前から 出す / 行き先が 決まって から 消え始める まで / レーンごとの 矢印 (左は 上へ・右は 下へ = ジャンクション)
+let sign3Row=null;
+function nearLane3(ch, want){ if(ch[want]) return want; let k=-1; for(let i=0;i<ch.length;i++) if(ch[i] && (k<0 || Math.abs(i-want)<Math.abs(k-want))) k=i; return k; }   // その レーンに 世界が なければ いちばん 近い 世界の レーン (同じ 近さなら 左)
+function signT3(o){ if(o.signT==null){ const want=o.t0-SIGN3_SEC, last=o.t0-S3.SPREAD3_SEC-1.5; let best=want, bd=1.2; if(plan3.music) for(const n of S3.MUSIC3.notes){ const t=n+BEAT3_LAG, d=Math.abs(t-want); if(d<bd && t<=last){ bd=d; best=t; } } o.signT=best; } return o.signT; }   // 案内標識が 出る 時刻 = 輪の 約 SIGN3_SEC 秒 前の 加速の 輪の 音 (その 輪を 踏んだ 瞬間に 出る、10/28 社長「音楽に 合わせる」)。曲の 時刻表が 使えない 時は ちょうど SIGN3_SEC 秒 前
+function sign3Step(){ const el=$('sign3'), r=plan3[pi3+1], on= state==='run' && !!r && r.branch && stageT>=signT3(r) && stageT<r.t0-S3.SPREAD3_SEC+SIGN3_HOLD;   // 毎コマ: 次の 分かれ道の 案内標識 (光る 絵 = 決まる 前は 今の lane で 行く 先、決まった 後は 選んだ 先)
+  el.classList.toggle('on', on); if(!on) return;
+  if(sign3Row!==r){ sign3Row=r; el.innerHTML=r.choices.map((k, i)=>'<div class="c'+(k ? '' : ' off')+'"><b>'+SIGN3_ARROW[i]+'</b>'+(k ? '<img src="'+card3(k).url+'" alt="">' : '')+'<i style="background:#'+RAIL_COLORS[i].toString(16).padStart(6, '0')+'"></i></div>').join(''); }
+  const cur= r.chosen ? r.lane : nearLane3(r.choices, lane); for(let i=0;i<el.children.length;i++) el.children[i].classList.toggle('cur', i===cur); }
 function sizePortal3(){ const b=renderer.getDrawingBufferSize(new THREE.Vector2()); portalU3.res.value.copy(b); portalRT3.setSize(Math.max(1, b.x>>1), Math.max(1, b.y>>1)); }   // 画面の大きさが変わった時 (resize から)
 function placeView3(w, g){ w.root.position.copy(g.p); w.root.quaternion.copy(g.q); w.root.updateMatrixWorld(true); w.bg.quaternion.copy(g.q); w.placed=true; }   // 置き物も 空の向きも 入口に合わせる
-function view3(pi){ if(!plan3[pi]) return null; let w=views3.get(pi); if(w) return w;
+function view3(pi){ if(!plan3[pi] || !plan3[pi].chosen) return null;   /* 分かれ道で まだ 決まって いない 段は 作らない (決めた 時に lockBranch3 が 作る、10/27) */ let w=views3.get(pi); if(w) return w;
   w=S3.buildWorld(plan3[pi], {mobile:IS_MOBILE, neb:PROBE3.neb, gal:PROBE3.gal, statue:PROBE3.statue, hall:PROBE3.hall}); views3.set(pi, w);
-  if(pi===0) placeView3(w, {p:new THREE.Vector3(0,0.45,0), q:new THREE.Quaternion()}); else { const g=gates3.find(o=>o.pi===pi); if(g) placeView3(w, g); }   /* 最初の世界の入口 = 作り手の始まり (makeGen3)。ほかは 入口が届いていれば すぐ置く */
-  if(pi===plan3.length-1 && pi>pi3 && !lost3){ lost3=S3.buildWorld({...plan3[pi], def:S3.WORLDS3[0]}, {mobile:IS_MOBILE, neb:PROBE3.neb, gal:PROBE3.gal}); const g=gates3.find(o=>o.pi===pi); if(g) placeView3(lost3, g); }   /* 最後の輪の 向こうの もう 1 つ = 速さが 足りない時の 天の川 (10/21 社長) */
+  if(pi===0) placeView3(w, {p:new THREE.Vector3(0,0.45,plan3[0].pre||0), q:new THREE.Quaternion()});   /* 子ども部屋の 回は 霧の 道の 先 */ else { const g=gates3.find(o=>o.pi===pi); if(g) placeView3(w, g); }   /* 最初の世界の入口 = 作り手の始まり (makeGen3)。ほかは 入口が届いていれば すぐ置く */
+  if(pi===plan3.length-1 && plan3[pi].def.key==='nursery' && pi>pi3 && !lost3){ lost3=S3.buildWorld({...plan3[pi], def:S3.WORLDS3[0]}, {mobile:IS_MOBILE, neb:PROBE3.neb, gal:PROBE3.gal}); const g=gates3.find(o=>o.pi===pi); if(g) placeView3(lost3, g); }   /* 最後の輪の 向こうの もう 1 つ = 速さが 足りない時の 天の川 (10/21 社長) */
   return w; }
+let laneLock3=null;   // 分かれ道で 行き先を 決めた 段 (その 輪の 後 RECONV3_SEC 秒まで レーンを 動かさない、10/27)
+const TOP3={up:14, back:26, sec:2.5}, _top3=new THREE.Vector3();   // 銀河の 場面の カメラ: おばけの 上 14 m・後ろ 26 m から コースの 先を 少しだけ 見下ろす (一点透視、10/28 社長「コースの 先は 画面の 中心 ちょっと 上、銀河の アップに なる 所が 焦点」。前の 上 40 m・14 m 先を 見る は 先が 上すぎた) / 切り替わる 秒
+let gx3=null;   // 3 面の 銀河の 遠景 (worlds/galaxy.js の createBackdrop。銀河の 輪から 最後まで = 世界が 変わっても 太陽系と 光の 筋が 途切れない、10/28)
+function gal03(){ const gi=S3.LAYERS3.findIndex(l=>l.includes('galaxy')); return plan3.length && plan3.t0all && plan3[plan3.length-1].li>=gi ? plan3.t0all[gi] : null; }   // 銀河の 輪の 時刻 (?world=6 で 太陽に 追いつけ から 始めても 遠景・カメラは 銀河の 続き)
+function updateGalaxy3(dt){ const g0=gal03(); if(g0==null || stageT<g0-25 || movieOn3()){ if(gx3 && movieOn3()) clearGalaxy3(); else if(gx3) gx3.group.visible=false; return; }   /* 映画に 切り替わったら 遠景は 捨てる (同じ 惑星の 画像を 二重に 持たない) */
+  if(!gx3){ gx3=S3.W3.galaxy.mod.createBackdrop({mobile:IS_MOBILE, renderer}); scene.add(gx3.group); }   /* 銀河の 輪の 25 秒前に 作って 惑星の 画像を 裏で 読み、読めたら 先に 用意 (太陽系が 初めて 出る 時に カクついた、10/28 社長) */
+  if(!movie3){ movie3=MV.createMovie3({renderer, mobile:IS_MOBILE, rev:CUT3.rev, white:CUT3.white}); try{ renderer.compile(movie3.scene, movie3.camera); }catch(e){ console.warn('映画の 下ごしらえ', e); } }   /* 最後の 映画も 同じ 時に 作って 画像を 裏で 読む */
+  gx3.group.visible= stageT>=g0; if(gx3.group.visible) gx3.update(camera, stageT-g0, -1, dt); }
+function clearGalaxy3(){ if(gx3){ scene.remove(gx3.group); gx3.dispose(); gx3=null; } }
+function top3(){ if(stage!==3) return 0; const g0=gal03(); if(g0==null) return 0; const k=Math.min(1, Math.max(0, (stageT-g0)/TOP3.sec)); return k*k*(3-2*k); }   // 0 = いつもの 後ろからの カメラ、1 = 見下ろし (銀河の 輪から なめらかに、最後まで そのまま)
+/* 太陽に 追いつけ (10/28 社長): 最後の 輪 (141.95 秒) を くぐった 速さで 当たり / はずれが 決まり、後は 操作 なしの 映画 (コース・輪・速さの 表示・文字は 全部 消す)。
+   カメラが 走る おばけに 寄って パッと 光り、立ち絵の おばけの 映画 (movie3.js、HD-2D の ように 立体の 宇宙と 惑星) へ。当たりは 日本に 着いて 最後の 和音で 真っ白 → 結果発表 / はずれは 太陽と 地球が 遠ざかり → 結果発表 (神様が 慰める) */
+let cut3=null, movie3=null;   // {ok: 当たり, v: 決めた 速さ} / 映画 (movie3.js)
+const CUT3=(()=>{ const g=S3.MUSIC3.gates, c=S3.MUSIC3.cut, g0=g[g.length-1]; return {rev:c.rev-g0, white:c.white-g0, near:0.9}; })();   // 最後の 輪からの 秒 (曲が 無い 時も 同じ 間) / カメラが おばけに 寄る 量 (見下ろしの 距離の 割合)
+function cutStart3(){ cut3={ok:v*3.6>=GOAL3_KMH, v}; pass3=cut3.ok; lane=1; for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; if(!b.hit){ hidePlate(b.idx); freeIdx.push(b.idx); plates.splice(i,1); } } markDirty();   /* 残って いる 加速の 輪は 片づける (操作 なしの 映画で 踏んで 加速 しない、Codex 指摘 10/28) */ document.body.classList.add('hud-calm'); if(ERRLOG) logSend({cut3: cut3.ok ? 'win' : 'lose', kmh:Math.round(v*3.6)}); }   // 最後の 輪の 加速 (世界が 変わる 輪も 加速の 輪) を 入れた 速さで 決める。おばけは まん中の レーンへ、速さ などの 表示は ふわっと 消す
+function cutInfo3(){ const c=plan3.find(o=>o.def.key==='catchup'); if(!cut3 || !c) return null; return {t:stageT-c.t0, ok:cut3.ok}; }
+function movieOn3(){ const i=cutInfo3(); return !!(i && movie3 && i.t>=MV.T_SIDE); }   // 立ち絵の 映画を 描く 間
+function cutNear3(){ const i=cutInfo3(); if(!i) return 0; const k=Math.min(1, Math.max(0, i.t/MV.T_SIDE)); return k*k*(3-2*k); }   // カメラが 走る おばけに 寄る (0 → 1)
+function cutFx3(dt){ const i=cutInfo3(); if(!i) return; const sm=x=>{ const k=Math.min(1, Math.max(0, x)); return k*k*(3-2*k); };   // 毎コマ: レールを 消す・パッと 光る・当たりの 真っ白・映画を 進める
+  railFade3(1-sm(i.t/1.0)); ghostGlow.visible=false;
+  const fl=Math.max(0, 1-Math.abs(i.t-MV.T_SIDE)/0.35), wt= cut3.ok ? sm((i.t-(CUT3.white-0.3))/1.3) : 0;   // 寄り きった 所で パッと 白く (立ち絵に 変わる) / 当たり: 日本に 着いて 最後の 和音で 真っ白 (結果発表の 後ろに 残す)
+  $('white3').style.opacity=Math.max(fl, wt); white3Full= wt>=1;
+  $('tilt3').hidden=!movieOn3(); if(movieOn3()) movie3.update(i.t, dt, cut3.ok, camera.aspect); }
+let camRef3=0; const CAMREF3_SEC=1;   // 3 面の カメラの 基準: 0 = コースの まん中、1 = 選んだ レーン (行き先が 決まって おばけが 動けなく なったら 選んだ レーンが 新しい まん中、10/28 社長) / 切り替えの 秒
+function refX3(sd){ const k=camRef3*camRef3*(3-2*camRef3); return stage===3 && k>0 ? k*laneOff(lane, sd) : 0; }   /* ゆっくり 動き出して ゆっくり 止まる (一定の 割合で 寄せると 動き出しが 急で カクついた、10/28 社長) */   // カメラが まん中と みなす 横の 位置 (m)。高さは railPoint が その 位置の 道の 高さを 足す
+function branchStep3(){   // 分かれ道 (10/27 社長): 輪の SPREAD3_SEC 秒 前 (レールが 広がり始める 時) に いま いる レーンで 行き先を 決め、輪の 先の コースと 世界を 作り始める (時刻で 決める = コマ落ちでも 1 回)
+  if(laneLock3 && stageT>=laneLock3.t0+S3.RECONV3_SEC) laneLock3=null;
+  const r=plan3[pi3+1]; if(state!=='run' || !r || r.chosen || !r.branch || stageT<r.t0-S3.SPREAD3_SEC) return;
+  const want= BRANCH_Q && BRANCH_Q[r.li-1]!=null ? BRANCH_Q[r.li-1] : lane, ch=r.choices, k=nearLane3(ch, want);   /* 決まるのは 移る 先の レーン (lane、見た目の laneX ではない)。輪の ない レーンは いちばん 近い 輪へ */
+  lane=k; laneLock3=r; S3.chooseRow3(plan3, r.li, ch[k], k); view3(r.pi);   /* 輪の 先の コースは ensureCourse が 続きを 作る (止めが 外れる)。世界も 今 作って 輪の 中に 見せる */
+  if(ERRLOG) logSend({branch:r.li, key:ch[k], lane:k});
+}
 function onGate3(g){ gates3.push(g); const w=views3.get(g.pi); if(w) placeView3(w, g); if(lost3 && g.pi===plan3.length-1) placeView3(lost3, g); }   // 作り手が 世界の終わりを越えた (g.at は 区間ができた時に入る)
 function next3(){ return pi3+1===plan3.length-1 && lost3 && v*3.6<GOAL3_KMH ? lost3 : views3.get(pi3+1); }   // 輪の向こうの 世界: 最後の輪は いまの速さで 子ども部屋 / 天の川 (足りない)
 const _foc3=new THREE.Vector3(), clip3=new THREE.Plane();   // clip3 = 窓を描く時の 切り落としの面 (ワープの輪の面)
 function focus3(){ const w=views3.get(pi3); if(!w || !w.placed || !w.focus) return null; const g=nextGate3(); if(g && s>g.at-5*moveSpeed(v)) return null; return w.root.localToWorld(w.focus(s-w.P.s0, _foc3)); }   // いまの世界の 見どころ (世界の座標。② = 像の体の線の上、入口では 高く = 見上げる)。ワープの輪の 5 秒前からは なし (前を向いて 輪の窓を見せる)
 function nextGate3(){ return gates3.find(o=>o.pi===pi3+1 && o.at!=null) || null; }   // いまの世界の出口 (区間ができて 位置が決まったもの)
 function swapWorld3(){ const old=views3.get(pi3); if(old){ old.dispose(); views3.delete(pi3); } pi3++;
-  if(pi3===plan3.length-1 && lost3){ if(v*3.6<GOAL3_KMH){ const nw=views3.get(pi3); if(nw) nw.dispose(); views3.set(pi3, lost3); lost3On=true; bgmFade(1.5); bgmDropLast(); } else lost3.dispose(); lost3=null; pass3=!lost3On; if(ERRLOG) logSend({gate3:lost3On ? 'lost' : 'nursery', kmh:Math.round(v*3.6)}); }   /* 最後の輪: 速さが 足りなければ 天の川へ (曲は 消え、3 秒で おしまい、10/21 社長) */
+  if(pi3===plan3.length-1 && lost3){ if(v*3.6<GOAL3_KMH){ const nw=views3.get(pi3); if(nw) nw.dispose(); views3.set(pi3, lost3); lost3On=true; if(!TAP_Q){ bgmFade(1.5); bgmDropLast(); } } else lost3.dispose(); lost3=null; pass3=!lost3On; if(ERRLOG) logSend({gate3:lost3On ? 'lost' : 'nursery', kmh:Math.round(v*3.6)}); }   /* 最後の輪: 速さが 足りなければ 天の川へ (曲は 消え、3 秒で おしまい、10/21 社長) */
   view3(pi3); gateA3=0; view3Due=stageT+2; const def= lost3On ? S3.WORLDS3[0] : plan3[pi3].def; if(def.name) planetTitle2(def); }   // 次の世界へ: 前の景色を捨て、名前を出し (子ども部屋は 出さない)、2 秒後に その次を作る (くぐった瞬間に作ると カクつく)   /* 切り替えた先の世界が まだ無ければ すぐ作る (時計が大きく飛んで 続けて切り替えた時、Codex 指摘 10/12) */
 function canStart(){ return kitsReady && (stage!==3 || bgmReady || bgmFail); }   // 3 面は 曲の長さで 世界の長さを決めるので 曲が読めるまで (読めないと決まるまで) 始めない (Codex 指摘 10/8: 仮の 300 秒で決めると 子ども部屋に届かない)
 function nurseryOn3(){ const r=plan3[pi3]; return stage===3 && pass3!==false && !!r && r.def.key==='nursery'; }   // 子ども部屋に 入っている (最後の輪を 足りる速さで くぐった時だけ。足りない時 (pass3 = false) は 天の川。確かめ用 ?world=5 で 子ども部屋から 始めた時は 輪を通らない = pass3 が null のまま → 入っている扱い)
@@ -1578,8 +1675,8 @@ function mom3Step(){   // 毎コマ (3 面): 子ども部屋の お母さんの�
 function mom3Reset(){ mom3Tok++; mom3i=-1; mom3Pre=false; mom3Done.clear(); $('mom3').style.opacity=0; for(const s of mom3Srcs.splice(0)){ try{ s.stop(); }catch(_){} } if(duck3){ duck3.gain.cancelScheduledValues(0); duck3.gain.value=1; } duckV=1; }   // もういちど・タイトルへ: 声を止め 字幕を消し 曲の大きさを 元へ
 const ROLL3_A=4, ROLL3_B=28;   // スタッフロールを 流す 秒 (子ども部屋の 始まりから。おばけが ベッドに 着く 28 秒までに 流れ切る)
 const CREDITS3=[   // スタッフロールの 中身 (c = 列: a はじめ / l 左 / r 右 / e 最後、h = 見出し、i = 行。名前は まだ 空ける、10/26 社長)
-  {c:'a', h:'つくった ひと', i:['〇〇〇〇']}, {c:'a', h:'え', i:['〇〇〇〇']}, {c:'a', h:'こえ', i:['〇〇〇〇']}, {c:'a', h:'てつだった AI', i:['Claude<small>Anthropic</small>', 'Codex<small>OpenAI</small>']},
-  {c:'l', h:'おんがく', i:['ネッケ「クシコス・ポスト」<small>音源: ポケットサウンド https://pocket-se.info/</small>', 'オッフェンバック「天国と地獄」<small>演奏: Musopen (パブリックドメイン)</small>', 'ホルスト「木星」<small>演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)</small>', 'サティ「ジムノペディ」第 1 番<small>演奏: Robin Alciatore (Musopen、パブリックドメイン)</small>', 'モーツァルト「きらきら星変奏曲」K.265<small>演奏: Simone Renzi (CC BY 3.0)</small>', 'きらきら星 (オルゴール)<small>音源: KonstantinPazuzuStudio (Pixabay)</small>']},
+  {c:'a', h:'つくった ひと', i:['プラさん']}, {c:'a', h:'え を かいた ひと', i:['いおりちゃん']},   /* 10/28 社長 */ {c:'a', h:'こえ', i:['おゆ']}, {c:'a', h:'てつだった AI', i:['Claude<small>Anthropic</small>', 'Codex<small>OpenAI</small>']},
+  {c:'l', h:'おんがく', i:['ネッケ「クシコス・ポスト」<small>音源: ポケットサウンド https://pocket-se.info/</small>', 'オッフェンバック「天国と地獄」<small>演奏: Musopen (パブリックドメイン)</small>', 'ホルスト「木星」<small>演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)</small>', 'ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」<small>音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/</small>', 'モーツァルト「きらきら星変奏曲」K.265<small>演奏: Simone Renzi (CC BY 3.0)</small>', 'きらきら星 (オルゴール)<small>音源: KonstantinPazuzuStudio (Pixabay)</small>']},
   {c:'l', h:'こうかおん', i:['歓声と拍手<small>効果音ラボ https://soundeffect-lab.info/</small>']},
   {c:'r', h:'3D の ぶひん', i:['Kenney<small>Nature Kit・City Kit Suburban・Car Kit・Furniture Kit・Fantasy Town Kit (CC0) www.kenney.nl</small>', 'Quaternius<small>Farm Animals・Ultimate Animated Animals (CC0)</small>', 'ボイジャー 1 号<small>NASA</small>']},
   {c:'r', h:'しゃしん・ちず', i:['惑星・月・太陽の 地図<small>Solar System Scope (CC BY 4.0)</small>', '天の川銀河の 想像図<small>NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0)</small>', '冥王星・ケレスの 地図<small>NASA</small>']},
@@ -1597,8 +1694,8 @@ function roll3Step(){   // 毎コマ (3 面): 子ども部屋の スタッフロ
   if(now<roll3Hold){ el.style.opacity=0; return; }
   el.style.opacity=1; el.firstChild.style.transform='translateY('+(A-(A+H)*k).toFixed(1)+'px)'; }   // 始め = 帯の 下の外、終わり = 帯の 上の外
 function roll3Reset(){ document.body.classList.remove('hud-calm'); roll3Built=false; roll3A=roll3H=-1; roll3Hold=0; const el=$('roll3'); el.style.opacity=0; el.innerHTML=''; }   // もういちど・タイトルへ
-let ending3=null; const ENDING3_LEAD=0.9;   // エンディング (子ども部屋の 白の後。ending.js) / 曲の ファイルの 終わりの 何秒前に 始めるか (オルゴールの 余韻が −46 dB = ほぼ 聞こえなく なるのが 終わりの 約 0.9 秒前、Blender で 測った。10/27 社長「曲が 終わったら すぐ」)
-function startEnding(){ document.body.classList.add('hud-calm'); $('white3').style.opacity=1; white3Full=true; /* 目覚めの 場面が 始まったら 子ども部屋は 終わり: すぐ 真っ白・コースは 描かない (白い幕は 子ども部屋の 引きの カメラ = 8 秒〜 に 頼らない。確かめ用 ?ending=1 で コースが 見えたまま 瞬きが 始まった、10/27 社長) */ ending3=ED.createEnding({ root:$('ending'), talkRoot:$('talk'), actx, faces:OP.FACES, onDone:()=>{ REC.markCleared(); ending3.dispose(); ending3=null; showResult(); }, log: ERRLOG ? m=>logSend({ending:m}) : null }); ending3.start(); if(ERRLOG) logSend({ending:'start'}); }   // 白の上に 会話 → 人影 → タップで ばあ！ → (おしまいの 後) 結果発表
+let ending3=null, ending3Over=false; const ENDING3_LEAD=0.9;   /* ending3Over = エンディングが 終わって タイトルへ 向かう 途中 (もう 一度 始めない) */   // エンディング (子ども部屋の 白の後。ending.js) / 曲の ファイルの 終わりの 何秒前に 始めるか (オルゴールの 余韻が −46 dB = ほぼ 聞こえなく なるのが 終わりの 約 0.9 秒前、Blender で 測った。10/27 社長「曲が 終わったら すぐ」)
+function startEnding(){ document.body.classList.add('hud-calm'); $('white3').style.opacity=1; white3Full=true; /* 目覚めの 場面が 始まったら 子ども部屋は 終わり: すぐ 真っ白・コースは 描かない (白い幕は 子ども部屋の 引きの カメラ = 8 秒〜 に 頼らない。確かめ用 ?ending=1 で コースが 見えたまま 瞬きが 始まった、10/27 社長) */ ending3=ED.createEnding({ root:$('ending'), talkRoot:$('talk'), actx, faces:OP.FACES, onDone:()=>{ REC.markCleared(); ending3.dispose(); ending3=null; ending3Over=true; goTitle(); }   /* 結果発表は 子ども部屋の 前 (当たりの 映画の 後) に 出した → おしまいの 後は タイトルへ (10/28 社長) */, log: ERRLOG ? m=>logSend({ending:m}) : null }); ending3.start(); if(ERRLOG) logSend({ending:'start'}); }   // 白の上に 会話 → 人影 → タップで ばあ！ → (おしまいの 後) 結果発表
 let cine3=false, goal3T=-1, white3Full=false; const WHITE3_A=32.0, WHITE3_B=35.0;   // 子ども部屋の 引くカメラを 使っている (描く範囲を 元へ 戻すため) / 曲が 鳴り終わってからの 秒 (ゴールの後、−1 = まだ) / 画面が 白く なり始める・真っ白 (子ども部屋の 始まりから 秒。オルゴールの 最後の フレーズの 音 32.0 秒から、最後の 和音 35.0 秒で 真っ白 = 曲の頭から 31.26 秒・34.26 秒 + 入りの 0.75 秒、Blender で 測った。カメラが 着地点の 3 cm 手前まで 寄るのも 35 秒)
 function nurseryCam3(){   // 子ども部屋の 上へ 引き続ける カメラ (nursery3.js の cine) と 遠くからの おばけの 光。使った コマは true
   const w= nurseryOn3() ? views3.get(pi3) : null, on=!!(w && w.placed && w.cine && w.cine(stageT, camera, camera.aspect, nurseryT0(), ghost.position));
@@ -1606,18 +1703,41 @@ function nurseryCam3(){   // 子ども部屋の 上へ 引き続ける カメラ
   const tn=stageT-nurseryT0(), home=tn>=plan3[pi3].def.path.times.bed, d=camera.position.distanceTo(ghost.position), fade= home ? Math.min(1, Math.max(0, (d-240)/360)) : 1; cine3=true; ghostBody3(!home); railFade3(fade);   // ベッドに 着いたら 体を消す (寄った カメラに 止まった おばけが 見えると 違う感じ、10/27 社長。着く時は カメラが 約 70 cm 先なので 消えても 分からない)。レール 3 本・光の点・光の筋も カメラが 約 50 cm → 20 cm に 寄る間 (約 28.4〜29.5 秒) に 消す (10/27 社長「コースが 3 本線で 残る」「光る球・点々が 残る」)
   nurseryLight3(home ? fade : Math.min(1, Math.max(0, (d-40)/160))); scene.visible=!(home && fade<=0);   // 消え切ったら コース側 (レール・おばけ・光・輪などの 効果) は 丸ごと 描かない = 部屋だけ
   const tw= goal3T>=0 ? 1 : Math.min(1, Math.max(0, (tn-WHITE3_A)/(WHITE3_B-WHITE3_A)));   /* 曲が 終わった後 (目覚めの 場面・結果発表) は 真っ白の まま (確かめ用 ?ending=1 で 早く 始めた時も、終わった後も) */ $('white3').style.opacity=tw*tw*(3-2*tw); white3Full= tw>=1; return true; }   // 着地点へ 寄りながら なめらかに 真っ白へ   // 光は カメラが 約 3 cm → 17 cm 離れる間に ふわっと 出る
-function clearWorlds3(){ sparks.length=0; sparkMesh.count=0; for(const w of views3.values()) w.dispose(); views3.clear(); if(lost3){ lost3.dispose(); lost3=null; } lost3On=false; pass3=null; gates3=[]; pi3=0; view3Due=-1; gateA3=0; gate3.visible=false; }
+/* 子ども部屋の 回の はじめ (10/28 社長「ワンテンポ、どんな ところを 走って いるか わからない 時間」): レールの 上を 爆走する おばけの 周りは もやもやの 霧で 遠くが 見えない
+   → 約 5 秒で ドアを すり抜け、霧が 晴れて 子ども部屋と 分かる (そこからは 今までと 同じ。曲・声・スタッフロールは ドアからの 時刻の まま) */
+const FOG3={col:new THREE.Color('#6a5f8e'), near:4, far:55, room:7, roomFar:6000, sky:3, mist:70, fade:700};   // 霧の 色 (夜の 薄紫の もや)・近く / 遠く (m)・部屋が じわーっと 見えて くる 秒と その 終わりの 遠さ (近くの 床 → おもちゃ → 家具 → 壁・ベッド、10/28 社長「スパッと 晴れるのは もったいない」)・その 後 夜空まで 晴れる 秒・流れる もやの 数・ドアを 抜けた 部屋が 霧の 中に 出て くる 距離
+let fogA3=0, mist3=null;   // 霧の 濃さ (画面の 奥の 色に 使う、0 = なし) / 流れる もや (霧の 道の 周りの 白い かたまり = 走る 速さが 分かる)
+function fog3On(){ return stage===3 && nursery3Run && !!plan3[0] && !!plan3[0].pre; }
+function fog3Step(){ if(!fog3On()){ if(mist3) clearMist3(); fogA3=0; ADDFOG.value=0; return; }
+  const sm=x=>{ const k=Math.min(1, Math.max(0, x)); return k*k*(3-2*k); }, t=stageT-plan3[0].t0+0.2, kr=sm(t/FOG3.room), ks=sm((t-FOG3.room)/FOG3.sky), w=views3.get(0);   // t = ドア (子ども部屋の 始まり) の 0.2 秒前からの 秒。kr = 部屋が 見えて くる (0〜1)、ks = その 後 夜空まで 晴れる
+  if(!mist3 && ks<1) makeMist3();
+  fogA3=1-kr; ADDFOG.value= ks<1 ? 1 : 0;
+  if(ks>=1){ scene.fog.near=1e7; scene.fog.far=2e7; if(w && w.scene.fog){ w.scene.fog.near=1e7; w.scene.fog.far=2e7; } if(mist3) clearMist3(); return; }
+  const far= ks>0 ? FOG3.roomFar*Math.pow(2e5/FOG3.roomFar, ks) : FOG3.far*Math.pow(FOG3.roomFar/FOG3.far, kr), near= ks>0 ? far*(0.25+0.2*ks) : FOG3.near+far*0.25*kr;   // 見える 遠さを 一定の 割合で ゆっくり 広げる (近くから 順に じわーっと)。最後に 空の 球 (半径 9 万) も 霧から 出る。近くは いつも 遠くより 手前 (逆に なると 色の 計算が 壊れて 画面が 乱れた、10/28 社長)
+  scene.fog.color.copy(FOG3.col); scene.fog.near=near; scene.fog.far=far;
+  if(w && !w.scene.fog){ w.scene.fog=new THREE.Fog(FOG3.col, 0, 1); w.scene.traverse(o=>{ for(const m of (o.material ? [].concat(o.material) : [])) if(m.blending===THREE.AdditiveBlending && m.fog) addFog(m); }); }   /* 部屋の 光り物 (ベッドの 光・常夜灯) も 霧の 中では 消える。最初の 絵の 準備の 前に (ドアを 抜けた 瞬間に 準備が 重なって 床が パッと 出た、10/28 社長) */
+  if(w){ const r=sm(((s-camSm.back)-(plan3[0].org-S3.DOOR3+5))/FOG3.fade); w.scene.fog.near=near*r; w.scene.fog.far=Math.max(0.5, far*r); }   // 部屋は ドアを 抜けた 所から 霧の 中に ふわっと (約 2.5 秒)
+  for(const m of mist3.children) m.material.opacity=m.userData.o*(1-kr); }
+function makeMist3(){ mist3=new THREE.Group(); const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d'), rg=g.createRadialGradient(32, 32, 0, 32, 32, 32); rg.addColorStop(0, 'rgba(255,255,255,0.9)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle=rg; g.fillRect(0, 0, 64, 64);
+  const tex=new THREE.CanvasTexture(c), end=plan3[0].pre-S3.DOOR3-30;   // 霧の 道は 世界の (0, 0.45, 0) から +Z へ まっすぐ (ドアの 手前まで)
+  for(let i=0;i<FOG3.mist;i++){ const m=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, color:0xd8d0f0, transparent:true, depthWrite:false})), side=Math.random()<0.5 ? -1 : 1; m.userData.o=0.25+Math.random()*0.25; m.position.set(side*(4+Math.random()*26), -6+Math.random()*18, -30+Math.random()*(end+30)); m.scale.setScalar(8+Math.random()*14); mist3.add(m); }
+  scene.add(mist3); }
+function clearMist3(){ scene.remove(mist3); const tex=mist3.children[0] && mist3.children[0].material.map; for(const m of mist3.children) m.material.dispose(); if(tex) tex.dispose(); mist3=null; }
+function clearWorlds3(){ clearGalaxy3(); cut3=null; if(mist3) clearMist3(); fogA3=0; if(stage===3){ scene.fog.near=1e7; scene.fog.far=2e7; } if(movie3){ movie3.dispose(); movie3=null; } $('tilt3').hidden=true; sparks.length=0; sparkMesh.count=0; for(const w of views3.values()) w.dispose(); views3.clear(); if(lost3){ lost3.dispose(); lost3=null; } lost3On=false; pass3=null; gates3=[]; pi3=0; view3Due=-1; gateA3=0; gate3.visible=false; for(const o of rings3) o.g.visible=false; sign3Row=null; $('sign3').classList.remove('on'); }
 let move3=S3.V3_MOVE;   // 3 面の おばけの実際の進み (m/秒)。世界ごとの速さ (planWorlds の move。② は コースの長さ ÷ 時間) へ なめらかに寄せる (速度計の数字とは 別)
 function resetWorlds3(){ clearWorlds3(); view3(0); view3(1); move3=(plan3[0] && plan3[0].move) || S3.V3_MOVE; }
-function updateWorlds3(dt){ if(view3Due>=0 && stageT>=view3Due){ view3Due=-1; view3(pi3+1); } gateA3+=(1-gateA3)*Math.min(1, dt*2);   // 毎コマ (おばけが進んだ後): 次の世界を 裏で作る / 輪は ふわっと現れる
+function updateWorlds3(dt){ branchStep3(); sign3Step(); if(!cut3 && state==='run' && plan3[pi3] && plan3[pi3].def.key==='catchup') cutStart3(); camRef3=Math.min(1, Math.max(0, camRef3+(laneLock3 ? dt : -dt)/CAMREF3_SEC)); if(view3Due>=0 && stageT>=view3Due){ view3Due=-1; view3(pi3+1); } gateA3+=(1-gateA3)*Math.min(1, dt*2);   // 毎コマ (おばけが進んだ後): 次の世界を 裏で作る / 輪は ふわっと現れる
   if(plan3.length) move3=S3.rowAt3(plan3, stageT).move; }   // いまの時刻の世界の速さ (世界が変わる輪を通る瞬間に 切り替わる、設計書 3.3)
 function renderWorlds3(dt){   // 毎コマ (描く直前、カメラが決まった後): 差し替え → 窓の向こう (次の世界) → いまの世界 → 窓の円板
   let g=nextGate3();
   if(g){ railPoint(g.at, 0, GF3); if(_g3.copy(camera.position).sub(GF3.p).dot(GF3.t)>-GATE3_SWAP){ swapWorld3(); g=nextGate3(); if(g) railPoint(g.at, 0, GF3); } }   // カメラが 輪の面の すぐ手前まで来たら 次の世界へ (コマ落ちで飛び越しても 向きの符号で拾う)
-  gate3.visible=!!g && gateA3>0.01; if(gate3.visible){ gate3.position.copy(GF3.p).addScaledVector(GF3.u, GATE3_UP); gate3.quaternion.setFromRotationMatrix(basisAt(GF3)); gateMat3.opacity=gateA3; gateGlowMat3.opacity=0.25*gateA3; }
-  const nx=next3(), win=gate3.visible && !!nx && nx.placed && PROBE3.win && gateOnScreen3(); portal3.visible=win;   // 輪が 画面に入っている時だけ (Codex 指摘 10/8: 画面の外でも 次の世界を描いていた)
-  if(win){ portal3.position.copy(gate3.position); portal3.quaternion.copy(gate3.quaternion); portalU3.fade.value=gateA3; nx.tick(camera, dt); renderer.setRenderTarget(portalRT3); renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.clippingPlanes=[clip3.setFromNormalAndCoplanarPoint(GF3.t, GF3.p)]; renderer.render(nx.scene, camera); renderer.clippingPlanes=[]; renderer.setRenderTarget(null); }   /* 次の世界を 同じカメラで 半分の細かさに (奥行きは 置き場の別のもの)。輪の面より 手前にある 次の世界の物は 切り落とす (② の大広間の壁が 窓をふさいでいた、Codex 指摘 10/12)。画面の消し色は 次のコマの頭で 元に戻る */
-  const w=views3.get(pi3); if(w && w.placed){ w.tick(camera, dt); renderer.render(w.scene, camera); }
+  const br= g && plan3[g.pi] && plan3[g.pi].branch ? plan3[g.pi] : null; let pw=null;   // 分かれ道の 輪 = レーンごとの 小さな 輪 (中に 行き先の 1 枚絵)。選んだ 輪だけ 見えている 間は 中に 本物の 次の 世界 (くぐる 瞬間に つながる)
+  if(br) frameAt(g.at, RF3); rings3.forEach((o, k)=>{ const key= br ? br.choices[k] : null; o.g.visible=!!key && gateA3>0.01; if(!o.g.visible) return; o.g.position.copy(RF3.p).addScaledVector(RF3.r, (k-(LANES-1)/2)*S3.SPREAD3_W).addScaledVector(RF3.u, RING3_UP-(k-(LANES-1)/2)*S3.SPLIT3_H); o.g.quaternion.setFromRotationMatrix(basisAt(RF3));   /* 位置 = 広がり 切った レーン (左は 上・右は 下) */
+    if(o.key!==key){ o.key=key; o.disc.material.map=card3(key).tex; o.disc.material.needsUpdate=true; } o.core.material.opacity=gateA3; o.glow.material.opacity=0.25*gateA3; o.disc.material.opacity=gateA3; o.disc.visible=true; if(br.chosen && br.lane===k) pw=o; });
+  gate3.visible=!!g && !br && gateA3>0.01; if(gate3.visible){ gate3.position.copy(GF3.p).addScaledVector(GF3.u, GATE3_UP); gate3.quaternion.setFromRotationMatrix(basisAt(GF3)); gateMat3.opacity=gateA3; gateGlowMat3.opacity=0.25*gateA3; }
+  const host= br ? pw && pw.g : gate3, nx=next3(), win=!!host && host.visible && !!nx && nx.placed && PROBE3.win && gateOnScreen3(host.position, br ? RING3_R : GATE3_R); portal3.visible=win;   // 輪が 画面に入っている時だけ (Codex 指摘 10/8: 画面の外でも 次の世界を描いていた)
+  if(win){ if(pw) pw.disc.visible=false; portal3.scale.setScalar(br ? (RING3_R-0.2)/(GATE3_R-0.3) : 1); portal3.position.copy(host.position); portal3.quaternion.copy(host.quaternion); portalU3.fade.value=gateA3; nx.tick(camera, dt, true); renderer.setRenderTarget(portalRT3); renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.clippingPlanes=[clip3.setFromNormalAndCoplanarPoint(GF3.t, GF3.p)]; renderer.render(nx.scene, camera); renderer.clippingPlanes=[]; renderer.setRenderTarget(null); }   /* 次の世界を 同じカメラで 半分の細かさに (奥行きは 置き場の別のもの)。輪の面より 手前にある 次の世界の物は 切り落とす (② の大広間の壁が 窓をふさいでいた、Codex 指摘 10/12)。画面の消し色は 次のコマの頭で 元に戻る */
+  const w=views3.get(pi3); if(w && w.placed){ w.tick(camera, dt); renderer.render(w.scene, camera); }   /* 子ども部屋の 回の 霧の 道でも 部屋は 描く (霧に 包まれて 見えない。ドアを 抜けた 瞬間に 初めて 描くと 準備が 重くて 床が パッと 出た) */
   if(win) renderer.render(portalScene3, camera); }
 
 /* ==================== BGM (Web Audio: iPhone でも音量を扱えるように 音の通り道を自分で作る) ==================== */
@@ -1712,7 +1832,7 @@ function bgmFade(sec){ if(!actx || !bgmGain) return; const t0=actx.currentTime; 
 function bgmSeek(){ bgmCut(); bgmPlay(); }
 function audioResume(){ if(actx && actx.state!=='running'){ alog('許可を求める ('+actx.state+')'); actx.resume().catch(e=>alog('許可 NG '+e)); } }
 function bgmRunning(){ return bgmOn && actx.state==='running'; }
-function stageLen(){ if(!bgmReady || !bgmSegs.length) return NO_BGM_LEN; const l=bgmSegs[bgmSegs.length-1]; return l.at+l.len; }
+function stageLen(){ if(!bgmReady || !bgmSegs.length) return stage===3 && nursery3Run ? S3.FOG3_SEC+WHITE3_B+1.5 : NO_BGM_LEN;   /* 子ども部屋の 回で きらきら星が 読めない 時は 真っ白の 少し 後に 終わる (仮の 300 秒だと 白の まま 約 4 分 待った、Codex 指摘 10/28) */ const l=bgmSegs[bgmSegs.length-1]; return l.at+l.len; }
 function songRemaining(){ return bgmEnded ? 0 : Math.max(0, stageLen()-stageT); }
 function lastTrackStarted(){ if(!bgmReady || !bgmSegs.length) return false; const l=bgmSegs[bgmSegs.length-1]; return stageT>=(l.spurt!=null ? l.spurt : bgmSegs.length>1 ? l.at : Infinity); }   // 最後の曲の頭 (1 曲だけの面は 曲の中の spurt 秒) から ラストスパート
 function tickStage(dt){   // dt = 実時間
@@ -1774,14 +1894,15 @@ function startRun(){
   resetCourse(); resetPlates();
   $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; updateLadderHUD();
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
-  if(stage===3) stageT=plan3[0].t0;   /* 3 面: 途中の世界から始める時 (?world=N) は 時計も曲も その世界の始まりから (設計書 3.2) */
+  if(stage===3) stageT= nursery3Run ? 0 : plan3[0].t0;   /* 3 面: 途中の世界から始める時 (?world=N) は 時計も曲も その世界の始まりから (設計書 3.2)。子ども部屋の 回は 霧の 道から (0) */
+  if(stage===3 && nursery3Run) document.body.classList.add('hud-calm');   /* 子ども部屋の 回: 速さ などの 表示なし (字幕・スタッフロールは 出る) */
   state='run'; bgmPlay();   // 「よーい… ドン！」の文字は 9/14 社長指示で撤去
   if(stage===1){ { frameAt(START_S+12,F); for(const dx of [-3,0,3]) confettiBurst(F.p.x+F.r.x*dx, F.p.y+6.2, F.p.z+F.r.z*dx, F.t, 0); }   // スタートの合図で ゲートの上から紙吹雪 (9/12 ゴージャス化)
     hotAirUp=0; }   // 熱気球も 同じ合図で 浮かび始める (9/30)
 }
 function finishRun(){   // 曲の終わり 5 秒前: 結果を用意し、時速を右中央へ、レールを宇宙へ立ち上げ、カメラはその場に残って見守る。曲は最後まで鳴り、終わった瞬間 (ジャン) に ピカーン + おばけが飛び去る
   state='finish'; finishT=0;
-  finalV=v; flashed=false;
+  finalV= cut3 ? cut3.v : v; flashed=false;   /* 3 面: 最後の 輪で 決めた 速さ (結果発表の 当たり / はずれと 同じ) */
   $('fin2').textContent= stage===3 ? 'じそく '+fmtKmh(v)+' km まで かそく！' : stage===2 ? (rung>=0 ? '「'+S2.LADDER2[rung].name+'」まで ぬいた！' : 'じそく '+fmtKmh(v)+' km まで かそく！') : v>=V_ESCAPE ? 'ちきゅうを とびだす はやさ！ (だいに うちゅうそくど)' : v>=V_ORBIT ? 'じんこうえいせいの はやさ！ (だいいち うちゅうそくど)' : v>=V_GOAL ? 'ちきゅうの じてんに おいついた！' : 'もうすこし！ あと じそく '+fmtKmh(V_GOAL-v)+' km';
   $('speed').classList.add('result');   // 右上の時速が スーッと右中央へ (これがスコア)
   if(stage===1){ truncateCourse(s+Math.max(600, scene.fog.far*0.9)); gen.phase='launch'; gen.launchStart=gen.s; ensureCourse(s, v, true); }   // 見えている先の向こうから レールが立ち上がる (2 面は そのまま先へ)
@@ -1790,7 +1911,7 @@ function finishRun(){   // 曲の終わり 5 秒前: 結果を用意し、時速
   spaceDark0=parseFloat($('space').style.opacity)||0; launchS=s; ghostGlow.visible=true; shadow.visible=false;   // 空の暗さは ここから 6 秒で 1 へ (update で)
 }
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
-function resetRun(){ bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
+function resetRun(){ laneLock3=null; camRef3=0; $('tilt3').hidden=true; nursery3Run=false; ending3Over=false;bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
 const RIVALS = {   // ハイスコアの 表に 最初から 並ぶ ライバル (10/27 社長「1 面なら スペースシャトル、2 面なら 金星などを ランクインさせて」)。名前と 速さは ゲームの 中の 相手と 同じ
   1: ['スペースシャトル', 'ミサイル', 'SR-71', 'ヴァルキリー', 'せんとうき', 'Tu-144', 'コンコルド', 'ちきゅうの じてん', 'おとの はやさ', 'ひこうき'].map(n=>LADDER.find(o=>o.name===n)),
@@ -1807,14 +1928,15 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   const praise= stage===1 ? RS.praiseFor(LADDER, kmh, 'ちきゅうの じてん') : stage===2 ? RS.praiseFor(S2.LADDER2, kmh, '地球') : RS.praiseFor(RS.COSMIC3, kmh, '');
   const okLine= stage===1 ? '{地球|ちきゅう}の {自転|じてん}を おいぬいた！' : stage===2 ? '{地球|ちきゅう}の {公転|こうてん}を おいぬいた！' : '{太陽系|たいようけい}の {公転|こうてん}を おいぬいた！';
   const rest=Math.max(1, goal-kmh).toLocaleString('en-US'), remainLine= stage===1 ? '{自転|じてん}まで あと '+rest+' km！' : '{公転|こうてん}まで あと '+rest+' km！';
-  const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'title', label:'タイトルに もどる', big:true}] :   /* 3 面の 合格 (エンディングの 後) は タイトルへ だけ (10/27 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
-  const soloButtons= ok ? [{id:'retry', label:'もういちど', big:true}, {id:'title', label:'タイトルに もどる'}] : [...buttons, {id:'title', label:'タイトルに もどる'}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎへ は 出さず タイトルへ (10/27 設計書) */
+  const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] :   /* 3 面の 当たり (太陽に 追いついた 映画の 後) は つぎへ = 子ども部屋 & エンディング だけ (10/28 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
+  const soloButtons= ok ? [...(stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] : []), {id:'retry', label:'もういちど', big:stage!==3}, {id:'title', label:'タイトルに もどる'}] : [...buttons, {id:'title', label:'タイトルに もどる'}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎの 面へは 出さず タイトルへ (10/27 設計書)。3 面の 当たりは 子ども部屋 & エンディングへも 進める */
   const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage]) : null;   /* 速さを 面ごとの 上位 10 件へ (ランキングの 板に 出る)。自分の 1 位を 超えたら「しんきろく！」(順位の 札は 出さない、10/27 社長) */
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
   resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:!!(sc && sc.best), god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons: soloStage ? soloButtons : buttons, confetti:ok,
-    onButton:id=>{ if(ERRLOG) logSend({button:id}); if(id==='retry') retry(false); else if(id==='booster') retry(true); else if(id==='next') goNext(); else goTitle(); } });
+    onButton:id=>{ if(ERRLOG) logSend({button:id}); if(id==='retry') retry(false); else if(id==='booster') retry(true); else if(id==='next') goNext(); else if(id==='nursery') goNursery3(); else goTitle(); } });
   if(ERRLOG) logSend({result: ok ? 'ok' : 'ng', kmh, stage, fail:failCount[stage]});
 }
+function goNursery3(){ whiteSwap(()=>{ setBooster(false); resetRun(); nursery3Run=true; setStage(3); pendingT=0; $('hud').style.visibility=''; pendingStart=true; if(ERRLOG) logSend({nursery3:'start'}); }); }   // 3 面の 当たりの つぎへ: 白 → 子ども部屋 & エンディング (きらきら星が 読めたら 始まる。白は 始まったら 晴れる)
 function retry(booster){ setBooster(booster); restart(); }   // もういちど: すぐ 同じ面 (天国には寄らない)
 let introStage=0, curtain=null;   // 天国の会話中の 面 (0 = 導入)・白い幕で 場面を切り替える途中 { t, fn, wc, called }
 function whiteSwap(fn){   // 白い幕で 場面を切り替える (0.55 秒で白く → fn → 0.6 秒で晴れる)。時間は frame の dt で
@@ -1881,11 +2003,12 @@ cv.addEventListener('pointerdown', e=>{
   if(state==='opening') return;
   if(state==='finish') return;   // FINISH の後は 結果発表の ボタンで (画面のタップでは 何も起きない、10/20)
   const x=e.clientX/window.innerWidth;
+  if(laneLock3 || cut3) return;   // 3 面の 分かれ道で レールが 広がっている 間 (10/27 社長)・太陽に 追いつけ (操作 なし、10/28 社長) は レーンを 動かせない
   if(x<1/3) lane=Math.max(0,lane-1); else if(x>2/3) lane=Math.min(LANES-1,lane+1);
 });
 for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audioResume(), {passive:true});   /* iPhone は 指を離した時 (pointerup / touchend) しか 音を出す許可にならない。導入の会話の間も 曲・声が鳴るように いつでも 許可を取る (10/23 社長: iPhone で 1 面の前の 天国の曲が 鳴らない。前は 面の曲が要る時だけ) */
 window.addEventListener('keydown', e=>{
-  if(e.key==='ArrowLeft') lane=Math.max(0,lane-1); else if(e.key==='ArrowRight') lane=Math.min(LANES-1,lane+1);
+  if(e.key==='ArrowLeft'){ if(!laneLock3 && !cut3) lane=Math.max(0,lane-1); } else if(e.key==='ArrowRight'){ if(!laneLock3 && !cut3) lane=Math.min(LANES-1,lane+1); }
   else if(e.key===' '||e.key==='Enter'){ if(e.repeat || (e.target instanceof Element && e.target.closest('button'))) return;   /* ボタンに 合わせた Enter・Space は ボタンに 任せる (オプションで Enter → 始まって しまった)・長押しの くり返しは 受けない (Codex 指摘 10/27) */
     if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !panelUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
   else if((e.key==='c'||e.key==='C') && stage>=2){ camMode2= camMode2==='watch' ? 'follow' : 'watch'; pop(camMode2==='watch' ? 'カメラ: みまもる' : 'カメラ: おばけに あわせる', true); }
@@ -1900,37 +2023,36 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   if(ENDING_Q && state==='run' && nurseryOn3()){ finishRun(); goal3T=1; bgmHalt(); }   /* 確かめ用 ?ending=1 (?stage=3&world=5&kmh=900000 と 一緒に): 子ども部屋に 入ったら すぐ 白 → エンディング */
   if(stage===2){ updateWarp2(dtReal); if(state==='finish') cleanupPlanets2(); updatePreview2(dt); updatePlanetVisuals2(dt); if(state!=="run") updateIce2(); updateWisps2(dtReal); if(state!=='title') updateDist2(); }   // ワープの時計 / FINISH 中も惑星を片づける・近づく見た目を動かす (Codex 指摘 10/1) / 太陽までの距離の表示
   if(state==='run'){
+    if(stage===3) branchStep3();   /* 分かれ道の 行き先は 位置・コース・輪の 判定より 先に 決める (1 コマで 分かれ道を 越えても 決まった コースの 上を 進む、Codex 指摘 10/28) */
     if(stage>=2){ const vm0=moveSpeed(v); ensureCourse(s+vm0*dtMove, vm0); ensurePlates(s, vm0, 0); }   // 2 面: 進む前に 行き先までのコースと その間の輪を作っておく (本物の速さでは 1 コマで数百 m〜1 km、コマ落ちでは もっと進み、作る前に通り過ぎてしまうため、Codex 指摘 10/1)
     const vm=moveSpeed(v), sPrev=s; s= stage===3 ? Math.max(s, S3.sAt3(plan3, stageT, lost3On || (pass3===null && v*3.6<GOAL3_KMH && !nurseryOn3()))) : s+vm*dtMove;   // 2 面は 画面の流れの速さで進む (時速は本物)。3 面は 曲の時計から決める (曲とずれない、設計書 3.3。後ろへは戻さない)
     if(stage===3 && ERRLOG && nurseryOn3()){ const r=plan3[pi3], mk=S3.pathMarks3(r); if(mk){ r.logged ??= {}; for(const k in mk) if(!r.logged[k] && (r.org ?? r.s0)+mk[k]<=s){ r.logged[k]=true; logSend({mark:k, t:+(stageT-r.t0).toFixed(3)}); } } }   /* 確かめ用 ?errlog=1: 子ども部屋の 印 (駆け上がり・メリー・ベッド) を 通った時刻 (始まりから 秒) */
     if(stage===3 && ERRLOG){ for(const b of plates) if(b.ring && !b.logged && b.s>sPrev && b.s<=s){ b.logged=true; logSend({ring:+S3.tAt3(plan3, b.s).toFixed(3)}); } for(const g of gates3) if(g.at!=null && !g.logged && g.at>sPrev && g.at<=s){ g.logged=true; logSend({gate:+S3.tAt3(plan3, g.at).toFixed(3)}); } }   /* 確かめ用 ?errlog=1: 輪・世界が変わる輪を 通った時刻 (設計書 5 章、曲の時刻表と照合) */
     ensureCourse(s, vm);                                      // 先を作る (片づけは 板の判定のあと)
     if(stage===2) updateIce2();   /* 土星の輪の石は おばけが このコマ進んだ後に並べる (進む前だと ひどいコマ落ちで 並べた石が 全部 後ろになった、Codex 指摘 10/26) */
-    laneX += (laneOff(lane, s)-laneX)*Math.min(1, dt*LANE_SMOOTH);
-    for(const b of plates){ if(!b.hit && !b.missed && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
+    if(stage===3){ const e=laneX-laneOff(lane, sPrev); laneX=laneOff(lane, s)+e*(1-Math.min(1, dt*LANE_SMOOTH)); }   /* 3 面: レールに 乗った まま 運ばれ、レーンを 移る 分だけ なめらかに (分かれ道で レールが 横へ 大きく 動く 間 おばけが 遅れて はみ出した、10/28 社長) */
+    else laneX += (laneOff(lane, s)-laneX)*Math.min(1, dt*LANE_SMOOTH);
+    const grpMiss=[]; for(const b of plates){ if(!b.hit && !b.missed && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
       b.hit=true; hits++; { frameAt(s,F); if(b.box || b.ring) ghostGlint(); else confettiBurst(F.p.x+F.r.x*laneX, F.p.y+0.9, F.p.z+F.r.z*laneX, F.t, v); }   // 地上の板 = 紙吹雪、空のボックスと 2 面 = おばけが きらりと光る
-      let add= stage>=2 ? stepAdd(hits) : BOOST_MODE==='step' ? stepAdd(hits) : BOOST_BASE+v*BOOST_RATE;   // 2 面: n 個目は +500 + 50(n−1) km/h、3 面: +5,000 + 500(n−1)。1 面 step: n 枚目は +n km/h (はじめは静か、後半ほど大きく)
-      if(stage===1 && lastTrackStarted() && !planeRival.passed) add*=CATCHUP_RATE;   // 最後の曲に入っても飛行機を抜けていなければ 追い風 (1 面)
-      if(boosterOn) add*=BOOSTER_MUL[stage];   // 救済の やり直し: ブースターで ガンガン加速 (10/20)
-      const cn=combo+1, cb= stage===1 ? Math.floor(cn/10)*COMBO1_STEP : stage===2 ? Math.floor(cn/10)*COMBO2_STEP : stage===3 ? Math.floor(cn/10)*COMBO3_STEP : 0; add+=cb/3.6;   // コンボ ボーナス (この板で 何連続目か)。1 面・2 面とも 続いている間ずっと (10 連続ごとに 1 段ずつ増える)
       if(b.ring){ placePlate(b, 1); ringBurstStart(b.lane); if(stage===3) sparkBurst3(b); }   // 2 面: くぐった輪は消え、おばけの周りに 光の輪が広がる
-      v+=add;   // くぐったら その場で加速 (2 面も ためない、10/5 社長: くぐっても反応がないのはいけない)
-      camKick=Math.min(1, camKick+CAM_KICK_ADD); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false);   // 上限なし (インフレは最後まで)。踏んだ瞬間に 次の相手が前方に見えてくる
-      combo++; showGain(add, cb); if(combo%10===0) pop(combo+' れんぞく！', true); }   // 加速は右上に小さく。連続は 10 ごとに一言だけ (踏めなくても何も言わない)
-      else if(!b.hit && !b.missed && b.s<s-1.6*b.sc){ b.missed=true; combo=0; } }   /* 踏めなかったと決めるのは 踏める範囲 (板の長さの半分) を 過ぎてから (前は 3 m 後ろ固定で、大きい板は まだ踏めるのに コンボだけ先に切れた = ボーナスが付かない、Codex 指摘 10/26) */
+      boostHit(); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false); if(b.grp) b.grp.hit=true; }   // 踏んだ瞬間に 次の相手が前方に見えてくる
+      else if(!b.hit && !b.missed && b.s<s-1.6*b.sc){ b.missed=true; if(b.grp) grpMiss.push(b.grp); else combo=0; } }   /* 踏めなかったと決めるのは 踏める範囲 (板の長さの半分) を 過ぎてから (前は 3 m 後ろ固定で、大きい板は まだ踏めるのに コンボだけ先に切れた = ボーナスが付かない、Codex 指摘 10/26) */
+    for(const g of grpMiss) if(!g.hit && !g.cut){ g.cut=true; combo=0; }   /* 同じ 音の 3 本は 全部 調べて から: どれも 踏めて いない 時だけ 連続を 切る (1 コマで 3 本を 越えた時 先に 調べた 輪で 切れた、Codex 指摘 10/28) */
+    if(stage===3) for(const g of gates3) if(!g.hit && g.at!=null && g.at<=s){ g.hit=true; hits++; ghostGlint(); ringBurstStart(lane); sparkBurst3({s:g.at, lane}); boostHit(); }   /* 世界が 変わる 輪も 加速の 輪と して 数える (10/28 社長。くぐる 時刻は 曲の 拍 = MUSIC3.gates)。輪の 位置が 後から 決まっても 抜けない (Codex 指摘 10/28) */
     $('combo').textContent= combo>=3 ? combo+' れんぞく' : '';
     if(stage===2){ updatePlanets2(dtMove, dt); updateSmall2(s-sPrev, dtMove); }   // 惑星イベント (追い風・ぬいた・ギアアップ) / 姿のある小物
     trackGrowth(stageT, moveSpeed(v)); if(stage===1) updateRivals(dtMove); ensurePlates(s, moveSpeed(v), dt); tidyCourse(s);   // 速さの段の更新は updateRivals の中 (抜いた時 / 速さで)。板の間隔は 画面の流れの速さで (2 面)
     if(!lastSpurt && lastTrackStarted()){ lastSpurt=true; pop('ラストスパート！'); }
-    if(songRemaining()<=FINISH_LEAD || lost3On) finishRun();   // 曲の終わり 5 秒前に FINISH (3 面で 天の川へ 入った時は すぐ = 3 秒後に 飛び去り) (打ち上げ開始)。曲が終わる瞬間が ピカーン + 飛び去り
+    if(cut3 ? songRemaining()<=0 : (songRemaining()<=FINISH_LEAD || (lost3On && !TAP_Q))) finishRun();   /* 太陽に 追いつけ は 曲の 最後 (余韻が 消える) まで 映画、終わったら 結果発表 */   // 曲の終わり 5 秒前に FINISH (3 面で 天の川へ 入った時は すぐ = 3 秒後に 飛び去り) (打ち上げ開始)。曲が終わる瞬間が ピカーン + 飛び去り
   }
   else if(state==='finish' && nurseryOn3()){   // 子ども部屋の ゴール: 飛び去り・ピカーン・宇宙の色は なし。白い幕 (最後の和音で 真っ白) の まま 曲が 鳴り終わるのを 待ち、0.6 秒後に 結果発表 (白い幕は 後ろに 残す。エンディングは ここに 挟む)
     finishT+=dtReal; if(goal3T<0){ if(songRemaining()<=0){ goal3T=0; bgmHalt(); } } else goal3T+=dtReal;   /* 曲の時計だけで 決める (実時間の 保険は タブを 隠して 戻った時に 余韻を 切るので 使わない。曲が 無い・止まった時も 時計は 進む、Codex 指摘 10/27) */
-    if((goal3T>=0 || songRemaining()<=ENDING3_LEAD) && !ending3 && !resultShown) startEnding(); if(ending3) ending3.update(Math.min(0.05, dtReal)); }   // オルゴールの 余韻が 聞こえなく なったら すぐ エンディング (灰色へ → むにゃむにゃ → 目が開く → ばあ！)、終わったら 結果発表。場面の 時計は 1 コマ 0.05 秒まで (タブから 戻った時に 止まっていた 時間を 足さない = 声と ずれない、Codex 指摘 10/27)
+    if((goal3T>=0 || songRemaining()<=ENDING3_LEAD) && !ending3 && !resultShown && !ending3Over) startEnding(); if(ending3) ending3.update(Math.min(0.05, dtReal)); }   // オルゴールの 余韻が 聞こえなく なったら すぐ エンディング (灰色へ → むにゃむにゃ → 目が開く → ばあ！)、終わったら 結果発表。場面の 時計は 1 コマ 0.05 秒まで (タブから 戻った時に 止まっていた 時間を 足さない = 声と ずれない、Codex 指摘 10/27)
+  else if(state==='finish' && stage===3 && cut3){ finishT+=dtReal; if(!resultShown && finishT>=0.6) showResult(); }   // 太陽に 追いつけ: 飛び去り・ピカーンは なし。曲が 鳴り終わった 0.6 秒後に 結果発表 (当たりの 白い幕は 後ろに 残す)
   else if(state==='finish'){   // 宇宙へ: おばけは加速しながら レールを駆け上がる。空は暗く、遠くまで見えるように
     finishT+=dtReal;
     if(!blast){ if(stage>=2){ v*=Math.exp(0.25*dtReal); const ds=moveSpeed(v)*dtReal; s+=ds; ensureCourse(s, moveSpeed(v)); if(stage===2) updateSmall2(ds, dtReal); } else { v+=LAUNCH_ACC*dtReal; s+=v*dtReal; ensureCourse(s, v); } tidyCourse(launchS);   // 見守るカメラより後ろの区間だけ片づける (軌道は残す)。2 面: 打ち上げはなく そのまま先へ加速
-      if(songRemaining()<=0 || finishT>=(lost3On ? LOST3_SEC : FINISH_LEAD+1.5)){   // 曲の最後の「ジャン」(曲が終わった瞬間) で 一気に加速して 画面の上へ
+      if(songRemaining()<=0 || finishT>=(lost3On && !TAP_Q ? LOST3_SEC : FINISH_LEAD+1.5)){   // 曲の最後の「ジャン」(曲が終わった瞬間) で 一気に加速して 画面の上へ
         blast=true; blastT=0; blastV=moveSpeed(v); blastDist=0; bgmHalt(); frameAt(s,G);   // 飛び去りは 画面の流れの速さから (2 面は時速が桁違いなので)
         for(const r of small2){ r.active=false; r.mesh.visible=false; }   // 2 面の小物は ピカーンで消す (飛び去りの後は 動かさないので 残ると止まって見える、Codex 指摘 10/7)
         flashed=true; $('speed').classList.add('flash'); $('flash').classList.add('on');   // ジャンの瞬間に ピカーン (時速はもう右中央にいる)
@@ -1985,6 +2107,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
 
   if(state==='finish'){   // 見守るカメラ: その場に残り 少しずつ後ろ・上へ引きながら おばけを見送る
     if(stage===3 && nurseryCam3()){ stars.position.copy(camera.position); space2.position.copy(camera.position); updateFx(dt); return; }   // 子ども部屋は FINISH の後も 見下ろしの まま (ゴールの 光 → 白 は Task 5)
+    if(stage===3 && cut3){ updateGalaxy3(dt); cutFx3(dt); updateFx(dt); return; }   // 太陽に 追いつけ: 結果発表の 間も 映画は 続く (はずれ = 遠ざかる 太陽と 地球、当たり = 真っ白)
     camera.position.copy(launchCam.pos).addScaledVector(launchCam.u, finishT*1.5).addScaledVector(launchCam.t, -finishT*2.5);
     const target= blast ? blastLook : gp, dist=camera.position.distanceTo(gp);
     camera.far=Math.max(stage>=2 ? CAM_FAR2 : 8000, dist*1.5+2000);   // 遠ざかる おばけが描画距離の外で消えないように (2 面は 本物の速さで 数百 km 先まで飛ぶ、Codex 指摘 10/1)
@@ -2005,20 +2128,23 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
   const satW= camMode2==='watch' ? sat2 : 0;   /* 見守るカメラだけ (おばけに合わせるカメラは そのまま、Codex 指摘 10/2) */
   const back0=(CAM_BACK_LOW+(CAM_BACK-CAM_BACK_LOW)*gf+kick*CAM_KICK_BACK+CAM2_BACK*k2)*(1+0.6*satW), aheadA=CAM_AHEAD_LOW+(CAM_AHEAD-CAM_AHEAD_LOW)*gf+spR*16;
   /* 縦持ちでは 横の幅が狭く、空の広いレーン (6 m) へ移ると おばけが 画面の外へ出た (10/23 社長) → 外側のレーンの おばけが 画面に入る遠さへ 後ろに引く (横には動かさない = 酔わない、社長)。カメラは おばけと反対へ レーン×0.5 ずれ、前 (aheadA 先) の おばけ側を 見るので、その首の振りも 入れて 遠さを探す (Codex 指摘 10/26: 首の振りを 入れないと 速い時に 足りなかった) */
-  const laneL=laneWAt(s), halfA=Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect)*0.85, lookK= stage>=2 ? 1.1 : 1.0; let needB=back0;
+  const laneL= stage===3 ? S3.LANE_W3 : laneWAt(s), halfA=Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect)*0.85, lookK= stage>=2 ? 1.1 : 1.0; let needB=back0;
   while(needB<90 && Math.atan(1.5*laneL/needB)-Math.atan(lookK*laneL/(aheadA+needB))>halfA) needB+=0.5;   /* おばけの向き − 見ている向き が 画面の 横半分の 85% に 収まるまで */
   const fb=Math.max(1, needB/back0);   /* 収まる遠さは 画面の形で 混ぜずに そのまま (中くらいの縦長で 足りなかった、Codex 指摘 10/26)。横長では ふつう back0 のまま = 見え方は 変わらない */
-  const backT=back0*fb, upT=(CAM_UP_LOW+(CAM_UP-CAM_UP_LOW)*gf+kick*CAM_KICK_UP+CAM2_UP*k2)*(1+0.5*satW)*Math.sqrt(fb), latT=-laneX*0.5*(stage===2 ? Math.max(0, 1-Math.abs(G.b)*1.5) : 1);   // 引いた分 少し高く。2 面: 断面が曲がっている所では 横へずらさない (パイプの外へ出ないように)
+  const backT=back0*fb, upT=(CAM_UP_LOW+(CAM_UP-CAM_UP_LOW)*gf+kick*CAM_KICK_UP+CAM2_UP*k2)*(1+0.5*satW)*Math.sqrt(fb), latT=-(laneX-refX3(s))*0.5*(stage===2 ? Math.max(0, 1-Math.abs(G.b)*1.5) : 1);   // 引いた分 少し高く。2 面: 断面が曲がっている所では 横へずらさない (パイプの外へ出ないように)
   if(!camSm.init){ camSm.back=backT; camSm.up=upT; camSm.lat=latT; camSm.init=true; camUp.copy(G.u); camera.fov=FOV_MIN; camera.far= stage>=2 ? CAM_FAR2 : 8000; }   // 始まりは 即座に付け直す
-  camSm.back+=(backT-camSm.back)*k; camSm.up+=(upT-camSm.up)*k; camSm.lat+=(latT-camSm.lat)*k;
+  const tk=top3();   // 3 面の 銀河から 最後まで: 高い 所から 斜めに 見下ろす (縦スクロールの シューティング、10/28 社長)
+  const near3=cutNear3();   // 太陽に 追いつけ: カメラが 走る おばけに 寄る (見下ろしの 距離を 縮める。なめらかに する 遅れは 入れない)
+  camSm.back+=(backT+(TOP3.back-backT)*tk-camSm.back)*k; camSm.up+=(upT+(TOP3.up-upT)*tk-camSm.up)*k; camSm.lat+=(latT-camSm.lat)*k;
+  if(near3>0){ camSm.back=TOP3.back*(1-CUT3.near*near3); camSm.up=TOP3.up*(1-CUT3.near*near3); }
   const aheadS=s+aheadA;
   if(stage>=2 && camMode2==='follow'){   // おばけに合わせる: カメラも おばけのレールの上 (後ろ・「上」へ)。画面ごと回る
     railPoint(Math.max(0, s-camSm.back), laneX, CB); camera.position.copy(CB.p).addScaledVector(CB.u, camSm.up);
     railPoint(aheadS, laneX, C); camUp.lerp(GH.u, k).normalize(); camera.up.copy(camUp); camera.lookAt(C.p);
   } else {   // 1 面・2 面の見守る: カメラは中心線の上 (パイプなら 軸のあたり)。2 面は おばけのいる側を 少し見る
-    frameAt(Math.max(0, s-camSm.back), CB);
+    const sb=Math.max(0, s-camSm.back); if(stage===3) railPoint(sb, refX3(sb), CB); else frameAt(sb, CB);   /* 3 面: 分かれ道で 行き先が 決まったら 選んだ レーンを まん中と して 追う (上下左右に 大きく 分かれても 画面の まん中、10/28 社長)。ふだんは refX3 = 0 で 今までと 同じ */
     camera.position.copy(CB.p).addScaledVector(CB.u, camSm.up).addScaledVector(CB.r, camSm.lat);
-    if(stage>=2) railPoint(aheadS, laneX*0.6, C); else frameAt(aheadS, C);
+    if(stage===3){ const rx=refX3(aheadS); railPoint(aheadS, rx+(laneX-refX3(s))*0.6, C); } else if(stage>=2) railPoint(aheadS, laneX*0.6, C); else frameAt(aheadS, C);
     camUp.lerp(G.u,k).normalize(); camera.up.copy(camUp);
     if(stage>=2 && satW>0.001){ _scF.copy(C.p).sub(camera.position).projectOnPlane(camUp).normalize(); _scS.copy(satPos2).sub(camera.position).projectOnPlane(camUp).normalize(); const th=Math.acos(Math.min(1, Math.max(-1, _scF.dot(_scS)))), sg=Math.sign(_scV.crossVectors(_scF, _scS).dot(camUp))||1, ph=satW*Math.min(SAT2_TURN, th*0.5, stage===2 && camera.aspect<1 ? halfA*0.95 : Infinity);   /* 土星の向きへ 最大 45° (土星までの角度の半分)。2 面の縦長の画面だけ 横の見える角度の 8 割まで (3 面の像・横長は これまでどおり、Codex 指摘。10/26 社長: 縦持ちで 流れてくる輪が 右の枠外へ → 土星は 見えにくくなっても コースの先を ぎりぎり見せる。halfA = 横半分の 85%) */
       _scQ.setFromAxisAngle(camUp, sg*ph); camera.position.sub(gp).applyQuaternion(_scQ).add(gp); _scV.copy(C.p).sub(gp).applyQuaternion(_scQ).add(gp);   /* カメラと見る所を まとめて おばけ (左右のレーンでも その位置) の周りに回す → いつもの構図のまま 向きだけ土星の側へ (おばけは いつもの位置に映る、Codex 指摘 10/2) */
@@ -2027,8 +2153,10 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
       camera.lookAt(_scV); }
     else camera.lookAt(stage>=2 ? C.p : C.p.clone().addScaledVector(G.r, laneX*0.5));
   }
+  if(tk>0){ const ph=Math.atan(S3.W3.galaxy.mod.SUN_Y*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))), L=Math.max(1, C.p.distanceTo(camera.position)); _top3.copy(G.t).multiplyScalar(Math.cos(ph)).addScaledVector(G.u, -Math.sin(ph)).multiplyScalar(L).add(camera.position); _top3.lerp(C.p, 1-tk); if(near3>0) _top3.lerp(gp, near3); camera.lookAt(_top3); }   /* 銀河: コースの 進む 向きを 少しだけ 見下ろす = 一点透視で コースの 消える 点が 遠景の 太陽 (画面の まん中より SUN_Y 上) に 重なる (10/28 社長) */
   camera.fov += ((FOV_LOW+(FOV_MIN-FOV_LOW)*gf+FOV_KICK*kick+FOV_SPEED*spR+FOV2*k2+10*satW)-camera.fov)*k; camera.updateProjectionMatrix();
-  if(stage===3) nurseryCam3();   // 子ども部屋: 約 4 秒から 上へ 引き続ける カメラに 置き換える (後ろからの カメラは 下で 計算し続け、引き始めの 位置に 使う)
+  if(stage===3){ updateGalaxy3(dt); cutFx3(dt); }   // 銀河の 遠景 (カメラが 決まった 後)・太陽に 追いつけ の 映画
+  if(stage===3){ nurseryCam3(); fog3Step(); }   // 子ども部屋: 約 4 秒から 上へ 引き続ける カメラに 置き換える (後ろからの カメラは 下で 計算し続け、引き始めの 位置に 使う)
   if(stage===1){ scene.fog.far=Math.min(AHEAD_MAX*0.9, 700+v*3); scene.fog.near=scene.fog.far*0.18; }   // 速いほど 遠くまで見える (作ってある範囲まで。FINISH 後は 上の分岐で別扱い)
   stars.position.copy(camera.position); space2.position.copy(camera.position); if(stage===2){ updateSun2(dt); placeSun2(); }
   updateFx(dt);
@@ -2051,7 +2179,7 @@ const starGeo=new THREE.BufferGeometry(); const starAng=new Float32Array(STAR_CA
 const tunnelStars=new THREE.Points(starGeo, starMat); tunnelStars.frustumCulled=false; tunnelStars.visible=false; scene.add(tunnelStars);   // (stars は宇宙の星空で使用済みの名前)
 let starT=-1, starOut=0; const SF=mkFrame(), STAR_DELAY=2;   // starT = トンネルが出てからの秒数 (−1 = 出ていない)、starOut = 消え具合 0→1。STAR_DELAY = 加速レーンが止まってから 出すまでの秒数 (9/15 社長: 少し早い → 2 秒遅く)
 function updateStarTunnel(dt){   // 子ども部屋 (3 面の 最後) では 出さない: ベッドに 落ちた 後に カラフルな キラキラが 残った (縦持ち、10/27 社長)
-  const songOn= !(stage===3 && nurseryOn3()) && ((state==='run' && songRemaining()<=FINISH_LEAD+PLATE_QUIET-STAR_DELAY) || state==='finish'), warpOn= stage===2 && state==='run' && warp2>=0, launchOut= blast || segFor(s).phase==='launch';   // 曲の終わりのトンネル / 2 面の惑星から惑星へのワープ (10/1)
+  const songOn= !(stage===3 && (nurseryOn3() || cut3)) && ((state==='run' && songRemaining()<=FINISH_LEAD+PLATE_QUIET-STAR_DELAY) || state==='finish'),   /* 太陽に 追いつけ (映画) は 出さない (10/28 社長「ゴール前の きらきらも 消して いい」) */ warpOn= stage===2 && state==='run' && warp2>=0, launchOut= blast || segFor(s).phase==='launch';   // 曲の終わりのトンネル / 2 面の惑星から惑星へのワープ (10/1)
   const on= songOn || warpOn;
   if(!on){ if(starT>=0){ starT=-1; starOut=0; tunnelStars.visible=false; } return; }
   if(songOn && !launchOut && starOut>0 && starOut<1) starOut=0;   /* ワープの消えかけから 曲の終わりのトンネルに切り替わったら 出し直す (Codex 指摘 10/1) */
@@ -2069,7 +2197,7 @@ function updateStarTunnel(dt){   // 子ども部屋 (3 面の 最後) では 出
 function resize(){ const w=window.innerWidth, h=window.innerHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); sizePortal3(); if(op) op.resize(w,h); }
 window.addEventListener('resize', resize); resize();
 let kitsReady=false;   // 部品集の読み込みが終わるまで スタートを待つ (読み込めなくても 簡易の形で始められる)
-bgmPrepare(); if(actx) setAudioVolume(actx, OPT.VOLUMES[REC.getVolume()]); bgmLoad(BGM_SETS[STAGE_Q]);   /* 音の 大きさは 覚えている 段で (オプション、10/27) */ if(actx) bgmBuf(HEAVEN_BGM.src).catch(()=>{}); $('tap').textContent='ぶひんを よみこみ中…';   /* 天国の曲も 先に読んでおく */
+bgmPrepare(); if(actx) setAudioVolume(actx, OPT.VOLUMES[REC.getVolume()]); bgmLoad(STAGE_Q===3 && nursery3Run ? BGM_NURSERY3 : BGM_SETS[STAGE_Q]);   /* 音の 大きさは 覚えている 段で (オプション、10/27) */ if(actx) bgmBuf(HEAVEN_BGM.src).catch(()=>{}); $('tap').textContent='ぶひんを よみこみ中…';   /* 天国の曲も 先に読んでおく */
 preloadVoices(actx, 'assets/voice/', RS.FAIL_LINES);   /* 結果発表の 神様の声を 先に読んでおく (10/20) */
 if(OPENING_ON){   /* 1 面の入口は 天国の タイトル画面 (雲の上を おばけが うろうろ)。部品集を読んでいる間から 描く (10/19) */
   op=OP.createOpening({renderer, getKit:()=>KIT, actx}); opTitle=makeTitle(); opTitle.setText($('tap').textContent); $('hud').style.visibility='hidden'; preloadVoices(actx, 'assets/voice/', OP.OPENING_LINES);   /* 声は タイトルの間に 先読み (最初の行に 間に合うように) */
@@ -2107,15 +2235,16 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   if(pendingStart){ requestAnimationFrame(frame); return; }   /* ストーリー なしで その面を 待つ 間 (白い 幕の 下) は ゲームを 動かさない・描かない (前の 遊びの 位置・速さの まま 動いて 止まった、Codex 指摘 10/27)。始まりは startRun が 全部 整える */   /* 天国の タイトル画面の 間だけ オルゴールの きらきら星 (始める・面の 試しの 入口などで タイトルを 離れたら 1 秒で 消す) */
   if(op && (state==='opening' || state==='title')){ const dt=Math.min(0.05,raw); op.update(dt); if(talk) talk.update(dt); if(diving) diveStep(dt); if(op){ renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(op.scene, op.camera); } requestAnimationFrame(frame); return; }   /* タイトル画面と 導入の間は 天国の場面だけ描く (10/19)。talk.update で 導入が終わると op は片づいている */
   update(Math.min(0.05,raw), Math.min(2,raw));
-  updateCloud2(); renderer.setClearColor(cloudK2>0.02 ? CLOUD2_COL : 0x000000, cloudK2>0.02 ? 1 : 0); renderer.info.reset(); renderer.clear();   /* 海王星の雲の中は 深い青で塗る (ふだんは 透明 = 後ろの宇宙の色) */
+  updateCloud2(); renderer.setClearColor(cloudK2>0.02 ? CLOUD2_COL : fogA3>0 ? FOG3.col : 0x000000, cloudK2>0.02 ? 1 : fogA3); renderer.info.reset(); renderer.clear();   /* 海王星の雲の中は 深い青で塗る (ふだんは 透明 = 後ろの宇宙の色) */
   if(stage===2 && cloudK2<=0.02){ farCam.position.copy(camera.position); farCam.quaternion.copy(camera.quaternion); if(farCam.fov!==camera.fov || farCam.aspect!==camera.aspect){ farCam.fov=camera.fov; farCam.aspect=camera.aspect; farCam.updateProjectionMatrix(); }   // 遠景のカメラは 本物のカメラと同じ位置・向き (奥行きの範囲だけ違う)
     renderer.render(bgScene, farCam); renderer.render(farScene, farCam); renderer.clearDepth(); }   // 2 面: 背景 (星空・太陽) → 惑星 を先に描き、奥行きを消してから レール・おばけ・輪
   if(ROOM_Q && stage===3){ const w=views3.get(pi3); if(w && w.placed && w.frame){ w.frame(camera, camera.aspect); if(nurseryOn3()) nurseryLight3(); } }   /* ?room=1: 子ども部屋の 最後の 見下ろし (上 = ドア) */
-  if(!white3Full){   // 子ども部屋で 真っ白の間は 見えないので 描かない (結果発表を 待つ間の 電池、Codex 指摘 10/27)
+  if(stage===3 && movieOn3()){ if(!white3Full) renderer.render(movie3.scene, movie3.camera); }   // 太陽に 追いつけ: 立ち絵の 映画だけを 描く (コース・世界は 描かない)
+  else if(!white3Full){   // 子ども部屋で 真っ白の間は 見えないので 描かない (結果発表を 待つ間の 電池、Codex 指摘 10/27)
     if(stage===3) renderWorlds3(Math.min(0.05, raw));   // 3 面: 世界の景色を レールより先に (奥行きは消さない)
     renderer.render(scene,camera); }
   if(FPS_ON){ fpsN++; fpsT+=raw; if(raw>fpsWorst) fpsWorst=raw; if(fpsT>=0.5){ const ri=renderer.info.render; fpsEl.textContent=Math.round(fpsN/fpsT)+' fps ／ 最悪 '+Math.round(fpsWorst*1000)+' ms ／ 描画 '+ri.calls+' 回 ／ 三角 '+Math.round(ri.triangles/1000)+'k ／ 影 '+(SHADOWS?'あり':'なし')+' ／ 画素 '+renderer.getPixelRatio().toFixed(2)+'× ／ 形 '+renderer.info.memory.geometries+' 画像 '+renderer.info.memory.textures; fpsN=0; fpsT=0; fpsWorst=0; } }
-  if(CLOCK_ON) clockEl.textContent='きょく '+songClock();
+  if(CLOCK_ON) clockEl.textContent='きょく '+songClock()+(stage===3 && state!=='title' ? ' ('+stageT.toFixed(1)+' 秒)' : '');   /* 3 面は 秒も (世界が 変わる 時刻 MUSIC3.gates と 見比べる、10/28 社長) */
   requestAnimationFrame(frame); }
 requestAnimationFrame(frame);
 const logQ=[]; let logWs=null; const logSend=o=>{ const t=JSON.stringify({type:'game-log', ...o}); if(logWs && logWs.readyState===1) logWs.send(t); else logQ.push(t); };   // 確かめ用の記録 (?errlog=1・?tap=1): 確認用サーバーの記録 (state/server.log) へ送る

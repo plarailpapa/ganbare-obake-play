@@ -4,25 +4,25 @@ import * as THREE from 'three';
 
 export const S2_LINES = [   // 2 面のはじめ (おばけが 雲の下から ニョッキ と出た後)
   { id:'s2-01', who:'obake', face:'egao', cast:['obake'], text:'やったー！ これで {地球|ちきゅう}の {自転|じてん}に おいついたぞ！' },
-  { id:'s2-02', who:'kami', face:'magao', listen:'egao', cast:['obake','kami'], cue:'kamiIn', text:'よろこんでいる ところ わるいけど… じつは そのままでは {地球|ちきゅう}に おいつけないんだ' },
+  { id:'s2-02', who:'kami', face:'magao', listen:'egao', cast:['obake','kami'], cue:'kamiIn', text:'よろこんでいる ところ わるいけど… じつは そのままでは {地球|ちきゅう}に おいつけないの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
   { id:'s2-03', who:'obake', face:'eehatena', listen:'magao', text:'ええっ！？ どうして！？' },
-  { id:'s2-04', who:'kami', face:'magao', listen:'hee', layout:'corner', cue:'orbitIn', text:'{地球|ちきゅう}は {自転|じてん}とは べつに、{太陽|たいよう}の まわりも まわっているんだ' },
-  { id:'s2-05', who:'kami', face:'magao', listen:'hee', cue:'orbitLap', text:'これを 『{公転|こうてん}』 と いうんだ。1 ねんで {太陽|たいよう}を ひとまわり するよ' },
+  { id:'s2-04', who:'kami', face:'magao', listen:'hee', layout:'corner', cue:'orbitIn', text:'じつは {自転|じてん}とは べつに、{太陽|たいよう}の まわりも まわっているの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
+  { id:'s2-05', who:'kami', face:'magao', listen:'hee', cue:'orbitLap', text:'これを 『{公転|こうてん}』 と いって、1 ねんで {太陽|たいよう}を ひとまわり するの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
   { id:'s2-06', who:'kami', face:'magao', listen:'hee', cue:'orbitSpeed', text:'その はやさは {時速|じそく} 107,000 km。{自転|じてん}の 80 ばい！' },
   { id:'s2-07', who:'kami', face:'magao', listen:'muhyojo', cue:'leftBehind', text:'{地球|ちきゅう}に ひっぱられない おばけは… {地球|ちきゅう}ごと おいていかれちゃう' },
   { id:'s2-08', who:'obake', face:'odoroki', listen:'magao', text:'じゃあ… {地球|ちきゅう}の {公転|こうてん}に おいつけば いいってこと…！？' },
   { id:'s2-09', who:'obake', face:'ganbaru', listen:'egao', layout:'stage', text:'よーし！ ぜったい 『ばあ！』って おどろかせて やるんだ！' },
-  { id:'s2-10', who:'kami', face:'egao', listen:'ganbaru', text:'その いきだ！ さあ、いっておいで！' }
+  { id:'s2-10', who:'kami', face:'egao', listen:'ganbaru', text:'その いきよ！ さあ、いっておいで！' }   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
 ];
 
 export const S3_LINES = [   // 3 面のはじめ
   { id:'s3-01', who:'obake', face:'egao', cast:['obake'], text:'はあ、はあ… やったぞ！' },
   { id:'s3-02', who:'obake', face:'egao', listen:'egao', cast:['obake','kami'], cue:'kamiIn', text:'かみさま！ これで {地球|ちきゅう}に いけますよね！？' },
-  { id:'s3-03', who:'kami', face:'magao', listen:'egao', text:'それが… じつは いいそびれた ことが あるんだ' },
+  { id:'s3-03', who:'kami', face:'magao', listen:'egao', text:'それが… じつは いいそびれた ことが あるの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
   { id:'s3-04', who:'kami', face:'magao', listen:'muhyojo', layout:'corner', cue:'galaxyIn', text:'{地球|ちきゅう}の いる {太陽系|たいようけい}は、{銀河系|ぎんがけい}の ちゅうしんを {公転|こうてん} しているんだ' },
   { id:'s3-05', who:'obake', face:'muhyojo', listen:'magao', text:'……？？？' },
   { id:'s3-06', who:'obake', face:'eehatena', listen:'magao', text:'ど、どういう ことですか！？ せつめい して ください！' },
-  { id:'s3-07', who:'kami', face:'magao', listen:'hee', cue:'galaxySpiral', text:'みて ごらん。{太陽|たいよう}は {惑星|わくせい}たちを つれて、らせんを えがきながら {銀河系|ぎんがけい}の なかを すすんでいるんだ' },
+  { id:'s3-07', who:'kami', face:'magao', listen:'hee', cue:'galaxySpiral', text:'みて ごらん。{太陽|たいよう}は {惑星|わくせい}たちを つれて、らせんを えがきながら {銀河系|ぎんがけい}の なかを すすんでいるの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
   { id:'s3-08', who:'kami', face:'magao', listen:'hee', cue:'galaxySpeed', text:'その はやさは {時速|じそく} 830,000 km。{公転|こうてん}の 8 ばい！' },
   { id:'s3-09', who:'obake', face:'shobon', listen:'magao', text:'そ、そんなに…' },
   { id:'s3-10', who:'obake', face:'ganbaru', listen:'magao', layout:'stage', text:'…でも、こんどこそ！ こんどこそ ぜったい いくんだ！' },

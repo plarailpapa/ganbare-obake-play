@@ -17,9 +17,9 @@ export const OPENING_LINES = [   // 台本 (設計書 3 章)。声は assets/voi
   { id:'op-05', who:'kami', face:'magao', listen:'ganbaru', text:'うーん… やめといたら？' },
   { id:'op-06', who:'obake', face:'eehatena', listen:'magao', text:'えー！？ なんで ですか！？' },
   { id:'op-07', who:'kami', face:'magao', listen:'hee', layout:'corner', cue:'earthIn', text:'おばけは ふわふわ うかんでいて、なんでも すりぬけちゃう。{地球|ちきゅう}に ひっぱられないんだ' },
-  { id:'op-08', who:'kami', face:'magao', listen:'hee', cue:'spin', text:'そして {地球|ちきゅう}は、こまの ように ずっと まわっている。これを 『{自転|じてん}』 と いうんだ' },
+  { id:'op-08', who:'kami', face:'magao', listen:'hee', cue:'spin', text:'そして {地球|ちきゅう}は、こまの ように ずっと まわっている。これを 『{自転|じてん}』 と いうの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
   { id:'op-09', who:'kami', face:'magao', listen:'hee', cue:'japan', text:'にほんの あたりは {時速|じそく} 1,360 km。ひこうきより はやいんだよ' },
-  { id:'op-10', who:'kami', face:'magao', listen:'muhyojo', cue:'house', text:'ひとも いえも、{地球|ちきゅう}に ひっぱられて いっしょに うごいている。でも おばけは… ぼーっと していると、おいていかれちゃう' },
+  { id:'op-10', who:'kami', face:'magao', listen:'muhyojo', cue:'house', text:'ひとや いえも、{地球|ちきゅう}に ひっぱられて いっしょに うごいている。でも おばけは… ぼーっと していると、おいていかれちゃう' },
   { id:'op-11', who:'obake', face:'odoroki', listen:'magao', cue:'houseHold', text:'えーっ！ それじゃ ひとに あえないよ！' },
   { id:'op-12', who:'kami', face:'egao', listen:'odoroki', cue:'catchUp', text:'ひとを おどろかせたいなら、{地球|ちきゅう}の {自転|じてん}に おいつかないと ね' },
   { id:'op-13', who:'obake', face:'shobon', listen:'egao', layout:'stage', cue:'settle', text:'そんなに はやく とべるかな…' },
