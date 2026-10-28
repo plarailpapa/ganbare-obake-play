@@ -22,10 +22,10 @@ function texDir(lonDeg, latDeg, out){ const phi = (lonDeg + 180) / 360 * Math.PI
 function glowTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.25, 'rgba(255,255,255,0.45)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); }
 function ringTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 40, 64, 64, 64); rg.addColorStop(0, 'rgba(255,255,255,0)'); rg.addColorStop(0.6, 'rgba(255,255,255,0.9)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); }   // 光の 輪 (最後の 力の 瞬間)
 function backCanvas(img){   // 立ち絵の 後ろ姿: 形は 同じ (左右 反対)・顔と 手は 描かず 体の 色で 塗り、ふちだけ 輪郭の 色
-  const w = img.width, h = img.height, a = document.createElement('canvas'), b = document.createElement('canvas'); a.width = b.width = w; a.height = b.height = h;
+  const w = img.width >> 1, h = img.height >> 1, a = document.createElement('canvas'), b = document.createElement('canvas'); a.width = b.width = w; a.height = b.height = h;   // 半分の 大きさ (画面では 小さい。3D に 渡す 時の 手間も 4 分の 1)
   const ga = a.getContext('2d'), gb = b.getContext('2d'), k = 0.985;
-  ga.translate(w, 0); ga.scale(-1, 1); ga.drawImage(img, 0, 0); ga.setTransform(1, 0, 0, 1, 0, 0); ga.globalCompositeOperation = 'source-in'; ga.fillStyle = '#4f4542'; ga.fillRect(0, 0, w, h);
-  gb.translate(w / 2, h * 0.55); gb.scale(-k, k); gb.translate(-w / 2, -h * 0.55); gb.drawImage(img, 0, 0); gb.setTransform(1, 0, 0, 1, 0, 0); gb.globalCompositeOperation = 'source-in';
+  ga.translate(w, 0); ga.scale(-1, 1); ga.drawImage(img, 0, 0, w, h); ga.setTransform(1, 0, 0, 1, 0, 0); ga.globalCompositeOperation = 'source-in'; ga.fillStyle = '#4f4542'; ga.fillRect(0, 0, w, h);
+  gb.translate(w / 2, h * 0.55); gb.scale(-k, k); gb.translate(-w / 2, -h * 0.55); gb.drawImage(img, 0, 0, w, h); gb.setTransform(1, 0, 0, 1, 0, 0); gb.globalCompositeOperation = 'source-in';
   const lg = gb.createLinearGradient(0, h * 0.15, 0, h * 0.9); lg.addColorStop(0, '#f4f7ff'); lg.addColorStop(1, '#dfe8fb'); gb.fillStyle = lg; gb.fillRect(0, 0, w, h);
   ga.globalCompositeOperation = 'source-atop'; ga.drawImage(b, 0, 0); return a;
 }

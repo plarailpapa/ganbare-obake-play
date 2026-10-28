@@ -236,6 +236,23 @@ const DRAFT_Q = Q.get('draft')==='1', W3_Q = S3.W3[Q.get('w3')] ? Q.get('w3') : 
 const WORLD_Q = W3_Q ? S3.LAYERS3.findIndex(l=>l.includes(W3_Q)) : Q.has('world') ? Math.min(S3.LAYERS3.length-1, Math.max(0, Math.floor(+Q.get('world')||1)-1)) : 0;   // 試し: ?stage=3&world=N で 3 面を N 番目の 段から (1 = 天の川、2〜4 = 分かれ道 ①〜③、5 = 銀河、6 = 太陽に 追いつけ。10/28 段の 組み直しで 子ども部屋の 特例は なくした、Codex 指摘)
 const PROBE3 = {neb:Q.get('neb')!=='0', gal:Q.get('gal')!=='0', win:Q.get('win')!=='0', statue:Q.get('statue')==='1', hall:Q.get('hall')!=='0'};   // 3 面の重さの見比べ (10/8 社長: 44 fps): ?neb=0 星雲なし / ?gal=0 眼下の銀河なし / ?win=0 輪の窓なし / ?statue=0 ② の像なし / ?hall=0 ② の大広間なし (10/12: 20 fps)
 let camMode2 = Q.get('cam')==='follow' ? 'follow' : 'watch';   // 2 面のカメラ: watch = 切り離して見守る (既定・酔いにくい) / follow = おばけに合わせて画面ごと回る (F-ZERO 風)。C キーで切り替え (社長の見比べ用、9/30 設計)
+/* iPhone の Safari (iOS 26 から 指紋採取防止が ふだんも 有効) は ページの 中で 描いた 絵 (光の ぼかし・空の グラデーション) を 3D の 画像に する 時に 雑音を 混ぜる。うすい 所ほど 色が 大きく くるい、
+   光を 重ねると カラフルな 点々に 見えた (10/28 社長の スクリーンショット)。Safari 系だけ、描いた 絵を 3D に 渡す 入り口で うすい 所の 色を まわりの 濃い 所の 色で 置き換える (濃さは そのまま) */
+const CANVAS_CLEAN = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/AppleWebKit/.test(navigator.userAgent) && !/Chrome\/|Chromium|Edg\//.test(navigator.userAgent));
+function cleanCanvas(cv){ const w=cv.width, h=cv.height; if(!w || !h || w*h>=2e6) return null;   /* 200 万画素 以上 (空・惑星の 加工) は 透明な 所の ない 絵 = 点々は 出ない (読まない、Codex 指摘 10/28) */
+  let d=null; try{ const g=cv.getContext('2d'); if(g) d=g.getImageData(0, 0, w, h); }catch(e){ return null; } if(!d) return null;
+  const p=d.data, A0=48, C=8, gw=Math.ceil(w/C), gh=Math.ceil(h/C), cs=new Float32Array(gw*gh*4); let low=false, tr=0, tg=0, tb=0, ts=0;   // A0 = これより うすい 所の 色は 確かでない (0〜255)。C = 色の 平均を 取る マスの 大きさ (画素)
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=(y*w+x)*4, a=p[i+3]; if(a<A0){ if(a) low=true; continue; } const k=a*a, c=((y/C|0)*gw+(x/C|0))*4; cs[c]+=p[i]*k; cs[c+1]+=p[i+1]*k; cs[c+2]+=p[i+2]*k; cs[c+3]+=k; }   // マスごとに はっきりした 所だけの 色を 足す (濃いほど 重く)
+  if(!low) return null;   /* 直す 所が 無い = 元の canvas の まま */
+  for(let c=0;c<cs.length;c+=4){ tr+=cs[c]; tg+=cs[c+1]; tb+=cs[c+2]; ts+=cs[c+3]; }
+  const G= ts>0 ? [tr/ts, tg/ts, tb/ts] : [255, 255, 255];   // 絵 全体の はっきりした 色 (無ければ 白 = 光の ぼかし)
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=(y*w+x)*4, a=p[i+3]; if(a===0 || a>=A0) continue;   /* 透明な 所は 色を 持たない */
+    const cx=x/C|0, cy=y/C|0; let r=0, gg=0, b=0, s=0;
+    for(let yy=Math.max(0, cy-1); yy<=Math.min(gh-1, cy+1); yy++) for(let xx=Math.max(0, cx-1); xx<=Math.min(gw-1, cx+1); xx++){ const c=(yy*gw+xx)*4; r+=cs[c]; gg+=cs[c+1]; b+=cs[c+2]; s+=cs[c+3]; }   // 自分の マスと まわり 8 マスの はっきりした 色 (自分の 色は 使わない = ぽつんと 残らない、Codex 指摘)
+    if(s>0){ p[i]=r/s; p[i+1]=gg/s; p[i+2]=b/s; } else { p[i]=G[0]; p[i+1]=G[1]; p[i+2]=G[2]; } }
+  return d; }
+if(CANVAS_CLEAN) for(const C of [window.WebGL2RenderingContext, window.WebGLRenderingContext]){ if(!C) continue; const pr=C.prototype;
+  for(const nm of ['texImage2D', 'texSubImage2D']){ const f=pr[nm]; pr[nm]=function(...a){ const last=a[a.length-1]; if(last instanceof HTMLCanvasElement){ const d=cleanCanvas(last); if(d) a[a.length-1]=d; } return f.apply(this, a); }; } }
 // 見た目の切替 (9/14): ?shadow=0 で影なし、?fps=1 で速度計、?px=1 で描画の細かさを画面ドット等倍に (既定は 1.5 倍まで)
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.has('px') ? +Q.get('px') : 1.5));
