@@ -76,7 +76,6 @@
   #sign3{position:absolute;left:50%;top:calc(104px + env(safe-area-inset-top));transform:translateX(-50%);width:min(94vw,440px);box-sizing:border-box;display:flex;gap:6px;padding:8px 8px 10px;background:#1d6b43;border:3px solid #f4f4ec;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.45);opacity:0;transition:opacity .5s;text-shadow:none}   /* 3 面の 分かれ道の 案内標識 (10/28 社長「画面の 上に 高速道路の 案内標識」): 行き先の 絵 3 枚と 矢印。今いる レーンが 光る。速さの 数字の 下 */
   #sign3.on{opacity:1}
   #sign3 .c{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.55;transition:opacity .2s,transform .2s}
-  #sign3 .c b{font:bold 22px/1 sans-serif;color:#fff}
   #sign3 .c img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px;border:3px solid rgba(255,255,255,.35);box-sizing:border-box;display:block}
   #sign3 .c i{width:60%;height:4px;border-radius:2px}   /* レールの 色 (左 みどり・まん中 黄・右 赤) */
   #sign3 .c.cur{opacity:1;transform:scale(1.07)}
@@ -1613,18 +1612,18 @@ function card3(key){ let c=cards3.get(key); if(c) return c;   // 絵が でき�
   x.globalAlpha=1; x.globalCompositeOperation='source-over';
   const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace; tex.repeat.set(H/W, 1); tex.offset.set((1-H/W)/2, 0);   // 輪の 円板には まん中の 正方形
   c={url:cv.toDataURL('image/jpeg', 0.85), tex}; cards3.set(key, c); return c; }
-const SIGN3_SEC=7, SIGN3_HOLD=1.2, SIGN3_ARROW=['↖','↑','↘'];   // 案内標識: 輪の この秒数 前から 出す / 行き先が 決まって から 消え始める まで / レーンごとの 矢印 (左は 上へ・右は 下へ = ジャンクション)
+const SIGN3_SEC=7, SIGN3_HOLD=1.2;   // 案内標識: 輪の この秒数 前から 出す / 行き先が 決まって から 消え始める まで (矢印は 無し = 世界ごとに 出口の 形が ちがう ので まぎらわしい、10/29 社長)
 let sign3Row=null;
 function nearLane3(ch, want){ if(ch[want]) return want; let k=-1; for(let i=0;i<ch.length;i++) if(ch[i] && (k<0 || Math.abs(i-want)<Math.abs(k-want))) k=i; return k; }   // その レーンに 世界が なければ いちばん 近い 世界の レーン (同じ 近さなら 左)
 function signT3(o){ if(o.signT==null){ const want=o.t0-SIGN3_SEC, last=o.t0-S3.SPREAD3_SEC-1.5; let best=want, bd=1.2; if(plan3.music) for(const n of S3.MUSIC3.notes){ const t=n+BEAT3_LAG, d=Math.abs(t-want); if(d<bd && t<=last){ bd=d; best=t; } } o.signT=best; } return o.signT; }   // 案内標識が 出る 時刻 = 輪の 約 SIGN3_SEC 秒 前の 加速の 輪の 音 (その 輪を 踏んだ 瞬間に 出る、10/28 社長「音楽に 合わせる」)。曲の 時刻表が 使えない 時は ちょうど SIGN3_SEC 秒 前
 function sign3Step(){ const el=$('sign3'), r=plan3[pi3+1], on= state==='run' && !!r && r.branch && stageT>=signT3(r) && stageT<r.t0-S3.SPREAD3_SEC+SIGN3_HOLD;   // 毎コマ: 次の 分かれ道の 案内標識 (光る 絵 = 決まる 前は 今の lane で 行く 先、決まった 後は 選んだ 先)
   el.classList.toggle('on', on); if(!on) return;
-  if(sign3Row!==r){ sign3Row=r; el.innerHTML=r.choices.map((k, i)=>'<div class="c'+(k ? '' : ' off')+'"><b>'+SIGN3_ARROW[i]+'</b>'+(k ? '<img src="'+card3(k).url+'" alt="">' : '')+'<i style="background:#'+RAIL_COLORS[i].toString(16).padStart(6, '0')+'"></i></div>').join(''); }
+  if(sign3Row!==r){ sign3Row=r; el.innerHTML=r.choices.map((k, i)=>'<div class="c'+(k ? '' : ' off')+'">'+(k ? '<img src="'+card3(k).url+'" alt="">' : '')+'<i style="background:#'+RAIL_COLORS[i].toString(16).padStart(6, '0')+'"></i></div>').join(''); }
   const cur= r.chosen ? r.lane : nearLane3(r.choices, lane); for(let i=0;i<el.children.length;i++) el.children[i].classList.toggle('cur', i===cur); }
 function sizePortal3(){ const b=renderer.getDrawingBufferSize(new THREE.Vector2()); portalU3.res.value.copy(b); portalRT3.setSize(Math.max(1, b.x>>1), Math.max(1, b.y>>1)); }   // 画面の大きさが変わった時 (resize から)
 function placeView3(w, g){ w.root.position.copy(g.p); w.root.quaternion.copy(g.q); w.root.updateMatrixWorld(true); w.bg.quaternion.copy(g.q); w.placed=true; }   // 置き物も 空の向きも 入口に合わせる
 function view3(pi){ if(!plan3[pi] || !plan3[pi].chosen) return null;   /* 分かれ道で まだ 決まって いない 段は 作らない (決めた 時に lockBranch3 が 作る、10/27) */ let w=views3.get(pi); if(w) return w;
-  w=S3.buildWorld(plan3[pi], {mobile:IS_MOBILE, neb:PROBE3.neb, gal:PROBE3.gal, statue:PROBE3.statue, hall:PROBE3.hall}); views3.set(pi, w);
+  w=S3.buildWorld(plan3[pi], {mobile:IS_MOBILE, neb:PROBE3.neb, gal:PROBE3.gal, statue:PROBE3.statue, hall:PROBE3.hall, nextBranch:!!(plan3[pi+1] && plan3[pi+1].branch)});   /* nextBranch = 次の 段が 分かれ道 (出口の 形を 世界が 合わせる、クリスタルの 門 10/28) */ views3.set(pi, w);
   if(pi===0) placeView3(w, {p:new THREE.Vector3(0,0.45,plan3[0].pre||0), q:new THREE.Quaternion()});   /* 子ども部屋の 回は 霧の 道の 先 */ else { const g=gates3.find(o=>o.pi===pi); if(g) placeView3(w, g); }   /* 最初の世界の入口 = 作り手の始まり (makeGen3)。ほかは 入口が届いていれば すぐ置く */
   if(pi===plan3.length-1 && plan3[pi].def.key==='nursery' && pi>pi3 && !lost3){ lost3=S3.buildWorld({...plan3[pi], def:S3.WORLDS3[0]}, {mobile:IS_MOBILE, neb:PROBE3.neb, gal:PROBE3.gal}); const g=gates3.find(o=>o.pi===pi); if(g) placeView3(lost3, g); }   /* 最後の輪の 向こうの もう 1 つ = 速さが 足りない時の 天の川 (10/21 社長) */
   return w; }
@@ -1660,7 +1659,7 @@ function branchStep3(){   // 分かれ道 (10/27 社長): 輪の SPREAD3_SEC 秒
   lane=k; laneLock3=r; S3.chooseRow3(plan3, r.li, ch[k], k); view3(r.pi);   /* 輪の 先の コースは ensureCourse が 続きを 作る (止めが 外れる)。世界も 今 作って 輪の 中に 見せる */
   if(ERRLOG) logSend({branch:r.li, key:ch[k], lane:k});
 }
-function onGate3(g){ gates3.push(g); const w=views3.get(g.pi); if(w) placeView3(w, g); if(lost3 && g.pi===plan3.length-1) placeView3(lost3, g); }   // 作り手が 世界の終わりを越えた (g.at は 区間ができた時に入る)
+function onGate3(g){ gates3.push(g); if(ERRLOG){ const w=views3.get(g.pi-1); if(w && w.placed && w.exitP){ const lp=w.root.worldToLocal(g.p.clone()), r2=n=>+n.toFixed(2), o={gate3:g.pi, gateLocal:[r2(lp.x), r2(lp.y), r2(lp.z)], castle:[r2(w.exitP.x), r2(w.exitP.y), r2(w.exitP.z)]}; setTimeout(()=>logSend(o), 0); } }   /* 確かめ用: 輪の 点 と 城壁の 門の 中心 (どちらも 世界の 座標、10/29 ずれ 調べ) */ const w=views3.get(g.pi); if(w) placeView3(w, g); if(lost3 && g.pi===plan3.length-1) placeView3(lost3, g); }   // 作り手が 世界の終わりを越えた (g.at は 区間ができた時に入る)
 function next3(){ return pi3+1===plan3.length-1 && lost3 && v*3.6<GOAL3_KMH ? lost3 : views3.get(pi3+1); }   // 輪の向こうの 世界: 最後の輪は いまの速さで 子ども部屋 / 天の川 (足りない)
 const _foc3=new THREE.Vector3(), clip3=new THREE.Plane();   // clip3 = 窓を描く時の 切り落としの面 (ワープの輪の面)
 function focus3(){ const w=views3.get(pi3); if(!w || !w.placed || !w.focus) return null; const g=nextGate3(); if(g && s>g.at-5*moveSpeed(v)) return null; return w.root.localToWorld(w.focus(s-w.P.s0, _foc3)); }   // いまの世界の 見どころ (世界の座標。② = 像の体の線の上、入口では 高く = 見上げる)。ワープの輪の 5 秒前からは なし (前を向いて 輪の窓を見せる)
@@ -1749,8 +1748,9 @@ function renderWorlds3(dt){   // 毎コマ (描く直前、カメラが決まっ
   let g=nextGate3();
   if(g){ railPoint(g.at, 0, GF3); if(_g3.copy(camera.position).sub(GF3.p).dot(GF3.t)>-GATE3_SWAP){ swapWorld3(); g=nextGate3(); if(g) railPoint(g.at, 0, GF3); } }   // カメラが 輪の面の すぐ手前まで来たら 次の世界へ (コマ落ちで飛び越しても 向きの符号で拾う)
   const br= g && plan3[g.pi] && plan3[g.pi].branch ? plan3[g.pi] : null; let pw=null;   // 分かれ道の 輪 = レーンごとの 小さな 輪 (中に 行き先の 1 枚絵)。選んだ 輪だけ 見えている 間は 中に 本物の 次の 世界 (くぐる 瞬間に つながる)
-  if(br) frameAt(g.at, RF3); rings3.forEach((o, k)=>{ const key= br ? br.choices[k] : null; o.g.visible=!!key && gateA3>0.01; if(!o.g.visible) return; o.g.position.copy(RF3.p).addScaledVector(RF3.r, (k-(LANES-1)/2)*S3.SPREAD3_W).addScaledVector(RF3.u, RING3_UP-(k-(LANES-1)/2)*S3.SPLIT3_H); o.g.quaternion.setFromRotationMatrix(basisAt(RF3));   /* 位置 = 広がり 切った レーン (左は 上・右は 下) */
+  const ex3= br ? S3.exit3(plan3[g.pi-1].def) : null; if(br) frameAt(g.at, RF3); rings3.forEach((o, k)=>{ const key= br ? br.choices[k] : null; o.g.visible=!!key && gateA3>0.01; if(!o.g.visible) return; o.g.position.copy(RF3.p).addScaledVector(RF3.r, (k-(LANES-1)/2)*ex3.w).addScaledVector(RF3.u, RING3_UP-(k-(LANES-1)/2)*ex3.h); o.g.quaternion.setFromRotationMatrix(basisAt(RF3));   /* 位置 = 広がり 切った レーン (出口の 形 = 輪の 手前の 世界の exit。無ければ 左は 上・右は 下、10/29) */
     if(o.key!==key){ o.key=key; o.disc.material.map=card3(key).tex; o.disc.material.needsUpdate=true; } o.core.material.opacity=gateA3; o.glow.material.opacity=0.25*gateA3; o.disc.material.opacity=gateA3; o.disc.visible=true; if(br.chosen && br.lane===k) pw=o; });
+  if(ERRLOG && br && g.at!=null && !g.logged && gateA3>0.5){ const w=views3.get(pi3); if(w && w.placed && w.exitP){ g.logged=true; const r2=n=>+n.toFixed(2), lp=o=>{ const q=w.root.worldToLocal(o.g.position.clone()); return [r2(q.x), r2(q.y), r2(q.z)]; }; logSend({rings3:g.pi, at:r2(g.at), s0:r2(plan3[g.pi].s0), rings:rings3.map(lp), castle:[r2(w.exitP.x), r2(w.exitP.y), r2(w.exitP.z)], t:[r2(RF3.t.x), r2(RF3.t.y), r2(RF3.t.z)], vis:rings3.map(o=>o.g.visible)}); } }   /* 確かめ用: 3 つの 輪の 位置 (いまの 世界の 座標) と 城壁の 門の 中心 (10/29) */
   gate3.visible=!!g && !br && gateA3>0.01; if(gate3.visible){ gate3.position.copy(GF3.p).addScaledVector(GF3.u, GATE3_UP); gate3.quaternion.setFromRotationMatrix(basisAt(GF3)); gateMat3.opacity=gateA3; gateGlowMat3.opacity=0.25*gateA3; }
   const host= br ? pw && pw.g : gate3, nx=next3(), win=!!host && host.visible && !!nx && nx.placed && PROBE3.win && gateOnScreen3(host.position, br ? RING3_R : GATE3_R); portal3.visible=win;   // 輪が 画面に入っている時だけ (Codex 指摘 10/8: 画面の外でも 次の世界を描いていた)
   if(win){ if(pw) pw.disc.visible=false; portal3.scale.setScalar(br ? (RING3_R-0.2)/(GATE3_R-0.3) : 1); portal3.position.copy(host.position); portal3.quaternion.copy(host.quaternion); portalU3.fade.value=gateA3; nx.tick(camera, dt, true); renderer.setRenderTarget(portalRT3); renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.clippingPlanes=[clip3.setFromNormalAndCoplanarPoint(GF3.t, GF3.p)]; renderer.render(nx.scene, camera); renderer.clippingPlanes=[]; renderer.setRenderTarget(null); }   /* 次の世界を 同じカメラで 半分の細かさに (奥行きは 置き場の別のもの)。輪の面より 手前にある 次の世界の物は 切り落とす (② の大広間の壁が 窓をふさいでいた、Codex 指摘 10/12)。画面の消し色は 次のコマの頭で 元に戻る */
