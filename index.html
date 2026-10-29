@@ -40,6 +40,7 @@
   #tilt3 .t{top:0;-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent)}
   #tilt3 .b{bottom:0;-webkit-mask-image:linear-gradient(transparent,#000);mask-image:linear-gradient(transparent,#000)}
   #tilt3::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%)}
+  #load3{position:fixed;left:50%;top:60%;transform:translateX(-50%);z-index:47;font:bold 20px/1 sans-serif;letter-spacing:.12em;color:#8a7ab8;pointer-events:none}   /* 読み込み中の 字 (白い 幕 46 の 上、10/29) */
   #white3{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:1}   /* 子ども部屋の 終わり: らせんの 着地点へ ぐっと 寄りながら 画面が 真っ白に (10/27 社長) */
   @keyframes flashbg{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
   #target{position:absolute;left:16px;top:calc(14px + env(safe-area-inset-top));font-size:14px;opacity:.95}
@@ -107,6 +108,7 @@
   <div id="roll3"></div>
   <div id="credit"></div>
 </div>
+<div id="load3" hidden>よみこみちゅう…</div>   <!-- 読み込みを 待つ 間の 字 (#hud の 外 = 白い 幕 46 より 上に 出せる、Codex 指摘 10/29) -->
 <div id="optitle" hidden></div>
 <div id="result" hidden></div>
 <div id="ending" hidden></div>
@@ -548,7 +550,7 @@ const sunDisc2=(()=>{ const c=document.createElement('canvas'); c.width=c.height
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t, transparent:true, depthWrite:false, fog:false})); sp.renderOrder=-4; space2.add(sp); return sp; })();   // 光 (−5) の上に ふつうの重ね方で
 function placeSun2(){ farSun.position.copy(sunDir2).multiplyScalar(1e6); sun.position.copy(sunDir2).multiplyScalar(1000); const d=140000, size=d*Math.tan((0.6+5.4*Math.min(1, Math.max(0, (rung+1)/S2.HUD_RUNGS2)))*Math.PI/180)*(1+(sunBig2-1)*0.3); /* 水星まで抜いて ちょうど最大 (Codex 指摘 10/1) */ sun2.position.copy(sunDir2).multiplyScalar(d); sun2.scale.set(size, size, 1); sunDisc2.position.copy(sun2.position); sunDiscA=2*Math.atan(SUN_R_KM/Math.max(SUN_R_KM*1.01, dist2)); const ds=2*d*Math.tan(sunDiscA/2)*256/248*sunBig2;   /* 絵の余白 (円盤の直径 248 / 256) の分 大きく */ sunDisc2.scale.set(ds, ds, 1); sun2.material.opacity= ov2 && ov2.shot==='taiyo' ? TAIYO.glow : 1; }   /* 望遠の間は ぼんやりした光を弱める (画面が白っぽくならず 円盤のふちが見える) */   // 見かけの大きさ 0.6° → 6° (相手を抜くほど 太陽に近づく)
 
-function setStage(n){ ringGlowMesh.material.opacity=RING_GLOW_OP; ringBeamMesh.material.opacity=RING_BEAM_OP;   /* 加速の 輪の 光を いつもの 強さに 戻す (3 面の 世界ごとの 強さ、10/29) */   // 1 面 (夕暮れの地球) ⇄ 2 面・3 面 (宇宙) の 景色・光・カメラ・曲・HUD を切り替える。コースは この後 resetCourse で作り直す
+function setStage(n){ ringGlowMesh.material.opacity=RING_GLOW_OP; ringBeamMesh.material.opacity=RING_BEAM_OP; ringGlowMesh.material.blending=ringBeamMesh.material.blending=THREE.AdditiveBlending; ringGlowMesh.material.color.setScalar(1); ringBeamMesh.material.color.setScalar(1);   /* 加速の 輪の 光を いつもの 強さに 戻す (3 面の 世界ごとの 強さ、10/29) */   // 1 面 (夕暮れの地球) ⇄ 2 面・3 面 (宇宙) の 景色・光・カメラ・曲・HUD を切り替える。コースは この後 resetCourse で作り直す
   stage=n; const two=n===2, sp=n>=2;   // sp = 宇宙の面。3 面の空は 世界ごとの景色 (stage3.js) で、2 面の星空・太陽 (space2) は使わない
   $('dist2').hidden=!two; $('target').hidden=$('ladder').hidden= n===3;   /* 3 面は ライバルを作るまで 相手の表示を出さない (Codex 指摘 10/8) */ space2.visible=two; stars.visible=!sp; sunDisc.visible=sunHalo.visible=!sp; mountains.visible=!sp; if(sp){ earth.visible=false; sea.visible=false; }   // 1 面の地面・海は update が毎コマ決め直す
   hemi.intensity= sp ? 0.25 : 1.1; hemi.color.set(sp ? 0x8090b0 : 0xffe0c0); hemi.groundColor.set(sp ? 0x101020 : 0x40305a);
@@ -1637,6 +1639,8 @@ function updateGalaxy3(dt){ const g0=gal03(); if(g0==null || stageT<g0-25 || mov
   if(!movie3){ movie3=MV.createMovie3({renderer, mobile:IS_MOBILE, rev:CUT3.rev, white:CUT3.white}); try{ renderer.compile(movie3.scene, movie3.camera); }catch(e){ console.warn('映画の 下ごしらえ', e); } }   /* 最後の 映画も 同じ 時に 作って 画像を 裏で 読む */
   gx3.group.visible= stageT>=g0; if(gx3.group.visible) gx3.update(camera, stageT-g0, -1, dt); }
 function clearGalaxy3(){ if(gx3){ scene.remove(gx3.group); gx3.dispose(); gx3=null; } }
+function prepGal3(){ if(stage!==3 || nursery3Run) return; if(!gx3){ gx3=S3.W3.galaxy.mod.createBackdrop({mobile:IS_MOBILE, renderer}); scene.add(gx3.group); gx3.group.visible=false; } if(!movie3){ movie3=MV.createMovie3({renderer, mobile:IS_MOBILE, rev:CUT3.rev, white:CUT3.white}); try{ renderer.compile(movie3.scene, movie3.camera); }catch(e){ console.warn("映画の 下ごしらえ", e); } } }   /* 3 面: 銀河の 遠景と 最後の 映画を 走り出す 前 (白い 幕の 間) に 用意 (前は 銀河の 輪の 25 秒前 = インドの 亀の 鼻先で 止まった、10/29 社長「何かを 読み込んで いる」) */
+function gal3Loading(){ return (gx3 && gx3.loading ? gx3.loading() : 0)+(movie3 && movie3.loading ? movie3.loading() : 0); }   // まだ 届いて いない 画像の 数
 function top3(){ if(stage!==3) return 0; const g0=gal03(); if(g0==null) return 0; const k=Math.min(1, Math.max(0, (stageT-g0)/TOP3.sec)); return k*k*(3-2*k); }   // 0 = いつもの 後ろからの カメラ、1 = 見下ろし (銀河の 輪から なめらかに、最後まで そのまま)
 /* 太陽に 追いつけ (10/28 社長): 最後の 輪 (141.95 秒) を くぐった 速さで 当たり / はずれが 決まり、後は 操作 なしの 映画 (コース・輪・速さの 表示・文字は 全部 消す)。
    カメラが 走る おばけに 寄って パッと 光り、立ち絵の おばけの 映画 (movie3.js、HD-2D の ように 立体の 宇宙と 惑星) へ。当たりは 日本に 着いて 最後の 和音で 真っ白 → 結果発表 / はずれは 太陽と 地球が 遠ざかり → 結果発表 (神様が 慰める) */
@@ -1651,6 +1655,8 @@ function cutFx3(dt){ const i=cutInfo3(); if(!i) return; const sm=x=>{ const k=Ma
   const fl=Math.max(0, 1-Math.abs(i.t-MV.T_SIDE)/0.35), wt= cut3.ok ? sm((i.t-(CUT3.white-0.3))/1.3) : 0;   // 寄り きった 所で パッと 白く (立ち絵に 変わる) / 当たり: 日本に 着いて 最後の 和音で 真っ白 (結果発表の 後ろに 残す)
   $('white3').style.opacity=Math.max(fl, wt); white3Full= wt>=1;
   $('tilt3').hidden=!movieOn3(); if(movieOn3()) movie3.update(i.t, dt, cut3.ok, camera.aspect); }
+const _ru3a=new THREE.Vector3(), _ru3b=new THREE.Vector3();
+function rollU3(fr, o){ const pa= stage===3 && plan3[pi3] ? plan3[pi3].def.path : null, cr= pa ? pa.camRoll : null; if(cr==null) return o.copy(fr.u); o.copy(WORLD_UP).addScaledVector(fr.t, -WORLD_UP.dot(fr.t)).normalize(); return o.lerp(fr.u, cr).normalize(); }   /* 3 面: カメラの 上向き = レールの 上向きを camRoll の 割合だけ (インド 0.35: レールが 曲がる 側へ 傾いて 見える、10/29 社長)。無い 世界は レールの 上向き そのまま */
 let camRef3=0; const CAMREF3_SEC=1;   // 3 面の カメラの 基準: 0 = コースの まん中、1 = 選んだ レーン (行き先が 決まって おばけが 動けなく なったら 選んだ レーンが 新しい まん中、10/28 社長) / 切り替えの 秒
 function refX3(sd){ const k=camRef3*camRef3*(3-2*camRef3); return stage===3 && k>0 ? k*laneOff(lane, sd) : 0; }   /* ゆっくり 動き出して ゆっくり 止まる (一定の 割合で 寄せると 動き出しが 急で カクついた、10/28 社長) */   // カメラが まん中と みなす 横の 位置 (m)。高さは railPoint が その 位置の 道の 高さを 足す
 function branchStep3(){   // 分かれ道 (10/27 社長): 輪の SPREAD3_SEC 秒 前 (レールが 広がり始める 時) に いま いる レーンで 行き先を 決め、輪の 先の コースと 世界を 作り始める (時刻で 決める = コマ落ちでも 1 回)
@@ -1663,7 +1669,7 @@ function branchStep3(){   // 分かれ道 (10/27 社長): 輪の SPREAD3_SEC 秒
 function onGate3(g){ gates3.push(g); if(ERRLOG){ const w=views3.get(g.pi-1); if(w && w.placed && w.exitP){ const lp=w.root.worldToLocal(g.p.clone()), r2=n=>+n.toFixed(2), o={gate3:g.pi, gateLocal:[r2(lp.x), r2(lp.y), r2(lp.z)], castle:[r2(w.exitP.x), r2(w.exitP.y), r2(w.exitP.z)]}; setTimeout(()=>logSend(o), 0); } }   /* 確かめ用: 輪の 点 と 城壁の 門の 中心 (どちらも 世界の 座標、10/29 ずれ 調べ) */ const w=views3.get(g.pi); if(w) placeView3(w, g); if(lost3 && g.pi===plan3.length-1) placeView3(lost3, g); }   // 作り手が 世界の終わりを越えた (g.at は 区間ができた時に入る)
 function next3(){ return pi3+1===plan3.length-1 && lost3 && v*3.6<GOAL3_KMH ? lost3 : views3.get(pi3+1); }   // 輪の向こうの 世界: 最後の輪は いまの速さで 子ども部屋 / 天の川 (足りない)
 const _foc3=new THREE.Vector3(), clip3=new THREE.Plane();   // clip3 = 窓を描く時の 切り落としの面 (ワープの輪の面)
-function focus3(){ const w=views3.get(pi3); if(!w || !w.placed || !w.focus) return null; const g=nextGate3(); if(g && s>g.at-5*moveSpeed(v)) return null; return w.root.localToWorld(w.focus(s-w.P.s0, _foc3)); }   // いまの世界の 見どころ (世界の座標。② = 像の体の線の上、入口では 高く = 見上げる)。ワープの輪の 5 秒前からは なし (前を向いて 輪の窓を見せる)
+function focus3(){ const w=views3.get(pi3); if(!w || !w.placed || !w.focus) return null; const g=nextGate3(); if(g && s>g.at-5*moveSpeed(v)) return null; const fp=w.focus(s-w.P.s0, _foc3); return fp ? w.root.localToWorld(fp) : null; }   /* 見どころの 無い 所は null (インドの 見上げる 間だけ、10/29) */   // いまの世界の 見どころ (世界の座標。② = 像の体の線の上、入口では 高く = 見上げる)。ワープの輪の 5 秒前からは なし (前を向いて 輪の窓を見せる)
 function nextGate3(){ return gates3.find(o=>o.pi===pi3+1 && o.at!=null) || null; }   // いまの世界の出口 (区間ができて 位置が決まったもの)
 function swapWorld3(){ const old=views3.get(pi3); if(old){ old.dispose(); views3.delete(pi3); } pi3++;
   if(pi3===plan3.length-1 && lost3){ if(v*3.6<GOAL3_KMH){ const nw=views3.get(pi3); if(nw) nw.dispose(); views3.set(pi3, lost3); lost3On=true; if(!TAP_Q){ bgmFade(1.5); bgmDropLast(); } } else lost3.dispose(); lost3=null; pass3=!lost3On; if(ERRLOG) logSend({gate3:lost3On ? 'lost' : 'nursery', kmh:Math.round(v*3.6)}); }   /* 最後の輪: 速さが 足りなければ 天の川へ (曲は 消え、3 秒で おしまい、10/21 社長) */
@@ -1740,15 +1746,15 @@ function makeMist3(){ mist3=new THREE.Group(); const c=document.createElement('c
   for(let i=0;i<FOG3.mist;i++){ const m=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, color:0xd8d0f0, transparent:true, depthWrite:false})), side=Math.random()<0.5 ? -1 : 1; m.userData.o=0.25+Math.random()*0.25; m.position.set(side*(4+Math.random()*26), -6+Math.random()*18, -30+Math.random()*(end+30)); m.scale.setScalar(8+Math.random()*14); mist3.add(m); }
   scene.add(mist3); }
 function clearMist3(){ scene.remove(mist3); const tex=mist3.children[0] && mist3.children[0].material.map; for(const m of mist3.children) m.material.dispose(); if(tex) tex.dispose(); mist3=null; }
-function clearWorlds3(){ clearGalaxy3(); cut3=null; if(mist3) clearMist3(); fogA3=0; if(stage===3){ scene.fog.near=1e7; scene.fog.far=2e7; } if(movie3){ movie3.dispose(); movie3=null; } $('tilt3').hidden=true; sparks.length=0; sparkMesh.count=0; for(const w of views3.values()) w.dispose(); views3.clear(); if(lost3){ lost3.dispose(); lost3=null; } lost3On=false; pass3=null; gates3=[]; pi3=0; view3Due=-1; gateA3=0; gate3.visible=false; for(const o of rings3) o.g.visible=false; sign3Row=null; $('sign3').classList.remove('on'); }
+function clearWorlds3(){ cut3=null;   /* 銀河の 遠景と 最後の 映画は ここで 片づけない (走り出す 前に 用意した 物を 残す、resetRun で 片づける、10/29) */ if(mist3) clearMist3(); fogA3=0; if(stage===3){ scene.fog.near=1e7; scene.fog.far=2e7; } $('tilt3').hidden=true; sparks.length=0; sparkMesh.count=0; for(const w of views3.values()) w.dispose(); views3.clear(); if(lost3){ lost3.dispose(); lost3=null; } lost3On=false; pass3=null; gates3=[]; pi3=0; view3Due=-1; gateA3=0; gate3.visible=false; for(const o of rings3) o.g.visible=false; sign3Row=null; $('sign3').classList.remove('on'); }
 let move3=S3.V3_MOVE;   // 3 面の おばけの実際の進み (m/秒)。世界ごとの速さ (planWorlds の move。② は コースの長さ ÷ 時間) へ なめらかに寄せる (速度計の数字とは 別)
 function resetWorlds3(){ clearWorlds3(); view3(0); view3(1); move3=(plan3[0] && plan3[0].move) || S3.V3_MOVE; }
 function updateWorlds3(dt){ branchStep3(); sign3Step(); if(!cut3 && state==='run' && plan3[pi3] && plan3[pi3].def.key==='catchup') cutStart3(); camRef3=Math.min(1, Math.max(0, camRef3+(laneLock3 ? dt : -dt)/CAMREF3_SEC)); if(view3Due>=0 && stageT>=view3Due){ view3Due=-1; view3(pi3+1); } gateA3+=(1-gateA3)*Math.min(1, dt*2);   // 毎コマ (おばけが進んだ後): 次の世界を 裏で作る / 輪は ふわっと現れる
   if(plan3.length) move3=S3.rowAt3(plan3, stageT).move; }   // いまの時刻の世界の速さ (世界が変わる輪を通る瞬間に 切り替わる、設計書 3.3)
 function renderWorlds3(dt){   // 毎コマ (描く直前、カメラが決まった後): 差し替え → 窓の向こう (次の世界) → いまの世界 → 窓の円板
-  { const rg=(plan3[pi3] && plan3[pi3].def.ringGlow) || 1; ringGlowMesh.material.opacity=Math.min(1, RING_GLOW_OP*rg); ringBeamMesh.material.opacity=Math.min(1, RING_BEAM_OP*rg); }   /* 世界ごとの 加速の 輪の 光の 強さ (光の 都市は ネオンに 埋もれない よう 強く、10/29 社長) */
+  { const d=plan3[pi3] && plan3[pi3].def, day=!!(d && d.sky && d.sky.day), rg=(d && d.ringGlow) || (day ? 1.75 : 1), bl= day ? THREE.NormalBlending : THREE.AdditiveBlending; ringGlowMesh.material.opacity=Math.min(1, RING_GLOW_OP*rg); ringBeamMesh.material.opacity=Math.min(1, RING_BEAM_OP*rg); ringGlowMesh.material.color.setScalar(day ? 0.55 : 1); ringBeamMesh.material.color.setScalar(day ? 0.55 : 1);   /* 昼は レールの 色を 濃く した 帯 (深い 緑・濃い 黄・濃い 赤) = 明るい 空の 上で 縁取りの ように (10/29 社長「もう 一声」) */ if(ringGlowMesh.material.blending!==bl){ ringGlowMesh.material.blending=bl; ringBeamMesh.material.blending=bl; } }   /* 昼の 世界 (インド・神殿) は 光を 足す 描き方だと 明るい 空に 溶けて 見えない (10/29 社長「加速リングの 視認性が すこぶる 悪い」) → 色を 重ねる 描き方 + 濃く */   /* 世界ごとの 加速の 輪の 光の 強さ (光の 都市は ネオンに 埋もれない よう 強く、10/29 社長) */
   let g=nextGate3();
-  if(g){ railPoint(g.at, 0, GF3); if(_g3.copy(camera.position).sub(GF3.p).dot(GF3.t)>-GATE3_SWAP){ swapWorld3(); g=nextGate3(); if(g) railPoint(g.at, 0, GF3); } }   // カメラが 輪の面の すぐ手前まで来たら 次の世界へ (コマ落ちで飛び越しても 向きの符号で拾う)
+  if(g){ railPoint(g.at, 0, GF3); if(s>g.at-60 && _g3.copy(camera.position).sub(GF3.p).dot(GF3.t)>-GATE3_SWAP){   /* s>g.at−60 = おばけが 輪の すぐ 近くまで 来て いる 時だけ (輪の 面の 向きだけで 見ると、インドの 太陽の ように 真上から 入る 輪では 太陽より 低い 所が 全部 「輪の 手前」に なり、象の 下や 宙返りの 途中で 銀河へ 切り替わった、10/29 社長「変な タイミングで 銀河の コースに 入った」) */ swapWorld3(); g=nextGate3(); if(g) railPoint(g.at, 0, GF3); } }   // カメラが 輪の面の すぐ手前まで来たら 次の世界へ (コマ落ちで飛び越しても 向きの符号で拾う)
   const br= g && plan3[g.pi] && plan3[g.pi].branch ? plan3[g.pi] : null; let pw=null;   // 分かれ道の 輪 = レーンごとの 小さな 輪 (中に 行き先の 1 枚絵)。選んだ 輪だけ 見えている 間は 中に 本物の 次の 世界 (くぐる 瞬間に つながる)
   const ex3= br ? S3.exit3(plan3[g.pi-1].def) : null; if(br) frameAt(g.at, RF3); rings3.forEach((o, k)=>{ const key= br ? br.choices[k] : null; o.g.visible=!!key && gateA3>0.01; if(!o.g.visible) return; o.g.position.copy(RF3.p).addScaledVector(RF3.r, (k-(LANES-1)/2)*ex3.w).addScaledVector(RF3.u, RING3_UP-(k-(LANES-1)/2)*ex3.h); o.g.quaternion.setFromRotationMatrix(basisAt(RF3));   /* 位置 = 広がり 切った レーン (出口の 形 = 輪の 手前の 世界の exit。無ければ 左は 上・右は 下、10/29) */
     if(o.key!==key){ o.key=key; o.disc.material.map=card3(key).tex; o.disc.material.needsUpdate=true; } o.core.material.opacity=gateA3; o.glow.material.opacity=0.25*gateA3; o.disc.material.opacity=gateA3; o.disc.visible=true; if(br.chosen && br.lane===k) pw=o; });
@@ -1910,7 +1916,7 @@ function diveStep(dt){
 function startRun(){
   s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
   for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.loopT=null; resetShuttle(r); r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
-  resetCourse(); resetPlates();
+  resetCourse(); resetPlates(); if(stage===3) prepGal3();   /* やり直し・確かめ用の 入口で 待たずに 始まる 時も ここで 用意 (走り出しの 1 コマ目) */
   $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; updateLadderHUD();
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
   if(stage===3) stageT= nursery3Run ? 0 : plan3[0].t0;   /* 3 面: 途中の世界から始める時 (?world=N) は 時計も曲も その世界の始まりから (設計書 3.2)。子ども部屋の 回は 霧の 道から (0) */
@@ -1930,7 +1936,7 @@ function finishRun(){   // 曲の終わり 5 秒前: 結果を用意し、時速
   spaceDark0=parseFloat($('space').style.opacity)||0; launchS=s; ghostGlow.visible=true; shadow.visible=false;   // 空の暗さは ここから 6 秒で 1 へ (update で)
 }
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
-function resetRun(){ laneLock3=null; camRef3=0; $('tilt3').hidden=true; nursery3Run=false; ending3Over=false;bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
+function resetRun(){ clearGalaxy3(); if(movie3){ movie3.dispose(); movie3=null; } laneLock3=null; camRef3=0; $('tilt3').hidden=true; nursery3Run=false; ending3Over=false;bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
 const RIVALS = {   // ハイスコアの 表に 最初から 並ぶ ライバル (10/27 社長「1 面なら スペースシャトル、2 面なら 金星などを ランクインさせて」)。名前と 速さは ゲームの 中の 相手と 同じ
   1: ['スペースシャトル', 'ミサイル', 'SR-71', 'ヴァルキリー', 'せんとうき', 'Tu-144', 'コンコルド', 'ちきゅうの じてん', 'おとの はやさ', 'ひこうき'].map(n=>LADDER.find(o=>o.name===n)),
@@ -2162,9 +2168,9 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     railPoint(aheadS, laneX, C); camUp.lerp(GH.u, k).normalize(); camera.up.copy(camUp); camera.lookAt(C.p);
   } else {   // 1 面・2 面の見守る: カメラは中心線の上 (パイプなら 軸のあたり)。2 面は おばけのいる側を 少し見る
     const sb=Math.max(0, s-camSm.back); if(stage===3) railPoint(sb, refX3(sb), CB); else frameAt(sb, CB);   /* 3 面: 分かれ道で 行き先が 決まったら 選んだ レーンを まん中と して 追う (上下左右に 大きく 分かれても 画面の まん中、10/28 社長)。ふだんは refX3 = 0 で 今までと 同じ */
-    camera.position.copy(CB.p).addScaledVector(CB.u, camSm.up).addScaledVector(CB.r, camSm.lat);
+    camera.position.copy(CB.p).addScaledVector(rollU3(CB, _ru3a), camSm.up).addScaledVector(CB.r, camSm.lat);
     if(stage===3){ const rx=refX3(aheadS); railPoint(aheadS, rx+(laneX-refX3(s))*0.6, C); } else if(stage>=2) railPoint(aheadS, laneX*0.6, C); else frameAt(aheadS, C);
-    camUp.lerp(G.u,k).normalize(); camera.up.copy(camUp);
+    camUp.lerp(rollU3(G, _ru3b),k).normalize(); camera.up.copy(camUp);
     if(stage>=2 && satW>0.001){ _scF.copy(C.p).sub(camera.position).projectOnPlane(camUp).normalize(); _scS.copy(satPos2).sub(camera.position).projectOnPlane(camUp).normalize(); const th=Math.acos(Math.min(1, Math.max(-1, _scF.dot(_scS)))), sg=Math.sign(_scV.crossVectors(_scF, _scS).dot(camUp))||1, ph=satW*Math.min(SAT2_TURN, th*0.5, stage===2 && camera.aspect<1 ? halfA*0.95 : Infinity);   /* 土星の向きへ 最大 45° (土星までの角度の半分)。2 面の縦長の画面だけ 横の見える角度の 8 割まで (3 面の像・横長は これまでどおり、Codex 指摘。10/26 社長: 縦持ちで 流れてくる輪が 右の枠外へ → 土星は 見えにくくなっても コースの先を ぎりぎり見せる。halfA = 横半分の 85%) */
       _scQ.setFromAxisAngle(camUp, sg*ph); camera.position.sub(gp).applyQuaternion(_scQ).add(gp); _scV.copy(C.p).sub(gp).applyQuaternion(_scQ).add(gp);   /* カメラと見る所を まとめて おばけ (左右のレーンでも その位置) の周りに回す → いつもの構図のまま 向きだけ土星の側へ (おばけは いつもの位置に映る、Codex 指摘 10/2) */
       if(stage===3){ _scF.copy(_scV).sub(camera.position).normalize(); _scS.copy(satPos2).sub(camera.position).normalize(); const el=Math.asin(Math.min(1, Math.max(-1, _scS.dot(camUp))))-Math.asin(Math.min(1, Math.max(-1, _scF.dot(camUp)))), pa=satW*Math.min(PITCH3, Math.max(0, el*0.5));   /* 3 面: 見どころが 上にあれば 見上げる (上下の角度の半分、最大 18°。10/12 社長: 正面から 像を見上げるように)。これも おばけの周りに回す */
@@ -2230,7 +2236,7 @@ await rivalsP; await fieldP; await propsP;
 prewarmRivals();   /* 相手の姿を 始まる前に 見えない所で 一度 描いておく (初めて出る瞬間の カクつきを防ぐ、10/26 社長: 序盤に 次々 出る所で かくつく) */
 kitsReady=true; $('tap').textContent= KIT ? 'タップで はじめる' : 'ぶひんが よみこめませんでした (かんいの かたちで はじめます) ・ タップで はじめる';   // 読み込み失敗を画面で分かるように
 if(opTitle) opTitle.setText($('tap').textContent);
-setStage(STAGE_Q); resetCourse(); resetPlates();
+setStage(STAGE_Q); resetCourse(); resetPlates(); if(stage===3) prepGal3();   /* 確かめ用の 入口 (?stage=3): タイトルの 間に 銀河の 遠景と 映画の 画像を 読み始める (10/29) */
 const QUICK_KMH={1:[2350,1150], 2:[130000,95000], 3:[900000,600000]};   /* 試し: ?result=ok / ?result=ng (面は ?stage=N)。どの面も 走り始めて 5 秒で 見本の速さにして FINISH → 本番と同じく 飛び去るコースの上に 結果発表。ブースター中は ふつうに最後まで (10/20) */
 let quickMode=null, pendingTalk=0;
 { const RQ=Q.get('result');
@@ -2243,8 +2249,11 @@ const fpsEl=$('fps'), FPS_ON=Q.get('fps')==='1'; if(FPS_ON) fpsEl.hidden=false; 
 const clockEl=$('songclock'), CLOCK_ON=Q.get('time')==='1'; if(CLOCK_ON) clockEl.hidden=false;   // ?time=1 で 左下に 録音の何分何秒を鳴らしているか (10/2 社長: 曲の切り所を耳で決めるため)
 function songClock(){ const g=bgmSegs.find(o=>stageT>=o.at && stageT<o.at+o.len); if(!g) return '--:--'; const d=Math.floor((g.offset+stageT-g.at)*10)/10, m=Math.floor(d/60); return m+':'+String((d-m*60).toFixed(1)).padStart(4,'0'); }
 function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
-  if(pendingStart && !canStart()){ pendingT+=raw; if(pendingT>10){ bgmLoadId++; bgmFail=true; if(ERRLOG) logSend({err:'bgm timeout, solo start without music', stage}); } }   /* 10 秒 待っても 曲が 読めなければ 曲なしで 始める (止まったまま に しない。導入の 後と 同じ) */
-  if(pendingStart && canStart()){ pendingStart=false; startRun(); }   /* 次の面: 曲・部品が 読めたら 始める (10/20) */
+  if(pendingStart && stage===3) prepGal3();   /* 3 面: 白い 幕の 間に 銀河の 遠景と 最後の 映画を 用意して 画像が 届くまで 待つ (最大 6 秒。待つ 間は 「よみこみちゅう」、10/29 社長) */
+  const ready3= !pendingStart || stage!==3 || nursery3Run || gal3Loading()===0 || pendingT>6;
+  if(pendingStart && (!canStart() || !ready3)){ pendingT+=raw; if(pendingT>10 && !canStart()){ bgmLoadId++; bgmFail=true; if(ERRLOG) logSend({err:'bgm timeout, solo start without music', stage}); } }   /* 10 秒 待っても 曲が 読めなければ 曲なしで 始める (止まったまま に しない。導入の 後と 同じ) */
+  if(pendingStart && canStart() && ready3){ pendingStart=false; startRun(); }   /* 次の面: 曲・部品が 読めたら 始める (10/20) */
+  $("load3").hidden= !(pendingStart && pendingT>0.5);   /* 読み込みを 待って いる 間 (0.5 秒より 長い 時だけ) */
   if(curtain) curtainStep(Math.min(0.05,raw));
   if(pendingTalk){ const n=pendingTalk; pendingTalk=0; beginIntro(n); }   /* 試しの入口 ?talk=N */
   if(stage===2 && (state==='title' || state==='opening' || (state==='finish' && resultShown))) prep2Step();   /* 2 面の前の タイトル・会話の間に 惑星と小物の下ごしらえ (結果画面の間も = 「もういちど」で すぐ走る時のため、Codex 指摘。1 コマ 1 つずつ。走っている間・ゴールの飛び去りの間は しない) */

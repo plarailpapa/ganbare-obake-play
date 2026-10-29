@@ -38,7 +38,7 @@ export const WORLDS3=[
         [0.041,0.113,0.537,0.577,0.516,0.128,0.085,0.043],[0,0,0.519,0.563,0.53,0,0,0],[0,0.215,0.497,0.558,0.547,0,0,0],[0,0,0.454,0,0.514,0,0,0],[0,0,0.294,0,0.457,0,0,0]]},   // 高さ 40 段 (2.5% ずつ、下から) × 8 方向 (模型の正面 +Z から 45° ずつ +X 側へ) の 体の線からの いちばん遠い所 (高さ 1 に対して、profile.py)。翼 = 72% から上の 3〜5 番目 (ゲームでは 右〜後ろ)
     color:'#e8d9a8', ready:true},   /* 3 面の ライバルは 名前だけの 別の 表 (手順書 Task 3)。ペガサスは 外した (姿が 無かった、10/27) */
   {key:'india',    name:'インドの宇宙', kana:'インドの うちゅう', sec:35, legs:[[999,0,0]], sky:{top:'#2f7fe6', bot:'#d8ecff', band:0, day:true, sun:[0.25, 0.92, 0.3]}, look:'india',   /* ③ 昼の空 (10/13 社長: 神々の世界は朝・インドは昼・日本の神々は夕方・子ども部屋は夜)。亀 → 象 4 → 大地 → 象 4 → 雲の台と須弥山 の塔を 大蛇が囲む。おばけは 大蛇の背中を走る (10/13 社長: 博物館の「古代インド人の宇宙観」の写真から、ベースは秘書の模型) */
-    path:{type:'serpent', s:3100, start:205, jump:228,   // 大蛇のコース (serpentPath): 模型の 1 (亀の甲羅の半径) = 3,100 m (10/13 社長: めちゃんこ大きく = 20 倍、塔の高さ 約 11 km) / 大蛇の背中に降りる所・跳び上がる所 = とぐろの角度 (度、200 = しっぽの入口・亀の顔の右前)
+    path:{type:'serpent', s:3100, start:205, jump:228, ride:{look:2, bank:30, pts:[[0,-0.25,-5.4],[0,-0.05,-3.9],[0.05,0.5,-3.1],[0,0.78,-2.05],[0,0.86,-1.6],[0,1.0,-1.05],[0,1.18,-0.45],[0,1.2,0],[0,1.2,0.45],[0,1.32,1.0],[0,1.5,1.75],[0.35,1.68,2.75],[1.25,1.85,3.45],[2.35,2.02,3.25],[2.95,2.2,2.35],[2.6,2.45,1.6],[1.725,2.83,0.95],[0.85,3.21,0.3]]}, noCalm:true, step:40, loop:{speed:300, sec:33.03, look:2, bank:30, headK:1.5, body:[[0,-1.6,-6.5],[0,-1.5,-5.5],[0.05,-1.38,-4.4],[0.2,-1.26,-3.2],[0.391,-1.150,-2.216],[-0.756,-1.115,-2.077],[-1.663,-1.079,-1.395],[-2.099,-1.044,-0.370],[-1.966,-1.008,0.715],[-1.319,-0.973,1.572],[-0.349,-0.937,1.982],[0.675,-0.902,1.854],[1.481,-0.867,1.243],[1.865,-0.831,0.329],[1.742,-0.796,-0.634],[1.166,-0.760,-1.390],[0.308,-0.725,-1.748],[-0.594,-0.690,-1.631],[-1.299,-0.654,-1.090],[-1.631,-0.619,-0.288],[-1.519,-0.583,0.553],[-1.014,-0.548,1.208],[-0.267,-0.512,1.514],[0.512,-0.477,1.408],[1.117,-0.442,0.937],[1.397,-0.406,0.246],[1.296,-0.371,-0.472],[0.861,-0.335,-1.026],[0.226,-0.300,-1.280],[-0.431,-0.300,-1.184],[-0.935,-0.300,-0.785],[-1.163,-0.300,-0.205],[-1.073,-0.300,0.390],[-0.708,-0.300,0.844],[-0.185,-0.300,1.046],[0.350,-0.300,0.961],[0.753,-0.300,0.632],[0.929,-0.300,0.164],[0.850,-0.300,-0.309],[0.556,-0.300,-0.662],[0.143,-0.300,-0.812],[-0.269,-0.300,-0.738],[-0.571,-0.300,-0.479],[-0.696,-0.300,-0.123],[-0.626,-0.300,0.228],[-0.403,-0.300,0.480],[-0.102,-0.300,0.579],[0.187,-0.300,0.515],[0.389,-0.300,0.327],[0.462,-0.300,0.081],[0.403,-0.300,-0.147],[0.250,-0.300,-0.298],[0.061,-0.300,-0.345],[0.05,-0.7,0.2],[0,-1.2,0.4],[0,-1.62,1.0],[0,-1.64,2.0],[0,-1.42,2.9],[0,-0.7,3.5],[0,0.3,3.85],[0,1.2,3.98],[0,1.967,3.933],[0,2.445,4.301],[0,3.002,4.531],[0,3.600,4.610],[0,4.198,4.531],[0,4.755,4.301],[0,5.233,3.933],[0,5.601,3.455],[0,5.831,2.898],[0,5.910,2.300],[0,5.831,1.702],[0,5.601,1.145],[0,5.233,0.667]], brad:[0.04,0.1,0.18,0.22,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.24,0.22,0.2,0.18], pts:[[0,-1.45,-6.6],[0,-1.3,-5.6],[0,-1.12,-4.6],[0,-0.72,-3.7],[0,-0.15,-2.9],[0,0.3,-2.4],[0,0.56,-2.08],[0,0.675,-1.9],[0,0.72,-1.65],[0,0.71,-1.4],[0,0.77,-1.2],[0,0.9,-1.0],[0,0.99,-0.8],[0,1.06,-0.55],[0,1.11,-0.2],[0,1.12,0.15],[0,1.12,0.5],[0,1.2,1.0],[0,1.4,1.75],[0,1.6,2.3],[0,1.87,3.3],[0,2.6,4.03],[0,3.6,4.3],[0,4.6,4.03],[0,5.33,3.3],[0,5.6,2.3],[0,5.33,1.3],[0,4.6,0.57],[0,3.6,0.3]]},   /* loop = 宙返りの 試作 (10/29 社長。22:40「亀の 下の 土台の 模様を 蛇の 体の ように、今は 白い パンケーキの 上に 載って いる ように 見える」= とぐろの 真ん中の 穴から 下の 雲が 透けて いた → 真ん中も 巻いて 埋める): speed / sec = コースを 33.03 秒で 秒速 300 m で 走る 大きさ (模型の 1 = 約 510 m)。大蛇 (太さ 0.24) = しっぽ (正面の 雲の 中、まっすぐ) → 亀の 真下で 外から 内へ・下から 上へ 巻く とぐろ 2 周 (半径 2.25・高さ −1.15 → 半径 1.3・高さ −0.3) → そのまま 亀の 底の すぐ 下で 平らに 内へ 2 周 (半径 1.3 → 0.35 = 真ん中まで 埋める) → 真ん中から 下へ 潜り いちばん 下の 輪の 下を くぐって 後ろへ → 空へ そびえ → 輪 (中心 (0, 3.6, 2.3)・半径 2.31) → 頭は 山の 上へ 下向き。レールは しっぽの 上 → 亀の 鼻先の すぐ 上 → 頭と 甲羅の 上を なめる ように → 象の 間 → 輪の 内側 (半径 2.0) を 宙返り → 頂上の 太陽 (0, 3.6, 0.3) へ 上から 突入。カメラは レールと 一緒に 回る。loop を 消すと ride に 戻る */   /* 象の すき間を 後ろへ 抜けた 後は 塔の 後ろの 外で 半回転 (U ターン) → 塔へ 戻りながら 須弥山の 頂上の 太陽 (模型の 太陽 = 中心 (0.85, 3.21, 0.30)、後ろ向き) へ まっすぐ のぼる (10/29 社長「太陽の 位置は 上の 象たちが 支える 山の 頂上に あった はず」)。noCalm = 道すじの 後の 2.5 秒の まっすぐを なくし ワープの 輪 = 太陽の 中心。camRoll = カメラは レールの 傾きの 35% だけ 傾く (社長「半回転は 曲がる 方向に レールを 傾けた 方が 見やすい」) */   /* ride = 社長の 道すじ (10/29): 正面の 遠く・雲の 高さから 塔 全体を 見上げて 近づく (look = 2 番目の 点まで カメラは 塔の 方へ) → 亀の 顔の 下の 大蛇の しっぽ・とぐろの 上を のぼり → 亀の 頭 → 甲羅の 上 → 甲羅と 大地の 間 (象の すき間) を くぐって 後ろへ → 右回りに 半周しながら のぼる → 正面から 須弥山の てっぺんへ → 太陽。消すと 前の 道すじ (route) に 戻る */   // 大蛇のコース (serpentPath): 模型の 1 (亀の甲羅の半径) = 3,100 m (10/13 社長: めちゃんこ大きく = 20 倍、塔の高さ 約 11 km) / 大蛇の背中に降りる所・跳び上がる所 = とぐろの角度 (度、200 = しっぽの入口・亀の顔の右前)
       route:[[-1.187, 0.75, -0.996], [-1.143, 1.05, -0.66],   // 道すじ (塔の中心からの 模型の単位、10/14 社長: 下から上へ): 甲羅の横 (右前) を上る
         [-0.883, 1.34, -0.51], [-0.695, 1.42, -0.719],   // 大地の下を くぐる (半径 約 1.0 = 象の鼻の先 0.76 より外、大地の下の面より 0.2〜0.3 下)
         [-0.729, 1.62, -1.003], [-0.622, 1.84, -1.276], [-0.319, 2.04, -1.281], [-0.098, 2.25, -1.116],   // 大地の縁を 横へ回りながら 上へ越える (坂は 40° まで、真上を向かない)
@@ -72,7 +72,7 @@ export const LADDER3=WORLDS3.flatMap((w,i)=>w.rival ? [{name:w.rival.name, wi:i,
 export function ctrlLen3(vm){ return Math.max(4, vm*0.5); }   // 3 面の 制御点の 間隔 (m)。秒速 10 m で 5 m = 1 区間 (8 点) 40 m (2 面の ctrlLen は 最低 30 m で 区間が 240 m に なり、4 秒の 広がりを 作れない、10/27)
 export function availableKeys3(li, draft){   // その 段で 選べる 世界 (レーン順、選べない 所は null)。できている (ready) 世界だけ、確かめ用 draft では 全部。1 つも 無い 段は 全部 (仮の 世界で 通れる)
   const ks=LAYERS3[li].map(k=>(W3[k].ready || draft) ? k : null); return ks.some(Boolean) ? ks : LAYERS3[li].slice(); }
-function rowMove3(def, T, vm){ return def.path && !def.path.times ? pathFor(def.path).len/Math.max(5, T-GATE_CALM) : vm; }   // 形の 決まった コース (神殿・インド) は 長さ ÷ 時間、ほかは 一定の 速さ
+function rowMove3(def, T, vm){ return def.path && !def.path.times ? pathFor(def.path).len/Math.max(5, T-(def.path.noCalm ? 0 : GATE_CALM)) : vm; }   /* noCalm = 道すじの 終わりが ワープの 輪 (インドの 太陽、10/29) */   // 形の 決まった コース (神殿・インド) は 長さ ÷ 時間、ほかは 一定の 速さ
 function layout3(plan){ let s0=plan.length ? plan[0].s0 : 0; for(const o of plan){ o.move=rowMove3(o.def, o.T, plan.vm); o.wi=WORLDS3.indexOf(o.def); o.s0=s0; o.sA=s0+o.lead; o.len=o.lead+o.T*o.move; s0+=o.len; } }   // 行ごとの 速さ・長さ・始まりの 位置 (前の 行の 長さを 足していく)
 export function planWorlds(runSec, startLi, vm, music, startS, opt={}){   // 段ごとの 始まりの時刻 t0・進む速さ move・コースの長さ len・始まりの位置 sA (設計書 3.2、10/27 段に)。music (MUSIC3) が使える時 (区切りの数 = 段の数 − 1、最後の区切りが FINISH より前) は 区切り = music.gates、使えない時は 段の 最初の 世界の sec の割合で 伸び縮み。startLi = 確かめ用の 始まりの 段。opt.draft = 全部の 世界を 選べる、opt.pick(li) = 最初から 決める 世界の key (確かめ用 ?w3=)。分かれ道の 段は chosen:false (輪の 手前で レーンで 決める = chooseRow3)
   const n=LAYERS3.length, G= music && music.gates.length===n-1 && music.gates[n-2]<runSec ? music.gates : null, sec=LAYERS3.map(l=>W3[l[0]].sec), k=Math.max(0.3, runSec/sec.reduce((a,b)=>a+b, 0)), t0=[0];
@@ -92,10 +92,15 @@ export function lanes3(plan, s, o){ o.cx=0; o.cy=0; o.w=LANE_W3; o.ty=0;   // 3 
     if(after>=0 && after<backL && r.lane!=null){ const u=sm(after/backL), d=r.lane-1; o.w=FORK3_W+(LANE_W3-FORK3_W)*u; const e=exit3(plan[i-1].def); o.cx=d*(e.w-FORK3_W)*(1-u); o.cy=-d*e.h*(1-u); return o; } }   /* 輪の 後: おばけの いる 線 (選んだ レーン = 同じ 色) は そのまま 続き、ほかの 2 本は FORK3_W 離れた 所から 生えて 広がる (10/28 社長「赤に いたら 分かれた 先でも 赤」。1 点から 3 本 生やすと 色が 重なって 今いる レーンが 分かりにくかった) */
   return o; }
 export function rowAt3(plan, t){ let r=plan[0]; for(const o of plan) if(t>=o.t0) r=o; return r; }   // 時刻 t (ステージの時計) の世界 (並びの行)
-export function sAt3(plan, t, plain){ const r=rowAt3(plan, t), H=r.def.path; if(H && H.times && !plain && r.pre && t<r.t0) return (r.org ?? r.s0)+(t-r.t0)*r.preV;   /* 子ども部屋の 回: ドアの 手前の 霧の 道 (一定の 速さで ドアへ) */ return H && H.times && !plain ? Math.max(r.sA, (r.org ?? r.s0)+timedS(pathFor(H).marks, H.times, t-r.t0)) : r.sA+r.move*(t-r.t0); }   /* 子ども部屋 (times の ある行) は 印ごとに 着く時刻で 進み、最後の印 (ベッド) で 止まる。plain = 足りなくて 天の川へ 入った時 (いつもの 一定の速さ = 10/21 のまま)。org = 道の原点の コース上の位置 (最初の行だけ index.html が入れる) */
+const RAMP3=2.5;   // 世界が 変わった 後、前の 世界の 速さから この 秒数で 自分の 速さへ なめらかに (10/29 社長: インド (秒速 約 1.7 km) から 銀河 (300 m) へ 輪で 一瞬に 落ちて「大減速」に 見えた)
+function endV3(plan, p){ const q=ramp3(plan, p); return q ? q.vc : p.move; }   // その 行を 出る 時の 本当の 速さ (加減速 した 行は vc、Codex 指摘 10/29)
+function ramp3(plan, r){ const i=plan.indexOf(r), v1= i>0 ? endV3(plan, plan[i-1]) : r.move, R=Math.min(RAMP3, r.T*0.3); if(Math.abs(v1-r.move)<1e-3 || R<=0) return null; const vc=(r.T*r.move-v1*R/2)/(r.T-R/2); return vc>0 ? {v1, R, vc} : null; }   // v1 = 入る 速さ、vc = 加減速の 後の 速さ (行の 道のりの 合計は 同じ = 次の 輪は 曲の 時刻の まま)
+function run3(plan, r, dt){ const p=ramp3(plan, r); if(!p) return r.move*dt; const {v1, R, vc}=p; return dt<=R ? v1*dt+(vc-v1)*dt*dt/(2*R) : v1*R+(vc-v1)*R/2+vc*(dt-R); }   // 行の 始まりから dt 秒で 進む 道のり
+function runT3(plan, r, d){ const p=ramp3(plan, r); if(!p) return d/r.move; const {v1, R, vc}=p, dR=v1*R+(vc-v1)*R/2, a=(vc-v1)/(2*R); if(d>=dR) return R+(d-dR)/vc; return Math.abs(a)<1e-9 ? d/v1 : (-v1+Math.sqrt(Math.max(0, v1*v1+4*a*d)))/(2*a); }   // 逆: 道のり d に 着く 秒
+export function sAt3(plan, t, plain){ const r=rowAt3(plan, t), H=r.def.path; if(H && H.times && !plain && r.pre && t<r.t0) return (r.org ?? r.s0)+(t-r.t0)*r.preV;   /* 子ども部屋の 回: ドアの 手前の 霧の 道 (一定の 速さで ドアへ) */ return H && H.times && !plain ? Math.max(r.sA, (r.org ?? r.s0)+timedS(pathFor(H).marks, H.times, t-r.t0)) : r.sA+run3(plan, r, t-r.t0); }   /* 子ども部屋 (times の ある行) は 印ごとに 着く時刻で 進み、最後の印 (ベッド) で 止まる。plain = 足りなくて 天の川へ 入った時 (いつもの 一定の速さ = 10/21 のまま)。org = 道の原点の コース上の位置 (最初の行だけ index.html が入れる) */
 function timedS(mk, tm, u){ let t0=0, s0=0; for(const k in tm){ const t1=tm[k], s1=mk[k]; if(u<t1) return s0+(s1-s0)*Math.max(0, u-t0)/(t1-t0); t0=t1; s0=s1; } return s0; }   // 印と印の間は 一定の速さ
 export function pathMarks3(r){ return r.def.path && r.def.path.times ? pathFor(r.def.path).marks : null; }   // 確かめ用 (?errlog=1 の 印を通った時刻)   // 時刻 t の おばけの位置 (コース上の m、設計書 3.3)。世界が変わる輪 (行の s0) を ちょうど切り替えの時刻に通る
-export function tAt3(plan, s){ let r=plan[0]; for(const o of plan) if(s>=o.sA) r=o; return r.t0+(s-r.sA)/r.move; }   // 逆: 位置 s を おばけが通る時刻 (確かめ用の記録、Codex 指摘 10/12: 速さの違う世界をまたいでも 正しく)
+export function tAt3(plan, s){ let r=plan[0]; for(const o of plan) if(s>=o.sA) r=o; return r.t0+runT3(plan, r, s-r.sA); }   // 逆: 位置 s を おばけが通る時刻 (確かめ用の記録、Codex 指摘 10/12: 速さの違う世界をまたいでも 正しく)
 /* ② のコース (10/12 社長: 正面から 像を見上げて近づき、らせん状に のぼり、翼を越えて 顔の高さで ワープ)。入口 (原点、+Z へ) から 像の中心 (0, 0, dz) へ まっすぐ → 右へ曲がって らせんに 外から入る → 左回りに のぼる → 顔の高さで 水平 (この先は nextCtrl3 が まっすぐ 輪へ)
    半径 = 各点で 上下 clear 以内の 体から 3 次元で clear 離れる 最小の半径 (sect の 8 方向を 扇形とみなす)。角度の向きに「最大 → 平均 2 回」で なめらかにしても 必ず その半径以上。体へ寄る・膨らむ傾きは beta まで
    高さ = climb の印の間を 水平の道のりに比例 (坂が一定)。assets-warehouse/scans/coursecheck.py が 同じ計算 (数字を変えたら そろえる) */
@@ -138,7 +143,47 @@ function statuePath(H){ if(pathCache.has(H)) return pathCache.get(H);
    おばけのコース (10/14 社長: 速すぎない・下から上へ・20 倍で 上まで): ワープの直後に 大蛇の背中 (しっぽ寄り、とぐろの角度 H.start) へ降りて 少し走り (〜 H.jump) → 亀の甲羅の横へ 跳ぶ → H.route = 大地の下 (象の鼻の外側) をくぐる → 大地の縁を 回り込んで上へ → 須弥山のまわりを 回りながら上る → 太陽の中へ (この先は nextCtrl3 が まっすぐ 輪へ)。速さ = 全長 ÷ ③ の時間 (今の仮の曲では速い。ステージが 約 5 分になれば ゆっくりに)
    世界の入口 = コースの始まり、向き = 最初の水平の進む向き になるよう 塔ごと回して置く (yaw・gpos。indiaWorld が 塔と大蛇を その置き場に) */
 const sstep=(a, b, x)=>{ const t=Math.min(1, Math.max(0, (x-a)/(b-a))); return t*t*(3-2*t); };
-function serpentPath(H){ if(pathCache.has(H)) return pathCache.get(H);
+function loopPath(H){   // ③ インドの コース (10/29 社長の 道すじ 2「見上げる → 蛇を 大きく、尻尾から 胴体を 上り → 亀の 頭を 越え 象の 下を くぐって 反対側へ → 天を 衝く 蛇の 体を 宙返りの ように 駆け上がり 上下 さかさまに → 山の 頂上の 太陽に 突入」・試作): 大蛇の 体も この 道すじに 合わせて 作る。点は Blender で 塔・象・大蛇との 近さを 測って 決めた (大蛇の 背中から 0.06〜0.09・象の 間 0.156)
+  const X=H.loop, cp=X.pts.map(p=>new THREE.Vector3(...p)), curve=new THREE.CatmullRomCurve3(cp, false, 'centripetal'), S= X.speed ? X.speed*X.sec/curve.getLength() : H.s;   // S = 模型の 1 (m)。speed が あれば コースを sec 秒で ちょうど speed (m/秒) で 走る 大きさ (10/29 社長「インドも 300 m に 合わせて 世界を 直したい」)
+  const bcp=X.body.map(p=>new THREE.Vector3(...p)), bc=new THREE.CatmullRomCurve3(bcp, false, 'centripetal'), Lb=bc.getLength(), N=Math.ceil(Lb/0.02), P=bc.getSpacedPoints(N), Tg=[], U=[], rr=[], sA=[];   // 体 (模型の 単位、0.02 ごと)
+  let up=new THREE.Vector3(0, 1, 0);
+  for(let i=0;i<=N;i++){ const t=bc.getTangentAt(i/N), c=bc.getUtoTmapping(i/N)*(bcp.length-1), j=Math.min(bcp.length-2, Math.floor(c)); Tg.push(t); up=up.clone().addScaledVector(t, -up.dot(t)).normalize(); U.push(up); sA.push(i/N*Lb); rr.push(X.brad[j]+(X.brad[j+1]-X.brad[j])*(c-j)); }   // 背中の 向きは 前から 順に 引き継ぐ (宙返りの 輪では 輪の 内側を 向く)・太さは 点ごとの brad を なめらかに
+  const M=Math.ceil(curve.getLength()*S/3), R=curve.getSpacedPoints(M), Rt=[], RU=[], k=new Float64Array(M+1);   // レール (模型の 単位、3 m ごと)
+  for(let i=0;i<=M;i++) Rt.push(curve.getTangentAt(i/M));
+  const hv=i=>new THREE.Vector3(Rt[i].x, 0, Rt[i].z), ds=curve.getLength()/M;
+  for(let i=1;i<M;i++){ const a=hv(i-1), b=hv(i+1); if(a.lengthSq()>1e-6 && b.lengthSq()>1e-6) k[i]=new THREE.Vector3().crossVectors(a.normalize(), b.normalize()).y/(2*ds); }   // 水平の 曲がり (+ = 左へ)
+  const W=Math.round(0.3/ds), cs=new Float64Array(M+2); for(let i=0;i<=M;i++) cs[i+1]=cs[i]+k[i];
+  const B=(X.bank ?? 30)*DEG; let ru=new THREE.Vector3(0, 1, 0);
+  for(let i=0;i<=M;i++){ const t=Rt[i], a=Math.max(0, i-W), b=Math.min(M, i+W), bk=Math.max(-B, Math.min(B, (cs[b+1]-cs[a])/(b-a+1)*(X.bankK ?? 0.9)))*sstep(0.5, 0.8, Math.hypot(t.x, t.z));   // 傾き = 曲がりの 強さに 比べて (急な 坂・宙返りでは 0)
+    ru=ru.clone().addScaledVector(t, -ru.dot(t)).normalize(); RU.push(ru.clone().applyAxisAngle(t, -bk)); }   // レールの 上 = 前から 引き継いだ 上向き (宙返りでは 輪の 内側 = さかさま) を 曲がる 側へ bk 傾けた もの
+  const d0=R[1].clone().sub(R[0]).setY(0).normalize(), yaw=Math.atan2(d0.x, d0.z), toRoot=p=>p.clone().sub(R[0]).applyAxisAngle(AXY, -yaw).multiplyScalar(S);
+  const pts=R.map(toRoot), cum=new Float64Array(pts.length); for(let i=1;i<pts.length;i++) cum[i]=cum[i-1]+pts[i].distanceTo(pts[i-1]);
+  const find=sl=>{ let lo=0, hi=pts.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(cum[m]<=sl) lo=m; else hi=m; } return lo; }, frac=(sl, i)=>(sl-cum[i])/Math.max(1e-9, cum[i+1]-cum[i]);
+  let iL=0; if(X.look!=null){ let bd=1e9; for(let i=0;i<=M;i++){ const d=R[i].distanceToSquared(cp[X.look]); if(d<bd){ bd=d; iL=i; } } }   // 見上げる 区間の 終わり
+  const T={len:cum[pts.length-1], S, yaw, gpos:toRoot(new THREE.Vector3()), body:{P, U, Tg, r:rr, s:sA}, helix:true, headK:X.headK || 1, lookLen:cum[iL],
+    at(sl, o){ const s=Math.max(0, Math.min(T.len, sl)), i=find(s); return o.copy(pts[i]).lerp(pts[i+1], frac(s, i)); },
+    upAt(sl, o){ const s=Math.max(0, Math.min(T.len, sl)), i=find(s); return o.copy(RU[i]).lerp(RU[i+1], frac(s, i)).normalize().applyAxisAngle(AXY, -yaw); }};
+  pathCache.set(H, T); return T; }
+function ridePath(H){   // ③ インドの 新しい コース (10/29 社長の 道すじ: 下から 全体を 見上げ → 蛇の 体を 上り → 亀の 頭から 背中を 走り抜け → 象の すき間 (大地の 下) → 半回転 → てっぺんの 太陽へ。大蛇は 前の 形のまま、レールは 空中): H.ride.pts = 道すじの 点 (模型の 単位、Blender で 塔・象・大蛇との 近さを 測って 決めた: 最も 近い 0.067 = 大蛇の とぐろの 上、象の 間 0.156)
+  const S=H.s, X=H.ride, old=serpentPath({...H, ride:null}), cp=X.pts.map(p=>new THREE.Vector3(...p));
+  const curve=new THREE.CatmullRomCurve3(cp, false, 'centripetal'), M=Math.ceil(curve.getLength()*S/3), P=curve.getSpacedPoints(M), Tg=[], U=[], k=new Float64Array(M+1);   // レール (模型の 単位、3 m ごと)
+  for(let i=0;i<=M;i++) Tg.push(curve.getTangentAt(i/M));
+  const h=i=>new THREE.Vector3(Tg[i].x, 0, Tg[i].z).normalize(), ds=1/M*curve.getLength();
+  for(let i=1;i<M;i++) k[i]=new THREE.Vector3().crossVectors(h(i-1), h(i+1)).y/(2*ds);   // 水平の 曲がり (+ = 左へ、模型の 単位 1 あたりの 角度)
+  const W=Math.round(0.3/ds), cs=new Float64Array(M+2); for(let i=0;i<=M;i++) cs[i+1]=cs[i]+k[i];   // 前後 0.3 で ならす
+  const B=(X.bank ?? 30)*DEG, v=new THREE.Vector3(), w=new THREE.Vector3();
+  for(let i=0;i<=M;i++){ const a=Math.max(0, i-W), b=Math.min(M, i+W), km=(cs[b+1]-cs[a])/(b-a+1), t=Tg[i], bk=Math.max(-B, Math.min(B, km*(X.bankK ?? 0.9)))*sstep(0.5, 0.8, Math.hypot(t.x, t.z));   // 傾き = 曲がりの 強さに 比べて (曲がる 側へ、最大 B)。急な 坂 (水平の 割合 0.5〜0.8 = 37〜60 度) では 弱める (横の 向きが 決まらず 暴れる)
+    v.set(0, 1, 0).addScaledVector(t, -t.y).normalize(); w.crossVectors(new THREE.Vector3(0, 1, 0), h(i)); w.addScaledVector(t, -w.dot(t)).normalize();   // 上 と 左 (どちらも 進む 向きと 直角)
+    U.push(v.clone().multiplyScalar(Math.cos(bk)).addScaledVector(w, Math.sin(bk)).normalize()); }
+  const d0=P[1].clone().sub(P[0]).setY(0).normalize(), yaw=Math.atan2(d0.x, d0.z), toRoot=p=>p.clone().sub(P[0]).applyAxisAngle(AXY, -yaw).multiplyScalar(S);
+  const pts=P.map(toRoot), cum=new Float64Array(pts.length); for(let i=1;i<pts.length;i++) cum[i]=cum[i-1]+pts[i].distanceTo(pts[i-1]);
+  const find=sl=>{ let lo=0, hi=pts.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(cum[m]<=sl) lo=m; else hi=m; } return lo; }, frac=(sl, i)=>(sl-cum[i])/Math.max(1e-9, cum[i+1]-cum[i]);
+  let iL=0; if(X.look!=null){ let bd=1e9; for(let i=0;i<=M;i++){ const d=P[i].distanceToSquared(cp[X.look]); if(d<bd){ bd=d; iL=i; } } }   // 見上げる 区間の 終わり (この 点まで カメラは 塔の 真ん中の 方へ)
+  const T={len:cum[pts.length-1], S, yaw, gpos:toRoot(new THREE.Vector3()), body:old.body, helix:true, lookLen:cum[iL],
+    at(sl, o){ const s=Math.max(0, Math.min(T.len, sl)), i=find(s); return o.copy(pts[i]).lerp(pts[i+1], frac(s, i)); },
+    upAt(sl, o){ const s=Math.max(0, Math.min(T.len, sl)), i=find(s); return o.copy(U[i]).lerp(U[i+1], frac(s, i)).normalize().applyAxisAngle(AXY, -yaw); }};   // レールの 上 (曲がる 所で 内側へ 傾く)
+  pathCache.set(H, T); return T; }
+function serpentPath(H){ if(pathCache.has(H)) return pathCache.get(H); if(H.loop) return loopPath(H); if(H.ride) return ridePath(H);   /* 社長の 道すじ (10/29: loop = 宙返り、ride = 1 つ前) */
   const S=H.s, ax=1.75, az=2.4, R=2.85, LC=new THREE.Vector3(-0.42, 1.6, -0.5);   // とぐろの楕円 (左右・前後) / 輪の 半径と中心
   const ell=a=>new THREE.Vector3(ax*Math.sin(a), 0.2+0.25*(a/DEG-200)/340, az*Math.cos(a)), a0=200*DEG, t0=new THREE.Vector3(ax*Math.cos(a0), 0, -az*Math.sin(a0)).normalize();   // とぐろの点 (角度 a、少しずつ上がる)
   const cp=[ell(a0).addScaledVector(t0, -0.8)];   // しっぽの先 (とぐろの入口の 手前)
@@ -170,15 +215,15 @@ const _sp=new THREE.Vector3(), _sx=new THREE.Vector3(), _sy=new THREE.Vector3(),
 export function makeGen3(plan){ const p=new THREE.Vector3(0,0.45,0), q=new THREE.Quaternion(); return {p, q, s:0, w:LANE_W3, plan, pi:0, legI:0, legLeft:0, yawR:0, pitchR:0, entry:{p:p.clone(), q:q.clone()}, pre:(plan[0] && plan[0].pre) || 0}; }   // pre = 最初の 世界の 前の まっすぐな 道 (子ども部屋の 回の 霧の 道)   // entry = いまの世界の入口 (位置と向き)
 export function nextCtrl3(g, ctx){   // 次の制御点 (2 面の nextCtrl2 と同じ形で返す)。速さは 作っている世界の速さ (planWorlds の move) を使う (おばけより先を作るため)
   const W=g.plan[g.pi]; if(!W.chosen) return null;   /* 分かれ道で まだ 世界が 決まって いない = コースは 輪の 所で 止める (10/27。決まったら chooseRow3 で 続きを 作る) */
-  const vm=W.move, last=g.pi>=g.plan.length-1, nb=g.plan[g.pi+1], rem=W.s0+W.len-g.s, L= !last && rem>0.5 && rem<ctrlLen3(vm)+0.5 ? rem : ctrlLen3(vm), dt=L/Math.max(1, vm), calm=(nb && nb.branch ? Math.max(GATE_CALM, SPREAD3_SEC) : GATE_CALM)*vm;   /* 分かれ道の 手前は 広がる 間 まっすぐ (レールの 並びは lanes3) */   /* 世界の終わりの手前の 1 歩は ちょうど終わりまで (世界が変わる輪を 曲の切り替えの時刻に通る、Codex 指摘 10/12: 越えた所に置くと 0.3 秒遅れた。残りが 0.5 m 以下に なりそうな 時は その 手前の 1 歩を 少し 長く して 必ず ちょうど 止まる = 次の 世界の 入口が いつも 境目、10/29 Codex 指摘: はみ出すと 洞窟の 城壁と 輪が ずれる) */
+  const vm=W.move, cl=(W.def.path && W.def.path.step) || ctrlLen3(vm), last=g.pi>=g.plan.length-1, nb=g.plan[g.pi+1], rem=W.s0+W.len-g.s, L= !last && rem>0.5 && rem<cl+0.5 ? rem : cl,   /* cl = 点の 間隔 (形の 決まった コースは path.step で 細かく できる: インドの 亀の 鼻先 〜 頭の 山なりが 100〜200 m しか なく、150 m おきでは 角ばって カクカク した、10/29) */ dt=L/Math.max(1, vm), calm=(nb && nb.branch ? Math.max(GATE_CALM, SPREAD3_SEC) : GATE_CALM)*vm;   /* 分かれ道の 手前は 広がる 間 まっすぐ (レールの 並びは lanes3) */   /* 世界の終わりの手前の 1 歩は ちょうど終わりまで (世界が変わる輪を 曲の切り替えの時刻に通る、Codex 指摘 10/12: 越えた所に置くと 0.3 秒遅れた。残りが 0.5 m 以下に なりそうな 時は その 手前の 1 歩を 少し 長く して 必ず ちょうど 止まる = 次の 世界の 入口が いつも 境目、10/29 Codex 指摘: はみ出すと 洞窟の 城壁と 輪が ずれる) */
   const left=W.s0+W.len-g.s, free=(last || left>=calm) && (g.pi===0 || g.s-W.s0>=calm), H=W.def.path;   // free = 輪の前後の まっすぐの所でない
   let moved=false;
   if(H && g.pre>0){ const l=Math.min(L, g.pre); g.pre-=l; _f.set(0,0,1).applyQuaternion(g.q); g.p.addScaledVector(_f, l); g.s+=l; moved=true; if(g.pre<=1e-6){ g.pre=0; g.entry={p:g.p.clone(), q:g.q.clone()}; } }   /* 子ども部屋の 回: ドアの 手前の 霧の 道 (まっすぐ)。終わった 所が 子ども部屋の 入口 */
   else if(H){   /* 形の決まったコース (② 像を見上げて らせんに のぼる / ③ 大蛇の背中): pathFor の道のりどおりに 点を置く。基準 = 世界の入口 g.entry。レールの上の向きは コースが持っていれば それ (③ の宙返り)、なければ 世界の入口の上。終わったら いまの向きのまま まっすぐ 輪へ */
     const T=pathFor(H); if(!g.h) g.h={q0:g.entry.q.clone(), p0:g.entry.p.clone(), up:new THREE.Vector3(0,1,0).applyQuaternion(g.entry.q), sl:0};
     const h=g.h;
-    if(h.sl<T.len){ h.sl=Math.min(T.len, h.sl+L); T.at(h.sl, _sp).applyQuaternion(h.q0).add(h.p0); const d=_sp.clone().sub(g.p), dl=d.length();
-      if(dl>1e-6){ d.normalize(); _sx.crossVectors(T.upAt ? T.upAt(h.sl, _su).applyQuaternion(h.q0) : h.up, d).normalize(); _sy.crossVectors(d, _sx); g.q.setFromRotationMatrix(_sm.makeBasis(_sx, _sy, d)); g.p.copy(_sp); g.s+=dl; moved=true; } } }   // 進む向き = 前の点から この点へ。上 = 世界の入口の上 (横転しない)
+    if(h.sl<T.len){ const sl0=h.sl; h.sl=Math.min(T.len, h.sl+L); T.at(h.sl, _sp).applyQuaternion(h.q0).add(h.p0); const d=_sp.clone().sub(g.p), dl=d.length();
+      if(dl>1e-6){ d.normalize(); _sx.crossVectors(T.upAt ? T.upAt(h.sl, _su).applyQuaternion(h.q0) : h.up, d).normalize(); _sy.crossVectors(d, _sx); g.q.setFromRotationMatrix(_sm.makeBasis(_sx, _sy, d)); g.p.copy(_sp); g.s+=h.sl-sl0; moved=true; } } }   /* 道のりは 曲線に 沿った 長さで 数える (弦の 長さだと 終わりに 端数が 残り、さらに 1 歩 余分に 進んで 輪が ずれた、Codex 指摘 10/29) */   // 進む向き = 前の点から この点へ。上 = 世界の入口の上 (横転しない)
   else if(free){
     if(g.legLeft<=0){ const lg=W.def.legs[g.legI++%W.def.legs.length]; g.legLeft=lg[0]; g.yawR=lg[1]*D2R; g.pitchR=lg[2]*D2R; }
     g.legLeft-=dt; turn(g, AXY, g.yawR*dt); turn(g, AXX, g.pitchR*dt); }
@@ -190,7 +235,7 @@ export function nextCtrl3(g, ctx){   // 次の制御点 (2 面の nextCtrl2 と�
 }
 export function coursePath3(P, branch){   // コースの 中心線 (10/29 社長「コースの 緩やかな カーブ」): index.html と 同じ 作り手 nextCtrl3 で 世界の 入口 (原点・+Z 向き) から 終わりまで なぞる。branch = 次の 段が 分かれ道 (終わりの まっすぐが 長い)
   const row = { chosen:true, move:P.move, s0:0, len:P.len, def:P.def }, pi = P.pi === 0 ? 0 : 1, st = pi ? 0 : ctrlLen3(P.move);   // 最初の 段 (確かめ用 ?w3= ・?world=) は 入口の まっすぐが 無く、作り手は ctrlLen3 進んだ 所から 数え始める (index.html の addSegment が 最初の 3 点を 持ち越す = org。10/29 これを 知らずに 城壁が 150 m 奥・37 m 横に ずれた)
-  const g = { p:new THREE.Vector3(), q:new THREE.Quaternion(), s:st, w:0, plan: pi ? [null, row, { branch }] : [row, { branch }], pi, legI:0, legLeft:0, yawR:0, pitchR:0, entry:null, pre:0 };
+  const g = { p:new THREE.Vector3(), q:new THREE.Quaternion(), s:st, w:0, plan: pi ? [null, row, { branch }] : [row, { branch }], pi, legI:0, legLeft:0, yawR:0, pitchR:0, entry:{ p:new THREE.Vector3(), q:new THREE.Quaternion() }, pre:0 };   /* entry = 世界の 入口 (形の 決まった コースの 原点、インドの らせん 10/29) */
   const S = [0], C = [new THREE.Vector3()], Q = [new THREE.Quaternion()];
   while(g.pi === pi && S.length < 20000){ nextCtrl3(g); S.push(g.s - st); C.push(g.p.clone()); Q.push(g.q.clone()); }   // S = 入口からの 道のり
   const n = S.length - 1;
@@ -328,7 +373,7 @@ function serpentMesh(T, tex, L){   // 大蛇の体 (模型の単位、塔と同�
   return new THREE.Mesh(g, new THREE.MeshBasicMaterial({map:tex, vertexColors:true, side:THREE.DoubleSide})); }
 function serpentHead(T, tex, L){   // 大蛇の頭 (模型の単位): 首の先に 平たい楕円の頭 + 目 (首の向き・背中の向きに合わせる)
   const b=T.body, n=b.P.length-1, tg=b.Tg[n], up=b.U[n], sd=new THREE.Vector3().crossVectors(up, tg).normalize(), grp=new THREE.Group();   /* 横 = 上 × 前 (逆だと 鏡に映した向きになり 頭の形と向きが首と合わない、Codex 指摘 10/13) */
-  grp.position.copy(b.P[n]).addScaledVector(tg, 0.18); grp.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(sd, up, tg));   // 頭の中心 (首の先の 少し先)、向き = 首の向き
+  const hk=T.headK || 1; grp.position.copy(b.P[n]).addScaledVector(tg, 0.18*hk); grp.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(sd, up, tg)); grp.scale.setScalar(hk);   /* hk = 頭の 大きさ (らせんの 試作の 細い 体、10/29) */   // 頭の中心 (首の先の 少し先)、向き = 首の向き
   const head=new THREE.SphereGeometry(1, 40, 20).scale(0.16, 0.095, 0.33), snout=new THREE.SphereGeometry(1, 24, 12).scale(0.10, 0.06, 0.14).translate(0, -0.01, 0.26);
   const mat=new THREE.MeshBasicMaterial({map:tex, vertexColors:true}); for(const gg of [head, snout]) grp.add(new THREE.Mesh(bakeLight(gg, L.clone().applyQuaternion(grp.quaternion.clone().invert())), mat));
   for(const s of [-1, 1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.03, 16, 8), new THREE.MeshBasicMaterial({color:0x2a3a30})); e.position.set(s*0.13, 0.04, 0.10); grp.add(e); }   // 目
@@ -338,20 +383,24 @@ function indiaWorld(scene, root, P, opts, out){   // 置き物を root に足す
   g.position.copy(T.gpos); g.rotation.y=-T.yaw; g.scale.setScalar(S); root.add(g);   // 塔と大蛇 (模型の単位 → m)。コースの始まり = 世界の入口 に合わせて 回して置く
   loadGLB(K.glb).then(sc=>{ if(!sc) return;
     const mat=new THREE.MeshBasicMaterial({vertexColors:true}), bk=o=>bakeLight(o.geometry.clone(), Lm, 1.25);   // 青銅の色を残して 光を焼き付け (少し明るく)
-    for(const nm of ['turtle', 'land']){ const o=sc.getObjectByName(nm); if(o && o.isMesh) g.add(new THREE.Mesh(bk(o), mat)); }
+    const mat2=new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide}); mat2.onBeforeCompile=s=>{ s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n  if(!gl_FrontFacing) diffuseColor.rgb *= 0.3;'); };   /* 亀の 甲羅は 外側だけの 面 → 鼻先の 近くから 甲羅の 中を のぞくと 向こうが 透けた (10/29 社長「甲羅の 隙間から 向こうの 風景が 見える」) → 内側も 描き、内側は 暗い 影の 色 */
+    for(const nm of ['turtle', 'land']){ const o=sc.getObjectByName(nm); if(o && o.isMesh) g.add(new THREE.Mesh(bk(o), nm==='turtle' ? mat2 : mat)); }
     const el=sc.getObjectByName('elephant');
     if(el && el.isMesh){ const im=new THREE.InstancedMesh(bakeLight(el.geometry.clone(), AXY, 1.25), mat, K.place.length), m4=new THREE.Matrix4(), q=new THREE.Quaternion();   // 象は 1 頭の形を 8 回描く。光は 真上から (1 頭に焼き付けてから回すので、横からの光だと 明るい面が 向きと一緒に回る、Codex 指摘 10/13)
       K.place.forEach(([x, y, z, yaw, s], i)=>im.setMatrixAt(i, m4.compose(new THREE.Vector3(x, y, z), q.setFromAxisAngle(AXY, yaw), new THREE.Vector3(s, s, s)))); im.computeBoundingSphere(); g.add(im); }
     const su=sc.getObjectByName('sun');
-    if(su && su.isMesh){ const sg=su.geometry.clone(); sg.computeBoundingSphere(); g.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xffd27a})));   // 太陽 (金色に光る)
+    if(su && su.isMesh && T.helix){ const sg=su.geometry.clone(); sg.computeBoundingSphere(); const c=sg.boundingSphere.center.clone(), cp=coursePath3(P, opts.nextBranch!==false), e=new THREE.Vector3(), eq=new THREE.Quaternion(); sg.translate(-c.x, -c.y, -c.z); cp.frame(cp.len, e, eq);   /* らせんの 試作: 太陽 = ゴール (ワープの 輪の 所、大蛇の 頭の 向きの 先)。正面 (模型の +Z) を 来る 向きへ */
+      const sun=new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xffd27a, side:THREE.DoubleSide})); sun.scale.setScalar(S); sun.position.copy(e); sun.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1).applyQuaternion(eq)); root.add(sun);
+      const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex(), color:0xffc860, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false})); glow.position.copy(e); glow.scale.setScalar(1.1*S); root.add(glow); }
+    else if(su && su.isMesh){ const sg=su.geometry.clone(); sg.computeBoundingSphere(); g.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xffd27a})));   // 太陽 (金色に光る)
       const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex(), color:0xffc860, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false})); glow.position.copy(sg.boundingSphere.center); glow.scale.setScalar(1.1); g.add(glow); }
   });
   const tex=scaleTex(); g.add(serpentMesh(T, tex, Lm), serpentHead(T, tex, Lm));
   const R=seeded(1013), ctex=cloudTex(["#ffffff", "#f2f7ff"]), C=T.gpos;   // 白い雲 (塔の大きさに合わせる): 塔の下の 雲の海 (30) と 遠くの空の雲 (14)
-  for(let i=0;i<44;i++){ const low=i<30, a=R()*Math.PI*2, d=((low ? 0.8 : 3)+R()*(low ? 4.2 : 4))*S, sz=((low ? 1.2 : 1)+R()*1.6)*S, sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ctex, transparent:true, opacity:0.95, depthWrite:false}));
-    sp.position.set(C.x+Math.sin(a)*d, C.y+(low ? -0.7-R()*0.5 : 0.5+R()*3.5)*S, C.z+Math.cos(a)*d); sp.scale.set(sz*1.7, sz*(low ? 0.6 : 1), 1); root.add(sp); }
+  for(let i=0;i<44;i++){ const low=i<30, a=R()*Math.PI*2, d=((low ? 2.8 : 3)+R()*(low ? 3.6 : 4))*S,   /* 雲の 海は 塔の 真下を 空ける (とぐろの 外 2.5 より 外、10/29) */ sz=((low ? 1.2 : 1)+R()*1.6)*S, sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ctex, transparent:true, opacity:0.95, depthWrite:false}));
+    sp.position.set(C.x+Math.sin(a)*d, C.y+(low ? -2.7-R()*0.6 : 0.5+R()*3.5)*S, C.z+Math.cos(a)*d);   /* 雲の 海は とぐろ・しっぽ (高さ −1.6 まで) より 下へ (前は −0.7〜−1.2 で 大蛇と 亀の 下に かかって 白く 見えた、10/29 社長) */ sp.scale.set(sz*1.7, sz*(low ? 0.6 : 1), 1); root.add(sp); }
   scene.fog=new THREE.Fog(0xd8ecff, 6*S, 30*S);   /* 昼の もや = 遠くが 白く かすむ (塔は くっきり) */
-  const F=new THREE.Vector3(0, 1.7*S, 0).applyAxisAngle(AXY, -T.yaw).add(C); out.focus=(sl, o)=>o.copy(F);   // 塔の真ん中
+  const F=new THREE.Vector3(0, 1.7*S, 0).applyAxisAngle(AXY, -T.yaw).add(C); if(!T.helix) out.focus=(sl, o)=>o.copy(F); else if(T.lookLen) out.focus=(sl, o)=>sl<T.lookLen ? o.copy(F) : null;   // 塔の真ん中 (社長の 道すじ 10/29: 最初の 見上げる 間だけ、その 後は なし = カメラは コースの 先を 見る、縦持ちで 先が 見える ように)
   return []; }
 export function buildWorld(P, opts){   // P = planWorlds の 1 行、opts = {mobile, neb, gal} (neb/gal = false で 星雲・眼下の銀河を出さない: 重さの見比べ用 ?neb=0・?gal=0)
   const def=P.def, scene=new THREE.Scene(), bg=new THREE.Group(), root=new THREE.Group(), ticks=[], out={focus:null};   // out.focus = カメラが向く所 (② だけ: 道のり → root の座標の点)
@@ -365,5 +414,5 @@ export function buildWorld(P, opts){   // P = planWorlds の 1 行、opts = {mob
   if(def.mod) ticks.push(...def.mod.build(scene, root, P, opts, out)); else if(!def.look) ticks.push(...buildDraft(scene, root, P, opts, out));   // 分かれ道の 新しい 世界 (worlds/<key>.js、10/27) / まだ 無い 世界は 仮の 世界 (確かめ用)
   return {P, scene, bg, root, placed:false, focus:out.focus, nursery:out.nursery, frame:out.frame, cine:out.cine, exitP:out.exitP,
     tick(cam, dt, portal){ bg.position.copy(cam.position); for(const f of ticks) f(cam, dt, portal); },   // portal = 輪の 窓の 中に 描いて いる (次の 世界)
-    dispose(){ out.dead=true; scene.traverse(o=>{ if(o.isInstancedMesh) o.dispose(); if(o.geometry && !o.isSprite) o.geometry.dispose(); for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map) m.map.dispose(); m.dispose(); } }); } };   /* 光の板 (Sprite) の形は three.js 全体の共用なので 捨てない */
+    dispose(){ out.dead=true; scene.traverse(o=>{ if(o.isInstancedMesh) o.dispose(); if(o.geometry && !o.isSprite) o.geometry.dispose(); for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map) m.map.dispose(); if(m.alphaMap) m.alphaMap.dispose(); m.dispose(); } }); } };   /* 光の板 (Sprite) の形は three.js 全体の共用なので 捨てない。alphaMap も 片づける (銀河の 窓の 円い ぼかし、Codex 指摘 10/29) */
 }

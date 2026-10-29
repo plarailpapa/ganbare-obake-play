@@ -28,8 +28,8 @@ function glowTex(){ const c = document.createElement('canvas'); c.width = c.heig
 function radialMask(){ const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), rg = g.createRadialGradient(128, 128, 96, 128, 128, 128); rg.addColorStop(0, '#fff'); rg.addColorStop(1, '#000'); g.fillStyle = rg; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); }   // 丸い ふち (intros.js と 同じ)
 
 export function createBackdrop(opts){   // 遠景: group を 場面に 足し、毎コマ update(カメラ, 銀河の 輪からの 秒, 盛り上がりからの 秒 (まだなら −1), dt)。opts.preview = 輪の 窓の 中 (銀河 だけ)、opts.renderer = 画像を 読めた 時に 先に 用意する (初めて 出る 時に カクつかない)
-  let dead = false;   // 片づけ 済み (後から 画像が 読めても 用意しない = 捨てた 画像を 作り直して 残さない、Codex 指摘 10/28)
-  const loader = new THREE.TextureLoader(), tex = f => { const t = loader.load('planets/' + f, x => { if(opts.renderer && !dead) opts.renderer.initTexture(x); }); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  let dead = false, pend = 0;   // 片づけ 済み (後から 画像が 読めても 用意しない = 捨てた 画像を 作り直して 残さない、Codex 指摘 10/28) / まだ 届いて いない 画像の 数 (3 面の 始まりで 届くまで 待つ、10/29)
+  const loader = new THREE.TextureLoader(), tex = f => { pend++; const t = loader.load('planets/' + f, x => { pend--; if(opts.renderer && !dead) opts.renderer.initTexture(x); }, undefined, () => pend--); t.colorSpace = THREE.SRGBColorSpace; return t; };
   const glow = glowTex(), add = THREE.AdditiveBlending;
   const lay = new THREE.Group(); lay.renderOrder = -5;   // 毎コマ カメラの 前 DIST に 置き、カメラと 同じ 向き
 
@@ -86,7 +86,7 @@ export function createBackdrop(opts){   // 遠景: group を 場面に 足し、
   }
   function dispose(){ dead = true; lay.traverse(o => { if(o.geometry && !o.isSprite) o.geometry.dispose();   /* 光の 板 (Sprite) の 形は three.js 全体の 共用なので 捨てない */
     for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map) m.map.dispose(); if(m.alphaMap) m.alphaMap.dispose(); m.dispose(); } }); }
-  return { group:lay, update, dispose };
+  return { group:lay, update, dispose, loading:() => pend };
 }
 
 export function build(scene, root, P, opts, out){   // 世界: 輪の 窓の 中に 見える 始まりの 銀河 だけ (くぐった 後は index.html の 遠景が 続ける)

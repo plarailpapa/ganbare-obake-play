@@ -33,9 +33,10 @@ function backCanvas(img){   // 立ち絵の 後ろ姿: 形は 同じ (左右 反
 export function createMovie3({ renderer, mobile = false, front = 'assets/chara/obake-ganbaru.png', rev = 14.47, white = 19.56 }){   // rev・white = 最後の 輪からの 秒 (曲が 大きく 戻る 瞬間・最後の 和音)
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(45, 1, 0.05, 5000);
   const loader = new THREE.TextureLoader(), owned = [];
-  let dead = false;   // 片づけ 済み (後から 画像が 読めても 用意しない)
+  let dead = false, pend = 0;   // 片づけ 済み (後から 画像が 読めても 用意しない) / まだ 届いて いない 画像の 数 (3 面の 始まりで 届くまで 待つ、10/29)
+  const ld = (url, cb) => { pend++; return loader.load(url, t => { pend--; cb(t); }, undefined, () => pend--); };
   const prep = t => { owned.push(t); return t; }, ready = t => { if(renderer && !dead) renderer.initTexture(t); };   // 読めたら 先に 用意 (初めて 出る 時に カクつかない)。片づけた 後は しない (捨てた 画像を 作り直して 残した、Codex 指摘 10/28)
-  const tex = f => { const t = loader.load('planets/' + f, ready); t.colorSpace = THREE.SRGBColorSpace; return prep(t); };
+  const tex = f => { const t = ld('planets/' + f, ready); t.colorSpace = THREE.SRGBColorSpace; return prep(t); };
   const glow = prep(glowTex()), ring = prep(ringTex()), add = THREE.AdditiveBlending;
   scene.add(new THREE.AmbientLight(0xffffff, 0.35));
   const sunLight = new THREE.DirectionalLight(0xfff2dd, 3.0); scene.add(sunLight, sunLight.target);
@@ -63,12 +64,12 @@ export function createMovie3({ renderer, mobile = false, front = 'assets/chara/o
     const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color:0x8fc4ff, transparent:true, opacity:0.35, depthWrite:false })); sunG.add(l); return l; })();   // 地球の 通り道 (うすく)
   const earthG = new THREE.Group(), tilt = new THREE.Group(); scene.add(earthG); earthG.add(tilt); earthG.visible = false;
   const earth = new THREE.Mesh(new THREE.SphereGeometry(EARTH_R, 96, 48), new THREE.MeshStandardMaterial({ map:tex('2k_earth_daymap.jpg'), roughness:1, metalness:0 })); tilt.add(earth);
-  const clouds = new THREE.Mesh(new THREE.SphereGeometry(EARTH_R * 1.012, 96, 48), new THREE.MeshStandardMaterial({ color:0xffffff, alphaMap:prep(loader.load('planets/2k_earth_clouds.jpg', ready)), transparent:true, opacity:0.85, depthWrite:false, roughness:1, metalness:0 })); earth.add(clouds);
+  const clouds = new THREE.Mesh(new THREE.SphereGeometry(EARTH_R * 1.012, 96, 48), new THREE.MeshStandardMaterial({ color:0xffffff, alphaMap:prep(ld('planets/2k_earth_clouds.jpg', ready)), transparent:true, opacity:0.85, depthWrite:false, roughness:1, metalness:0 })); earth.add(clouds);
   const earthHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map:glow, color:0x6fb0ff, transparent:true, opacity:0.75, blending:add, depthWrite:false })); earthHalo.scale.setScalar(EARTH_R * 3.4); earthG.add(earthHalo);
   const jp = texDir(JP_LON, JP_LAT, new THREE.Vector3()), jpSpark = new THREE.Sprite(new THREE.SpriteMaterial({ map:glow, color:0xfff2b0, transparent:true, opacity:0, blending:add, depthWrite:false })); earth.add(jpSpark); jpSpark.position.copy(jp).multiplyScalar(EARTH_R * 1.02);   // 日本に 着いた 時の 光
 
   const ghostG = new THREE.Group(); scene.add(ghostG);   // 立ち絵の おばけ (前 = がんばる顔 / 後ろ姿)。残像・光・輪・粒も ここに
-  const frontTex = prep(loader.load(front, t => { if(dead) return; ready(t); const bc = backCanvas(t.image); backTex.image = bc; backTex.needsUpdate = true; ready(backTex); })); frontTex.colorSpace = THREE.SRGBColorSpace;
+  const frontTex = prep(ld(front, t => { if(dead) return; ready(t); const bc = backCanvas(t.image); backTex.image = bc; backTex.needsUpdate = true; ready(backTex); })); frontTex.colorSpace = THREE.SRGBColorSpace;
   const backTex = prep(new THREE.Texture()); backTex.colorSpace = THREE.SRGBColorSpace;
   const gMat = new THREE.SpriteMaterial({ map:frontTex, transparent:true, alphaTest:0.04, depthWrite:false }), gSpr = new THREE.Sprite(gMat); gSpr.scale.set(GH * 0.75, GH, 1); gSpr.renderOrder = 5; ghostG.add(gSpr);
   const aura = new THREE.Sprite(new THREE.SpriteMaterial({ map:glow, color:0xbfe0ff, transparent:true, opacity:0.45, blending:add, depthWrite:false })); aura.scale.setScalar(GH * 2.2); aura.renderOrder = 4; ghostG.add(aura);
@@ -151,5 +152,5 @@ export function createMovie3({ renderer, mobile = false, front = 'assets/chara/o
     v2.copy(jp).applyAxisAngle(new THREE.Vector3(0, 1, 0), spin + dd); tilt.quaternion.identity().slerp(q1.setFromUnitVectors(v2, v1), k);   /* 緯度の 分も こちらへ 傾ける (日本が 正面) */
   }
   function dispose(){ dead = true; scene.traverse(o => { if(o.geometry && !o.isSprite) o.geometry.dispose(); for(const m of (o.material ? [].concat(o.material) : [])) m.dispose(); }); for(const t of owned) t.dispose(); }
-  return { scene, camera, update, dispose };
+  return { scene, camera, update, dispose, loading:() => pend };
 }
