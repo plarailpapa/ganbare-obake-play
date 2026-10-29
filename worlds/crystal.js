@@ -3,7 +3,7 @@
 // 最後は 3 つの 光る 門の 建物 (次の 分かれ道の 3 本の レールが それぞれ 門を くぐる)。座標: 輪の 入口が 原点、+Z = 進む 向き、+Y = 上、+X = 左。コースは ゆるく 曲がる (10/29) ので、置き物は まっすぐの 座標 (z = 道のり) で 作って coursePath で コースに 沿わせる。形は InstancedMesh、色は 頂点に 焼き付け (光の 計算なし = 軽い)
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { SPREAD3_SEC, RECONV3_SEC, nextCtrl3, ctrlLen3, exit3, exitLift3 } from '../stage3.js';
+import { SPREAD3_SEC, RECONV3_SEC, coursePath3, exit3, exitLift3 } from '../stage3.js';
 
 const ZONES = [['#c58cff', '#7b3cff'], ['#7cc8ff', '#3d6bff'], ['#ff8fdc', '#c45cff'], ['#ffd98a', '#ff9a3c']].map(z => z.map(c => new THREE.Color(c)));   // 紫・青・桃・金 (明るい 色 / 深い 色)
 const FOGC = ['#1d0c3a', '#0a1840', '#2c0c34', '#33200c'].map(c => new THREE.Color(c));   // 遠くの もやの 色 (区間ごと)
@@ -36,19 +36,6 @@ function rockGeo(kind){   // 岩の 形 (高さ 1・太さ 1、上の 中心 y =
   for(let i = 0; i < p.count; i++){ const s = -p.getY(i) / o.asp, ny = n.getY(i), lam = Math.max(0, n.getX(i) * L.x + ny * L.y + n.getZ(i) * L.z);
     const k = (0.1 + 0.42 * lam + 0.18 * Math.max(0, ny) ** 2) * (0.35 + 0.65 * Math.exp(-s * (o.isl ? 2 : 7))); c.set([k * 0.75, k * 0.65, k], i * 3); }
   g.scale(1, 1 / o.asp, 1); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); return g;
-}
-function coursePath(P, branch){   // コースの 中心線 (10/29 社長「コースの 緩やかな カーブ」): index.html と 同じ 作り手 nextCtrl3 で 世界の 入口 (原点・+Z 向き) から 終わりまで なぞる。branch = 次の 段が 分かれ道 (終わりの まっすぐが 長い)
-  const row = { chosen:true, move:P.move, s0:0, len:P.len, def:P.def }, pi = P.pi === 0 ? 0 : 1, st = pi ? 0 : ctrlLen3(P.move);   // 最初の 段 (確かめ用 ?w3= ・?world=) は 入口の まっすぐが 無く、作り手は ctrlLen3 進んだ 所から 数え始める (index.html の addSegment が 最初の 3 点を 持ち越す = org。10/29 これを 知らずに 城壁が 150 m 奥・37 m 横に ずれた)
-  const g = { p:new THREE.Vector3(), q:new THREE.Quaternion(), s:st, w:0, plan: pi ? [null, row, { branch }] : [row, { branch }], pi, legI:0, legLeft:0, yawR:0, pitchR:0, entry:null, pre:0 };
-  const S = [0], C = [new THREE.Vector3()], Q = [new THREE.Quaternion()];
-  while(g.pi === pi && S.length < 20000){ nextCtrl3(g); S.push(g.s - st); C.push(g.p.clone()); Q.push(g.q.clone()); }   // S = 入口からの 道のり
-  const n = S.length - 1;
-  return { S, Q, len:S[n],   /* len = 入口から 出口 (輪) までの 道のり */
-    frame(s, p, q){   // 道のり s の 点と 向き (入口の 手前・終わりの 先は まっすぐ 延ばす)
-      if(s <= 0 || s >= S[n]){ const i = s <= 0 ? 0 : n; q.copy(Q[i]); return p.set(0, 0, s - S[i]).applyQuaternion(q).add(C[i]); }
-      let lo = 0, hi = n; while(hi - lo > 1){ const m = (lo + hi) >> 1; if(S[m] <= s) lo = m; else hi = m; }
-      const k = (s - S[lo]) / (S[hi] - S[lo]); q.slerpQuaternions(Q[lo], Q[hi], k); return p.copy(C[lo]).lerp(C[hi], k); },
-    near(p, i){ const d = j => C[j].distanceToSquared(p); while(i < n && d(i + 1) < d(i)) i++; while(i > 0 && d(i - 1) < d(i)) i--; return i; } };   // p に 一番 近い 点の 番号 (前の 番号から たどる)
 }
 function crystalMat(){   // 結晶の 描き方 (10/28 社長「反射とか」): 面ごとの 照り返し (見る 角度で 光る・結晶ごとに またたく)・ふちの 光・中の 光・上向きの 面には 天井の 色、下向きには 谷の 暗さが ほんのり 映る
   return new THREE.ShaderMaterial({ vertexColors:true, fog:true, clipping:true,   /* clipping = 輪の 窓の 中に 描く 時の 切り落とし (入口より 手前を 消す、10/29 Codex 指摘) */
@@ -122,7 +109,7 @@ function fallTex(){ const c = document.createElement('canvas'); c.width = 64; c.
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
 
 export function build(scene, root, P, opts, out){
-  const branch = opts.nextBranch !== false, path = coursePath(P, branch), L = Math.max(600, path.len), mob = !!opts.mobile;   /* branch = 次の 段が 分かれ道 / L = 入口から 出口の 輪までの 長さ (最初の 段は P.len より ctrlLen3 短い) */ let seed = 20261028; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const branch = opts.nextBranch !== false, path = coursePath3(P, branch), L = Math.max(600, path.len), mob = !!opts.mobile;   /* branch = 次の 段が 分かれ道 / L = 入口から 出口の 輪までの 長さ (最初の 段は P.len より ctrlLen3 短い) */ let seed = 20261028; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const zone = (z, o, deep) => { const f = Math.min(0.999, Math.max(0, z / L)) * 4, i = Math.floor(f), j = Math.min(3, i + 1), k = sm((f - i - 0.75) / 0.25); return o.copy(ZONES[i][deep ? 1 : 0]).lerp(ZONES[j][deep ? 1 : 0], k); };   // 区間の 終わり 4 分の 1 で 次の 色へ
   const H1 = L * 0.375, H2 = L * 0.625;   // 広間 1・広間 2 の まん中 (大広間は 最後の 2 割)
   const ceil = z => 50 + 55 * bump(z, H1, L * 0.07) + 55 * bump(z, H2, L * 0.07) + 70 * sm((z - L * 0.8) / (L * 0.08)) + 6 * Math.sin(z / 230);   // 天井の 高さ (m)

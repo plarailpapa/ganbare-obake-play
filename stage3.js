@@ -8,6 +8,7 @@ import { nurseryWorld, nurseryPath, NURSERY, MM3 } from './nursery3.js';   // �
 import { buildDraft } from './worlds/draft.js';   // 仮の 世界 (分かれ道の まだ 無い 世界、確かめ用 ?draft=1、10/27)
 import * as GALAXY from './worlds/galaxy.js';   // 銀河の 公転を 追う (合流、10/28)
 import * as CRYSTAL from './worlds/crystal.js';   // ① クリスタルの 洞窟 (10/28)
+import * as NEON from './worlds/neon.js';   // ② 光の 都市 (10/29)
 
 export const V3_START = 108000/3.6;   // 速度計の始まり (m/s) = 2 面の目標 地球の公転 (107,200) の きりのいい数 (10/26 社長。前は 水星の 170,500)。数字は スコアのように上がり続けてよい (設計書 2.1)
 export const V3_MOVE = 300;           // おばけが 実際に進む速さ (m/s、ずっと一定。10/28 社長「子ども部屋に 合わせた方が スピード感が ある」= 子ども部屋の 床を走る所と 同じ 約 300 (1 秒で おばけ 約 250 個ぶん)、各 世界 約 9 km。10/27 は 10、前は 150)。速度計の数字とは切り離す (F-ZERO 方式: 神殿や像を じっくり見せる、2.1、仮)
@@ -48,7 +49,7 @@ export const WORLDS3=[
   {key:'crystal',    name:'クリスタルの 洞窟', kana:'くりすたるの どうくつ', sec:30, legs:[[6,3,0],[10,-3,0],[10,3,0]], exit:{w:24, h:0, up:40}, sky:{top:'#120a26', bot:'#2a1650', band:0, stars:false}, color:'#c08cff', ready:true, mod:CRYSTAL},   /* 出口 (10/29 社長「緩やかに 扇形に 広がりながら 上に 上がって いき、光る 城壁の 門へ」): 3 本が 上下に ずれず 24 m 間隔まで 広がり、そろって 40 m 上がる */   /* worlds/crystal.js (10/28 社長の ChatGPT の 絵)。コースは ゆるい S 字 (10/29 社長「コースの 緩やかな カーブ」: 左 → 右 → 左、1 秒に 3 度。秒速 300 m で 曲がりの 半径 約 5.7 km = 洞窟の 幅より ずっと 大きい)。洞窟・岩・門は coursePath で コースに 沿わせる。上下には 曲げない (岩の 柱を まっすぐ 立てたまま) */
   {key:'deepsea',    name:'深海', kana:'しんかい', sec:30, legs:[[6,0,1],[6,0,-1]], sky:{top:'#02101e', bot:'#06324a', band:0, stars:false}, color:'#3fc8ff', ready:false},
   {key:'kowloon',    name:'九龍城', kana:'くーろんじょう', sec:30, legs:[[4,6,0],[4,-6,0]], sky:{top:'#3a2a3a', bot:'#c88060', band:0, day:true}, color:'#ff9a50', ready:false},
-  {key:'neon',       name:'光の 都市', kana:'ひかりの とし', sec:30, legs:[[5,0,0],[5,5,0],[5,-5,0]], sky:{top:'#05020f', bot:'#2a0a3a', band:0}, color:'#ff4fd8', ready:false},
+  {key:'neon',       name:'光の 都市', kana:'ひかりの とし', sec:30, legs:[[4,0,-3],[4,2,3],[5,-3,0],[3,0,2.5],[3,0,-2.5],[4,3,0]], bank:2.5, exit:{w:44, h:0, up:300, sw:0.4, k0:0.3}, ringGlow:1.7, sky:{top:'#05020f', bot:'#2a0a3a', band:0}, color:'#ff4fd8', ready:true, mod:NEON},   /* 10/29 2 回目 (社長「ほぼ 完璧」): bank = 曲がる 時に レールの 面を 少し 傾ける (3 度/秒で 約 7.5 度)。exit = 出口は スカイツリー風の 塔の 展望台の 3 枚の 光る 看板 (3 本が 4 割で 44 m まで 分かれ、3 割 進んだ 所から 300 m のぼる)。ringGlow = この 世界では 加速の 輪の 光を 強く (ネオンに 埋もれない) */   /* worlds/neon.js (10/29 社長「摩天楼・遠くに スカイツリーや 東京タワー」「スパイダーマンの ように 地面から 空へ、ビルの 間を くぐり抜ける」「急な うねり・カーブは スマホで 見にくい」= 1 秒 3 度まで): 大通りの 上 → 4 秒で 機首上げ・4 秒で 水平 (約 250 m 上空) → 右へ → ゆるく 下って 上がる → 左へ。出口は 決める 前 (今は ジャンクション) */
   {key:'torii',      name:'鳥居と 湯けむりの 町', kana:'とりいと ゆけむりの まち', sec:30, legs:[[6,3,0],[6,-3,0]], sky:{top:'#2a2010', bot:'#c89040', band:0}, color:'#ff5a3a', ready:false},   /* 旧 悟空と 日本の 神々 (空の 色だけで 景色が 無かった)。たくさんの 鳥居と 道後温泉を 積み重ねた ような 和風建築 (10/27 社長) */
   {key:'prominence', name:'太陽の プロミネンス', kana:'たいようの ぷろみねんす', sec:30, legs:[[6,2,-1],[6,-2,1]], sky:{top:'#1a0400', bot:'#ff7a20', band:0}, color:'#ffb030', ready:false},
   {key:'micro',      name:'ミクロの 世界', kana:'みくろの せかい', sec:30, legs:[[5,4,1],[5,-4,-1]], sky:{top:'#001820', bot:'#00485a', band:0, stars:false}, color:'#60ffe0', ready:false},
@@ -61,8 +62,8 @@ export const W3=Object.fromEntries(WORLDS3.map(w=>[w.key, w]));   // key → 世
 export const LAYERS3=[['milkyway'], ['crystal','deepsea','micro'], ['kowloon','neon','torii'], ['temple','india','prominence'], ['galaxy'], ['catchup']];   // 段 (10/28 社長: 分かれ道 3 回・オーロラ / ブロック / 万華鏡を 外す): はじまり / ① ふしぎな 自然 / ② 人の 街 / ③ 神話と 宇宙 / 合流 = 銀河の 公転 / 最後の フレーズ = 太陽に 追いつけ (大当たり 演出)。子ども部屋は 結果発表の 後 (作り替え中)。分かれ道の 段の 並び = レーン 0・1・2 (左・まん中・右、タップの 左右と 同じ)
 export const FORK3_W=1;   // 輪の 後で 新しく 生える 2 本の 最初の 間隔 (m、光の 管が 重ならない)
 export const SPREAD3_SEC=4, SPREAD3_W=14, RECONV3_SEC=1.5, SPLIT3_H=10;   // 分かれ道の 手前で レールが 広がる 秒 / 広がった レール間隔 (m) / 輪の 後で 元の 間隔へ 戻る 秒 / 広がった 時の 上下の ずれ (m、左の レーンが 上・右が 下・まん中は そのまま、10/28 社長「高速道路の ジャンクション」「もっと ワイルドに 変化しても いい」→ 8・6 から 14・10 へ。カメラは 選んだ レーンを 追う) (10/27 社長「輪の 前に 3 本の コースが 広がる、その 間は 加速の 輪も コース変更も なし」)
-export function exit3(def){ const e=def && def.exit; return {w: e ? e.w : SPREAD3_W, h: e ? e.h : SPLIT3_H, up: (e && e.up) || 0}; }   // 世界ごとの 出口の 形 (10/29 社長「各世界の 分岐は オリジナリティの ある 出口を 一つ一つ 作って いこう」): w = 輪での レール間隔 (m)、h = 左右の 上下の ずれ (m、左が 上)、up = 3 本 そろって 上がる 高さ (m)。def.exit が 無い 世界は 高速道路の ジャンクション (14 m・上下 10 m)
-export function exitLift3(def, move, left){ const up=exit3(def).up; if(!up) return 0; const k=Math.min(1, Math.max(0, 1-left/(SPREAD3_SEC*move))); return up*k*k*(3-2*k); }   // 出口で 3 本 そろって 上がる 高さ (輪までの 残り left m。広がる 間 SPREAD3_SEC 秒で なめらかに、輪の 所では 水平)
+export function exit3(def){ const e=def && def.exit; return {w: e ? e.w : SPREAD3_W, h: e ? e.h : SPLIT3_H, up: (e && e.up) || 0, sw: (e && e.sw) || 1, k0: Math.min(0.9, (e && e.k0) || 0)}; }   /* sw = 広がる 間の うち 何割で 広がり きるか、k0 = 何割 進んで から 上がり 始めるか (光の 都市「3 本 分かれた 後に 上に 上って 行く」10/29) */   // 世界ごとの 出口の 形 (10/29 社長「各世界の 分岐は オリジナリティの ある 出口を 一つ一つ 作って いこう」): w = 輪での レール間隔 (m)、h = 左右の 上下の ずれ (m、左が 上)、up = 3 本 そろって 上がる 高さ (m)。def.exit が 無い 世界は 高速道路の ジャンクション (14 m・上下 10 m)
+export function exitLift3(def, move, left){ const e=exit3(def); if(!e.up) return 0; const k=Math.min(1, Math.max(0, (1-left/(SPREAD3_SEC*move)-e.k0)/(1-e.k0))); return e.up*k*k*(3-2*k); }   // 出口で 3 本 そろって 上がる 高さ (輪までの 残り left m。広がる 間 SPREAD3_SEC 秒で なめらかに、輪の 所では 水平)
 export const MUSIC3={   /* 3 面の曲の時刻表 (設計書 2026-10-12-ganbare-obake-stage3-music-sync-design.md)。曲 = ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の 行進」の 短い版 (2:47、10/28 社長: 元の 3:55 から 元の 66.88〜105.02 秒と 164.19〜185.45 秒を 切った)。時刻 = ステージの時計 (秒、1 曲目の頭の無音を切った所 = 0)。notes = 加速の輪 (社長が ?tap=1 で 拍を 記録 → 音の 立ち上がりに 合わせ、強い 拍の 側を 1 つおきに 選んだ 82 個)。gates = 世界の切り替え (段の数 − 1。10/28 社長が ?time=1 の 時計で 決めた 17・51・80・113・142 秒を いちばん 近い 音の 立ち上がりへ: 駆け足の 始まり / 音が 引いた 後の フレーズ / その 32 拍 後 / 強い アクセント / 一瞬 止まった 後の 最後の 盛り上がり)。曲を変えたら ?tap=1 で 記録し直す */
   notes:[4.19, 5.86, 7.46, 9.12, 10.82, 18.24, 19.80, 21.50, 23.24, 25.00, 26.66, 28.40, 30.20, 31.93, 33.69, 35.42, 37.17, 38.89, 40.64, 42.39, 44.11, 45.84, 47.64, 49.40, 51.05, 52.94, 54.53, 56.33, 58.02, 59.71, 61.54, 63.10, 64.98, 66.79, 68.49, 70.22, 71.96, 73.76, 75.44, 77.18, 78.92, 80.66, 82.41, 84.14, 85.91, 87.61, 89.36, 91.10, 92.88, 94.60, 96.36, 98.29, 99.77, 101.52, 103.31, 105.03, 106.74, 108.64, 110.26, 111.98, 113.72, 115.55, 117.18, 118.95, 120.66, 122.39, 124.17, 125.93, 127.73, 129.54, 131.35, 133.14, 134.88, 136.67, 138.34, 140.18, 143.70, 145.92, 148.58, 149.91, 151.76, 153.59],
   gates:[16.90, 51.74, 79.58, 112.61, 141.95],   /* 10/28: 天の川 17 秒 (ファンファーレ) / ① 35 秒 / ② 28 秒 / ③ 33 秒 / 銀河の 公転 29 秒 / 太陽に 追いつけ 25 秒 */
@@ -87,7 +88,7 @@ export function chooseRow3(plan, li, key, lane){ const r=plan.find(o=>o.li===li)
 export function lanes3(plan, s, o){ o.cx=0; o.cy=0; o.w=LANE_W3; o.ty=0;   // 3 面の レーンの 並び (コース上の 距離 s): cx・cy = まん中の レーンの 横・上の ずれ (m)、w = 間隔、ty = 横 1 m あたりの 上下 (左が 上)。分かれ道 = 高速道路の ジャンクション (10/28 社長): 輪の 手前 SPREAD3_SEC 秒で 3 本が 上下左右に 離れ、輪の 後は 選んだ 1 本だけが 残って RECONV3_SEC 秒で また 3 本に 分かれる (選ばなかった 線は 別の 世界へ 行った)
   const sm=x=>x*x*(3-2*x);
   for(let i=1;i<plan.length;i++){ const r=plan[i]; if(!r.branch) continue; const spreadL=SPREAD3_SEC*plan[i-1].move, backL=RECONV3_SEC*r.move, before=r.s0-s, after=s-r.s0;
-    if(before>0 && before<spreadL){ const u=sm(1-before/spreadL); const e=exit3(plan[i-1].def); o.w=LANE_W3+(e.w-LANE_W3)*u; o.ty=-e.h*u/o.w; return o; }
+    if(before>0 && before<spreadL){ const e=exit3(plan[i-1].def), u=sm(Math.min(1, (1-before/spreadL)/e.sw)); o.w=LANE_W3+(e.w-LANE_W3)*u; o.ty=-e.h*u/o.w; return o; }
     if(after>=0 && after<backL && r.lane!=null){ const u=sm(after/backL), d=r.lane-1; o.w=FORK3_W+(LANE_W3-FORK3_W)*u; const e=exit3(plan[i-1].def); o.cx=d*(e.w-FORK3_W)*(1-u); o.cy=-d*e.h*(1-u); return o; } }   /* 輪の 後: おばけの いる 線 (選んだ レーン = 同じ 色) は そのまま 続き、ほかの 2 本は FORK3_W 離れた 所から 生えて 広がる (10/28 社長「赤に いたら 分かれた 先でも 赤」。1 点から 3 本 生やすと 色が 重なって 今いる レーンが 分かりにくかった) */
   return o; }
 export function rowAt3(plan, t){ let r=plan[0]; for(const o of plan) if(t>=o.t0) r=o; return r; }   // 時刻 t (ステージの時計) の世界 (並びの行)
@@ -184,7 +185,21 @@ export function nextCtrl3(g, ctx){   // 次の制御点 (2 面の nextCtrl2 と�
   if(!moved){ _f.set(0,0,1).applyQuaternion(g.q); g.p.addScaledVector(_f, L); g.s+=L; }
   if(nb && nb.branch && !last){ const dz=exitLift3(W.def, vm, W.s0+W.len-g.s)-exitLift3(W.def, vm, left); if(dz) g.p.addScaledVector(_su.set(0,1,0).applyQuaternion(g.q), dz); }   /* 出口で 3 本 そろって 上がる 世界 (クリスタルの 洞窟の 光る 城壁、10/29) は 中心線ごと 持ち上げる (向きは 変えない = 次の 世界は 上がった 所から 水平に 始まる) */
   let ev=null; if(!last && g.s>=W.s0+W.len-1e-6){ g.pi++; g.legI=0; g.legLeft=0; g.h=null; g.entry={p:g.p.clone(), q:g.q.clone()}; ev={pi:g.pi, p:g.p.clone(), q:g.q.clone(), at:null}; }   // 次の世界の入口 = この点 (位置と向き → 置き物の原点)
-  return {p:g.p.clone(), up:new THREE.Vector3(0,1,0).applyQuaternion(g.q), bend:0, w:g.w, mark: ev ? 'at' : null, ev, spawn:!!ev};
+  const bk=W.def.bank||0, tb= bk && free ? g.yawR*bk : 0, upv=new THREE.Vector3(0,1,0).applyQuaternion(g.q); g.bank=(g.bank||0)+(tb-(g.bank||0))*0.4; if(Math.abs(g.bank)>1e-4) upv.applyAxisAngle(_f.set(0,0,1).applyQuaternion(g.q), -g.bank);   /* 曲がる 時に レールの 面を 曲がる 側へ 少し 傾ける (def.bank = 1 度/秒の 曲がりあたりの 傾き。光の 都市「ゆっくり 左や 右に 平面を 傾けながら」10/29)。向きと 位置は 変えない = 置き物の 中心線は そのまま */
+  return {p:g.p.clone(), up:upv, bend:0, w:g.w, mark: ev ? 'at' : null, ev, spawn:!!ev};
+}
+export function coursePath3(P, branch){   // コースの 中心線 (10/29 社長「コースの 緩やかな カーブ」): index.html と 同じ 作り手 nextCtrl3 で 世界の 入口 (原点・+Z 向き) から 終わりまで なぞる。branch = 次の 段が 分かれ道 (終わりの まっすぐが 長い)
+  const row = { chosen:true, move:P.move, s0:0, len:P.len, def:P.def }, pi = P.pi === 0 ? 0 : 1, st = pi ? 0 : ctrlLen3(P.move);   // 最初の 段 (確かめ用 ?w3= ・?world=) は 入口の まっすぐが 無く、作り手は ctrlLen3 進んだ 所から 数え始める (index.html の addSegment が 最初の 3 点を 持ち越す = org。10/29 これを 知らずに 城壁が 150 m 奥・37 m 横に ずれた)
+  const g = { p:new THREE.Vector3(), q:new THREE.Quaternion(), s:st, w:0, plan: pi ? [null, row, { branch }] : [row, { branch }], pi, legI:0, legLeft:0, yawR:0, pitchR:0, entry:null, pre:0 };
+  const S = [0], C = [new THREE.Vector3()], Q = [new THREE.Quaternion()];
+  while(g.pi === pi && S.length < 20000){ nextCtrl3(g); S.push(g.s - st); C.push(g.p.clone()); Q.push(g.q.clone()); }   // S = 入口からの 道のり
+  const n = S.length - 1;
+  return { S, Q, len:S[n],   /* len = 入口から 出口 (輪) までの 道のり */
+    frame(s, p, q){   // 道のり s の 点と 向き (入口の 手前・終わりの 先は まっすぐ 延ばす)
+      if(s <= 0 || s >= S[n]){ const i = s <= 0 ? 0 : n; q.copy(Q[i]); return p.set(0, 0, s - S[i]).applyQuaternion(q).add(C[i]); }
+      let lo = 0, hi = n; while(hi - lo > 1){ const m = (lo + hi) >> 1; if(S[m] <= s) lo = m; else hi = m; }
+      const k = (s - S[lo]) / (S[hi] - S[lo]); q.slerpQuaternions(Q[lo], Q[hi], k); return p.copy(C[lo]).lerp(C[hi], k); },
+    near(p, i){ const d = j => C[j].distanceToSquared(p); while(i < n && d(i + 1) < d(i)) i++; while(i > 0 && d(i - 1) < d(i)) i--; return i; } };   // p に 一番 近い 点の 番号 (前の 番号から たどる)
 }
 
 /* 世界の景色 (1 つの世界 = 1 つの Scene)。bg = 空 (カメラと一緒に動く。向きは 世界の入口に合わせる)、root = 置き物 (入口 = ワープの輪の所が原点: +Z = 進む向き・+Y = 上・−X = 右)。index.html が いまの世界を レールより先に描き、次の世界を 輪の窓に描く */
