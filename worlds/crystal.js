@@ -65,7 +65,7 @@ function crystalMat(){   // 結晶の 描き方 (10/28 社長「反射とか」)
       }` });
 }
 let waterTex = null;   // 水面の 凹凸の 絵 (three.js 付属の waternormals.jpg、MIT。10/29 社長「水面の テクスチャーとか どうですか」)。世界を 作り直しても 1 枚を 使い回す
-function waterNormals(){ if(!waterTex){ waterTex = new THREE.TextureLoader().load('assets/nature/waternormals.jpg'); waterTex.wrapS = waterTex.wrapT = THREE.RepeatWrapping; } return waterTex; }
+function waterNormals(){ if(!waterTex){ waterTex = new THREE.TextureLoader().load('assets/nature/waternormals.jpg'); waterTex.wrapS = waterTex.wrapT = THREE.RepeatWrapping; waterTex.userData.shared = true; } return waterTex; }
 function lakeMat(){   // 地底湖の 水面 (平らな 帯 1 枚。凹凸の 絵を 3 枚 ずらして 重ねた さざ波 → 見る 角度で 映り込みが 強まる (手前は 暗い 水・遠くは 天井の 結晶の 色)・出口の 門の 方へ 光の 道。映り込みの 光の 点は 別 (rippleMat))
   // 水の 下に 沈んだ 柱や 壁を 隠す ため、ふつうの 物の 後に 描き (透明 扱い・renderOrder −1)、奥行きは 書かない (さかさまの 光が 水面越しに 見える)
   const m = new THREE.ShaderMaterial({ vertexColors:true, fog:true, clipping:true, transparent:true, depthWrite:false, side:THREE.DoubleSide,
