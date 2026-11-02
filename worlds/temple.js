@@ -31,14 +31,14 @@ function fallMat(){   // 滝: 白と 水色の すじが 下へ 流れる (ふ�
       void main(){
         ${clip.f}
         float r = h1(vec2(floor(vUv.x * 28.0), vId)), y = vUv.y * (2.0 + r) + uTime * (0.45 + 0.4 * r);
-        float s = smoothstep(0.3, 1.0, fract(y + r * 7.0)), edge = smoothstep(0.0, 0.2, vUv.x) * smoothstep(1.0, 0.8, vUv.x), top = smoothstep(1.0, 0.97, vUv.y), bot = smoothstep(0.0, 0.3, vUv.y);
+        float s = smoothstep(0.3, 1.0, fract(y + r * 7.0)), edge = smoothstep(0.0, 0.2, vUv.x) * (1.0 - smoothstep(0.8, 1.0, vUv.x)), top = (1.0 - smoothstep(0.97, 1.0, vUv.y)), bot = smoothstep(0.0, 0.3, vUv.y);
         gl_FragColor = vec4(mix(vec3(0.74, 0.87, 1.0), vec3(1.0), 0.35 + 0.65 * s), (0.5 + 0.45 * s) * edge * top * (0.35 + 0.65 * bot));
         #include <colorspace_fragment>
         #include <fog_fragment>
       }` });
 }
 
-function sparkMat(tex){   // 光の 粒: ゆっくり 昇りながら ゆらぎ、きらめき、昇りきると 消える (加算。遠いほど もやで 弱める)
+function sparkMat(tex){   // 光の 粒: ゆっくり 昇りながら ゆらぎ、きらめき、昇りきると 消える (加算。遠いほど もやで 弱める)   // 光の 形は 透明度 .a で 読む (白い 絵なので .r は どこも ほぼ 1 = 縁の 硬い 丸に なった、Codex 指摘)
   const m = new THREE.ShaderMaterial({ fog:true, clipping:true, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
     uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime:{ value:0 }, uTex:{ value:null } }]),
     vertexShader:`uniform float uTime; attribute vec4 aRun; varying float vA;
@@ -46,7 +46,7 @@ function sparkMat(tex){   // 光の 粒: ゆっくり 昇りながら ゆらぎ�
       ${clip.pv}
       void main(){ float k = fract(aRun.y + uTime * aRun.x / aRun.z);
         vec3 p = position + vec3(sin(uTime * 0.7 + aRun.w * 6.3) * 6.0, k * aRun.z, cos(uTime * 0.6 + aRun.w * 4.1) * 6.0);
-        vA = smoothstep(0.0, 0.15, k) * smoothstep(1.0, 0.7, k) * (0.55 + 0.45 * sin(uTime * 3.0 + aRun.w * 40.0));
+        vA = smoothstep(0.0, 0.15, k) * (1.0 - smoothstep(0.7, 1.0, k)) * (0.55 + 0.45 * sin(uTime * 3.0 + aRun.w * 40.0));
         vec4 mvPosition = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mvPosition; gl_PointSize = clamp(3200.0 / -mvPosition.z, 1.5, 22.0);
         ${clip.v}
         #include <fog_vertex>
@@ -56,7 +56,7 @@ function sparkMat(tex){   // 光の 粒: ゆっくり 昇りながら ゆらぎ�
       ${clip.pf}
       void main(){
         ${clip.f}
-        gl_FragColor = vec4(1.0, 0.86, 0.55, texture2D(uTex, gl_PointCoord).a * vA);   // 光の 形は 透明度 (白い 絵なので 赤は どこも ほぼ 1 = 縁の 硬い 丸に なった、Codex 指摘)
+        gl_FragColor = vec4(1.0, 0.86, 0.55, texture2D(uTex, gl_PointCoord).a * vA);
         #ifdef USE_FOG
           gl_FragColor.a *= 1.0 - smoothstep(fogNear, fogFar, vFogDepth);
         #endif
