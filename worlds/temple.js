@@ -277,7 +277,7 @@ export function build(scene, root, P, opts, out){
     for(let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), z = p.getZ(i), r = Math.hypot(x, z), k = (y < F[0] - 30 ? 1 : 0) * (0.85 + 0.3 * Math.sin(x * 0.004 + y * 0.003) * Math.cos(z * 0.005)); p.setX(i, x * k + x * (1 - (y < F[0] - 30 ? 1 : 0))); p.setZ(i, z * k + z * (1 - (y < F[0] - 30 ? 1 : 0)));
       c.set('#bda98e').lerp(new THREE.Color('#7d6f60'), Math.min(1, (F[0] - y) / 2000)); if(y > F[0] - 200 && r > r0 * 0.8 && Math.sin(x * 0.01) * Math.cos(z * 0.012) > 0.2) c.set('#6f8a4e'); cl.set([c.r, c.g, c.b], i * 3); }
     g.setAttribute('color', new THREE.BufferAttribute(cl, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors:true })); m.position.z = zc; m.frustumCulled = false; root.add(m);
-    for(let i = 0; i < 9; i++){ const a = (rnd() - 0.5) * 1.6, [x, , z] = onRing(R[0] + 4, a, 0); if(Math.abs(x) < AVE + 200) continue; falls.push({ x, y:F[0] - 380, z, w:50 + rnd() * 50, h:760, ry:Math.PI - a }); } }   // 島の ふちから 雲へ 落ちる 滝
+    for(let i = 0; i < 9; i++){ const a = (rnd() - 0.5) * 1.6, [x, , z] = onRing(R[0] + 4, a, 0); if(Math.abs(x) < AVE + 200) continue; falls.push({ x, y:F[0] - 900, z, w:50 + rnd() * 50, h:1800, ry:Math.PI - a }); } }   // 島の ふちから 雲へ 落ちる 滝
 
   // 遠くの 浮島の 城 (左右の 空、形が 分かる 程度)
   for(let i = 0; i < 6; i++){ const sg = i % 2 ? 1 : -1, x = sg * (3200 + rnd() * 3500), z = 1500 + i * 2300 + rnd() * 1200, y = -200 + rnd() * 900, r = 260 + rnd() * 260;
@@ -324,9 +324,9 @@ export function build(scene, root, P, opts, out){
   { const puffs = [], K = mob ? 0.65 : 1;
     const tower = (cx, cy, cz, w, h) => { const n = Math.round((18 + h / 110) * K); for(let j = 0; j < n; j++){ const u = Math.pow(rnd(), 0.8), rr = w * 0.5 * (1 - u * 0.6) * Math.sqrt(rnd()), a = rnd() * Math.PI * 2;   // 入道雲: 下ほど 太く、上ほど 細く 明るい
       puffs.push([cx + Math.cos(a) * rr, cy + u * h, cz + Math.sin(a) * rr * 0.7, w * (0.3 + rnd() * 0.22) * (1 - u * 0.45), 0.3 + 0.7 * u, (rnd() - 0.5) * 0.5]); } };
-    for(let i = 0; i < Math.round(170 * K); i++) puffs.push([(rnd() - 0.5) * 18000, -1150 + rnd() * 300, -4000 + rnd() * (zc + 13000), 1600 + rnd() * 1600, 0.55 + rnd() * 0.3, (rnd() - 0.5) * 0.4]);   // 雲の 海
-    for(let i = 0; i < 10; i++){ const sg = i % 2 ? 1 : -1; tower(sg * (5500 + rnd() * 5000), -1100, -1000 + i * 1900 + rnd() * 800, 2200 + rnd() * 1400, 2200 + rnd() * 3000); }   // 左右の 遠くの 入道雲
-    for(const sg of [1, -1]) tower(sg * (2400 + rnd() * 600), -1200, zc + 6500 + rnd() * 1500, 3600, 6000);   // 中央神殿の 奥の 大きな 雲 (光の 輪の 真後ろは あける)
+    for(let i = 0; i < Math.round(170 * K); i++) puffs.push([(rnd() - 0.5) * 18000, -2000 + rnd() * 250, -4000 + rnd() * (zc + 13000), 1600 + rnd() * 1200, 0.55 + rnd() * 0.3, (rnd() - 0.5) * 0.4]);   // 雲の 海 (島の 約 1.8 km 下。板の 上の 端 = 中心 + 大きさの 半分 が 橋より 下に 収まる: 前は −1150 m・最大 3.2 km で 上の 端が 橋や 門の 高さに 突き出し 白い 壁に 見えた、11/2 社長)
+    for(let i = 0; i < 10; i++){ const sg = i % 2 ? 1 : -1; tower(sg * (5500 + rnd() * 5000), -1900, -1000 + i * 1900 + rnd() * 800, 2200 + rnd() * 1400, 2200 + rnd() * 3000); }   // 左右の 遠くの 入道雲
+    for(const sg of [1, -1]) tower(sg * (2400 + rnd() * 600), -2000, zc + 6500 + rnd() * 1500, 3600, 6000);   // 中央神殿の 奥の 大きな 雲 (光の 輪の 真後ろは あける)
     for(let i = 0; i < 12; i++){ const sg = i % 2 ? 1 : -1, cx = sg * (1900 + rnd() * 1600), cy = -600 + rnd() * 900, cz = rnd() * (zc + 1500);   // 島の そばを 流れる 小さな 雲
       for(let j = 0; j < 5; j++) puffs.push([cx + (rnd() - 0.5) * 500, cy + (rnd() - 0.5) * 120, cz + (rnd() - 0.5) * 400, 300 + rnd() * 300, 0.6 + rnd() * 0.4, (rnd() - 0.5) * 0.5]); }
     const ref = new THREE.Vector3(0, 0, -2000); puffs.sort((a, b) => ref.distanceToSquared(v.set(b[0], b[1], b[2])) - ref.distanceToSquared(v.set(a[0], a[1], a[2])));   // 遠い 順に 描く (手前の 雲が 上に 重なる)
