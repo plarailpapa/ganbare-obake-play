@@ -86,7 +86,7 @@ function stoneMat(tex, color){   // 石積みの 大理石: 置いた 後の 大
   return m;
 }
 
-function puffTex(rnd){   // 雲の かたまり 1 つ (丸を 重ねた もくもく。上は お日さまで 白く、下ほど 青い 影)
+export function puffTex(rnd){   // 雲の かたまり 1 つ (丸を 重ねた もくもく。上は お日さまで 白く、下ほど 青い 影)
   const N = 256, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d');
   for(let i = 0; i < 16; i++){ const a = rnd() * Math.PI * 2, d = rnd() * 60, x = 128 + Math.cos(a) * d, y = 140 + Math.sin(a) * d * 0.6 - rnd() * 20, r = 45 + rnd() * 45, rg = g.createRadialGradient(x, y, 0, x, y, r);
     rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.6, 'rgba(255,255,255,0.75)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2); }
@@ -94,7 +94,7 @@ function puffTex(rnd){   // 雲の かたまり 1 つ (丸を 重ねた もく�
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
-function puffMat(tex){   // 雲 (いつも カメラを 向く 板を 何百も 1 回で 描く。aP = 中心 xyz・大きさ、aS = 明るさ (0 = 下の 影 〜 1 = 上の 日なた)・少しの 傾き)
+export function puffMat(tex){   // 雲 (いつも カメラを 向く 板を 何百も 1 回で 描く。aP = 中心 xyz・大きさ、aS = 明るさ (0 = 下の 影 〜 1 = 上の 日なた)・少しの 傾き)
   const m = new THREE.ShaderMaterial({ fog:true, clipping:true, transparent:true, depthWrite:false,
     uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTex:{ value:null } }]),
     vertexShader:`attribute vec4 aP; attribute vec2 aS; varying vec2 vUv; varying float vShade;
