@@ -18,6 +18,7 @@
 画像
 - 太陽・惑星・地球の地図: Solar System Scope (CC BY 4.0)
 - 天の川銀河の想像図: NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0)
+- ダリアの写真: Annie Spratt (Unsplash、CC0、Wikimedia Commons)
 
 3D の部品
 - Kenney (CC0): Nature Kit / City Kit (Suburban) / Car Kit / Furniture Kit ほか
