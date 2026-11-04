@@ -176,9 +176,9 @@ function dropMat(tint = '0.92, 0.96, 1.0'){   // 朝露・細胞の 中の 小�
       }` });
 }
 
-const HAZE3 = '0.035, 0.012, 0.07', HAZE4 = '0.015, 0.045, 0.12', HAZE5 = '0.008, 0.012, 0.04';   // 霞: 核の 中 (暗い 藍紫) / 分子の 世界 (深い 青) / 原子の 中 (ほとんど 黒の 紺)
+const HAZE3 = '0.66, 0.38, 0.50', HAZE4 = '0.015, 0.045, 0.12', HAZE5 = '0.008, 0.012, 0.04';   // 霞: 核の 中 = DNA の 場面 (くすんだ ローズピンク、11/4 社長「背景が むらさきで 他の 世界との 差が 見えにくい、ピンク系」。前は 暗い 藍紫 0.035, 0.012, 0.07) / 分子の 世界 (深い 青) / 原子の 中 (ほとんど 黒の 紺)
 
-function baseMat(haze = HAZE3){   // DNA の 段 (塩基)・分子の 原子・原子核の 粒 (色は 1 つずつ aCol): 正面は 鮮やかな 色、縁が 白っぽく 光る、遠いほど 霞
+function baseMat(haze = HAZE3, rimK = 0.9){   // DNA の 段 (塩基)・分子の 原子・原子核の 粒 (色は 1 つずつ aCol): 正面は 鮮やかな 色、縁が 白っぽく 光る、遠いほど 霞
   return new THREE.ShaderMaterial({ clipping:true, uniforms:{ uCam:{ value:new THREE.Vector3() } },
     vertexShader:`attribute vec3 aCol; varying vec3 vN; varying vec3 vW; varying vec3 vC;
       ${clip.pv}
@@ -190,7 +190,27 @@ function baseMat(haze = HAZE3){   // DNA の 段 (塩基)・分子の 原子・�
       void main(){
         ${clip.f}
         vec3 n = normalize(vN), V = normalize(uCam - vW); float f = abs(dot(n, V));
-        vec3 c = vC * (0.5 + 0.5 * f) + mix(vC, vec3(1.0), 0.6) * pow(1.0 - f, 2.0) * 0.9;
+        vec3 c = vC * (0.5 + 0.5 * f) + mix(vC, vec3(1.0), 0.6) * pow(1.0 - f, 2.0) * ${rimK.toFixed(2)};
+        gl_FragColor = vec4(mix(c, vec3(${haze}), smoothstep(400.0, 2200.0, length(uCam - vW))), 1.0);
+        #include <colorspace_fragment>
+      }` });
+}
+const DNA_IRON = new URLSearchParams(location.search).get('dna') === 'iron';   // 確かめ用 ?dna=iron = 鉄の DNA
+function modelMat(core, haze = HAZE3){   // 科学模型の ような DNA (11/4 社長「明るすぎ、科学模型くらいの 色合い、何なら 鉄でも」): 自分では 光らず、上と 手前からの 光で 陰が つき 少し つや。core = null は 1 つずつの 色 (aCol)
+  const col = core ? `vec3(${core})` : 'vC', base = DNA_IRON ? 'vec3(0.30, 0.31, 0.33)' : col;
+  return new THREE.ShaderMaterial({ clipping:true, uniforms:{ uCam:{ value:new THREE.Vector3() } },
+    vertexShader:`${core ? '' : 'attribute vec3 aCol; varying vec3 vC;'} varying vec3 vN; varying vec3 vW;
+      ${clip.pv}
+      void main(){ ${core ? '' : 'vC = aCol;'} vec4 w = instanceMatrix * vec4(position, 1.0); vW = w.xyz; mat3 im = mat3(instanceMatrix); vN = normalize(im * (normal / vec3(dot(im[0], im[0]), dot(im[1], im[1]), dot(im[2], im[2])))); vec4 mvPosition = modelViewMatrix * w; gl_Position = projectionMatrix * mvPosition;
+        ${clip.v}
+      }`,
+    fragmentShader:`uniform vec3 uCam; varying vec3 vN; varying vec3 vW; ${core ? '' : 'varying vec3 vC;'}
+      ${clip.pf}
+      void main(){
+        ${clip.f}
+        vec3 n = normalize(vN), V = normalize(uCam - vW), L = normalize(V + vec3(0.0, 0.8, 0.0)); if(dot(n, V) < 0.0) n = -n;
+        float d = max(0.0, dot(n, L)), sp = pow(max(0.0, dot(reflect(-L, n), V)), ${DNA_IRON ? '18.0' : '36.0'});
+        vec3 c = ${base} * (0.16 + 0.74 * d) + vec3(${DNA_IRON ? '0.5' : '0.14'}) * sp;
         gl_FragColor = vec4(mix(c, vec3(${haze}), smoothstep(400.0, 2200.0, length(uCam - vW))), 1.0);
         #include <colorspace_fragment>
       }` });
@@ -300,7 +320,7 @@ export function build(scene, root, P, opts, out){
   const z3 = new THREE.Group(); z3.visible = false; root.add(z3);
   const HR = 90, HRISE = 30, OFF = 140 * Math.PI / 180;
   path.frame(FL[2], v, q); const X3 = new THREE.Vector3(1, 0, 0).applyQuaternion(q), Y3 = new THREE.Vector3(0, 1, 0).applyQuaternion(q);   // 軸に 直角な 向き (17 秒の 向き、横回転の 前)
-  const s1m = organMat('0.4, 0.6, 1.0', '0.85, 0.95, 1.0', 0, HAZE3), s2m = organMat('1.0, 0.45, 0.8', '1.0, 0.85, 0.95', 0, HAZE3), bm = baseMat(), hm3 = organMat('0.5, 0.28, 0.8', '0.9, 0.8, 1.0', 0, HAZE3), rbm2 = riboMat(400, '1.0, 0.8, 1.0');
+  const s1m = modelMat('0.18, 0.38, 0.90'), s2m = modelMat('0.88, 0.88, 0.90'), bm = modelMat(null),   /* DNA は 科学模型 (光らない・陰が つく)。色は プラスチックの 模型の ように 鮮やか (背骨 = 青と 白、ピンクの 背景に 溶けない ように。11/4 社長「科学模型式なら くすんだ 色で なくて 大丈夫」) */ hm3 = organMat('0.5, 0.28, 0.8', '0.9, 0.8, 1.0', 0, HAZE3), rbm2 = riboMat(400, '1.0, 0.8, 1.0');
   const ang = s => (s - FL[2]) / HRISE * Math.PI / 5, hx = (s, a) => { path.frame(s, v, q); return v.clone().addScaledVector(X3, Math.cos(a) * HR).addScaledVector(Y3, Math.sin(a) * HR); };   // 道のり s での 背骨の 位置 (a = 回りの 角度)
   { const s0 = FL[2] - 150, s1 = FL[3] + 450, n = Math.floor((s1 - s0) / HRISE) + 1;
     for(const [k, m] of [[0, s1m], [OFF, s2m]]){ const pts = []; for(let s = s0; s <= s1; s += 10) pts.push(hx(s, ang(s) + k));   // 背骨 (糖と リン酸) = 管 + 段ごとの 玉
@@ -309,7 +329,7 @@ export function build(scene, root, P, opts, out){
       for(let i = 0; i < n; i++){ const s = s0 + i * HRISE, c = hx(s, ang(s) + k); balls.setMatrixAt(i, m4.compose(c, q.identity(), s3.set(1, 1, 1))); }
       balls.frustumCulled = false; z3.add(balls); }
     const g = new THREE.CylinderGeometry(8, 8, 1, 10, 1).translate(0, 0.5, 0), col = new Float32Array(n * 6), mesh = new THREE.InstancedMesh(g, bm, n * 2), up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3();
-    const BASE = [[1.0, 0.32, 0.28], [1.0, 0.82, 0.2], [0.3, 1.0, 0.45], [0.3, 0.62, 1.0]];
+    const BASE = [[0.90, 0.18, 0.15], [0.95, 0.80, 0.10], [0.15, 0.75, 0.25], [0.15, 0.40, 0.95]];   // 段の 色 = 赤・黄・緑・青 (模型の 鮮やかな 色、11/4 社長)
     for(let i = 0; i < n; i++){ const s = s0 + i * HRISE, A = hx(s, ang(s)), B = hx(s, ang(s) + OFF), M = A.clone().add(B).multiplyScalar(0.5), b = Math.floor(rnd() * 4), pair = [b, b ^ 1];   // 段 = 背骨から 真ん中の 少し 手前 (3 m すき間 = 水素結合) までの 棒 2 本
       [A, B].forEach((E, j) => { dir.subVectors(M, E); const L = dir.length() - 3; dir.normalize(); mesh.setMatrixAt(i * 2 + j, m4.compose(E, q.setFromUnitVectors(up, dir), s3.set(1, L, 1))); col.set(BASE[pair[j]], (i * 2 + j) * 3); }); }
     g.setAttribute('aCol', new THREE.InstancedBufferAttribute(col, 3)); mesh.frustumCulled = false; z3.add(mesh); }
@@ -323,7 +343,7 @@ export function build(scene, root, P, opts, out){
     balls.forEach((p, i) => hb.setMatrixAt(i, m4.compose(p, q.identity(), s3.set(1, 1, 1)))); rings.forEach(([p, t], i) => hr.setMatrixAt(i, m4.compose(p, q.setFromUnitVectors(zA, t), s3.set(1, 1, 1))));
     hb.frustumCulled = false; hr.frustumCulled = false; z3.add(hb, hr); }
   { const p = new THREE.Points(rg, rbm2); p.frustumCulled = false; z3.add(p); }
-  const sky2 = new THREE.Mesh(new THREE.SphereGeometry(15000, 32, 16), skyMat('0.07, 0.02, 0.14', HAZE3, '0.02, 0.0, 0.04')); sky2.renderOrder = -5; sky2.frustumCulled = false; z3.add(sky2);
+  const sky2 = new THREE.Mesh(new THREE.SphereGeometry(15000, 32, 16), skyMat('0.80, 0.52, 0.64', HAZE3, '0.36, 0.16, 0.26')); sky2.renderOrder = -5; sky2.frustumCulled = false; z3.add(sky2);
 
   const QI = new THREE.Quaternion(), ONE = new THREE.Vector3(1, 1, 1), AX1 = new THREE.Vector3(1, 0, 0), AZ1 = new THREE.Vector3(0, 0, 1), rbm3 = riboMat(400, '0.75, 0.88, 1.0');
   const dc = document.createElement('canvas'); dc.width = dc.height = 64; { const x = dc.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,0.4)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); }
