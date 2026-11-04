@@ -6,7 +6,7 @@ const LINES = [   // 声の台本 (10/26 版。声優さんの連絡で「人を
   { id:'e-04', who:'obake', cast:[], text:'むにゃむにゃ… どうやら {地球|ちきゅう}に {追|お}いついたみたい…' },
   { id:'e-05', who:'obake', text:'よし… {人|ひと}を おどろかせてやるんだ…' },
   { id:'e-06', who:'obake', text:'…ぼんやり {人影|ひとかげ}が {見|み}える…', cue:'shadow' },
-  { id:'e-07', who:'obake', text:'いくぞ！' }
+  { id:'e-07', who:'obake', text:'{行|い}くぞ！' }
 ];
 
 const CSS = `

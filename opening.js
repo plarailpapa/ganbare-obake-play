@@ -11,20 +11,20 @@ export const FACES = {
 
 export const OPENING_LINES = [   // 台本 (設計書 3 章)。声は assets/voice/<id>.mp3
   { id:'op-01', who:'obake', face:'muhyojo', cast:['obake'], text:'…あれ？ ここ どこだろう？' },
-  { id:'op-02', who:'obake', face:'hee', text:'なんで ここに いるのか わからないけど… おばけに なったみたい' },
-  { id:'op-03', who:'obake', face:'egao', text:'おばけに なったからには… ひとを おどろかせて みたい！ 『ばあ！』って！' },
-  { id:'op-04', who:'obake', face:'ganbaru', listen:'egao', cast:['obake','kami'], cue:'kamiIn', text:'かみさま！ ひとを おどろかせに いきたいです！' },
+  { id:'op-02', who:'obake', face:'hee', text:'{何|なん}で ここに いるのか {分|わ}からないけど… おばけに なったみたい' },
+  { id:'op-03', who:'obake', face:'egao', text:'おばけに なったからには… {人|ひと}を おどろかせて みたい！ 『ばあ！』って！' },
+  { id:'op-04', who:'obake', face:'ganbaru', listen:'egao', cast:['obake','kami'], cue:'kamiIn', text:'かみさま！ {人|ひと}を おどろかせに {行|い}きたいです！' },
   { id:'op-05', who:'kami', face:'magao', listen:'ganbaru', text:'うーん… やめといたら？' },
-  { id:'op-06', who:'obake', face:'eehatena', listen:'magao', text:'えー！？ なんで ですか！？' },
-  { id:'op-07', who:'kami', face:'magao', listen:'hee', layout:'corner', cue:'earthIn', text:'おばけは ふわふわ うかんでいて、なんでも すりぬけちゃう。{地球|ちきゅう}に ひっぱられないんだ' },
-  { id:'op-08', who:'kami', face:'magao', listen:'hee', cue:'spin', text:'そして {地球|ちきゅう}は、こまの ように ずっと まわっている。これを 『{自転|じてん}』 と いうの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
-  { id:'op-09', who:'kami', face:'magao', listen:'hee', cue:'japan', text:'にほんの あたりは {時速|じそく} 1,360 km。ひこうきより はやいんだよ' },
-  { id:'op-10', who:'kami', face:'magao', listen:'muhyojo', cue:'house', text:'ひとや いえも、{地球|ちきゅう}に ひっぱられて いっしょに うごいている。でも おばけは… ぼーっと していると、おいていかれちゃう' },
-  { id:'op-11', who:'obake', face:'odoroki', listen:'magao', cue:'houseHold', text:'えーっ！ それじゃ ひとに あえないよ！' },
-  { id:'op-12', who:'kami', face:'egao', listen:'odoroki', cue:'catchUp', text:'ひとを おどろかせたいなら、{地球|ちきゅう}の {自転|じてん}に おいつかないと ね' },
+  { id:'op-06', who:'obake', face:'eehatena', listen:'magao', text:'えー！？ {何|なん}で ですか！？' },
+  { id:'op-07', who:'kami', face:'magao', listen:'hee', layout:'corner', cue:'earthIn', text:'おばけは ふわふわ うかんでいて、{何|なん}でも すりぬけちゃう。{地球|ちきゅう}に ひっぱられないんだ' },
+  { id:'op-08', who:'kami', face:'magao', listen:'hee', cue:'spin', text:'そして {地球|ちきゅう}は、こまの ように ずっと {回|まわ}っている。これを 『{自転|じてん}』 と {言|い}うの' },   /* 10/28 神様の 声 (おゆさん) の 言い方に 合わせた */
+  { id:'op-09', who:'kami', face:'magao', listen:'hee', cue:'japan', text:'{日本|にほん}の あたりは {時速|じそく} 1,360 km。ひこうきより はやいんだよ' },
+  { id:'op-10', who:'kami', face:'magao', listen:'muhyojo', cue:'house', text:'{人|ひと}や {家|いえ}も、{地球|ちきゅう}に ひっぱられて いっしょに うごいている。でも おばけは… ぼーっと していると、おいて{行|い}かれちゃう' },
+  { id:'op-11', who:'obake', face:'odoroki', listen:'magao', cue:'houseHold', text:'えーっ！ それじゃ {人|ひと}に {会|あ}えないよ！' },
+  { id:'op-12', who:'kami', face:'egao', listen:'odoroki', cue:'catchUp', text:'{人|ひと}を おどろかせたいなら、{地球|ちきゅう}の {自転|じてん}に おいつかないと ね' },
   { id:'op-13', who:'obake', face:'shobon', listen:'egao', layout:'stage', cue:'settle', text:'そんなに はやく とべるかな…' },
   { id:'op-14', who:'obake', face:'ganbaru', listen:'egao', cue:'settle', text:'…ううん、やる！ ぜったい みんなを おどろかせて やるんだ！' },
-  { id:'op-15', who:'kami', face:'egao', listen:'ganbaru', cue:'settle', text:'よし、いっておいで！' }
+  { id:'op-15', who:'kami', face:'egao', listen:'ganbaru', cue:'settle', text:'よし、{行|い}っておいで！' }
 ];
 
 export function sparkle(actx){   // 杖の キラキラの音 (高い音 5 つを 0.06 秒ずつ ずらす)

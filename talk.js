@@ -17,7 +17,7 @@ const CSS = `
 .tk-obake .tk-fr{aspect-ratio:0.708}.tk-obake img{width:143.7%;left:-25.1%;top:-19.3%}
 .tk-kami .tk-fr{aspect-ratio:0.642}.tk-kami img{width:107.8%;left:-1.08%;top:-7.8%}
 .tk-kami{right:4vw;top:calc(6vh + env(safe-area-inset-top));width:min(46vw,260px)}
-.tk-obake{left:4vw;bottom:calc(10px + 5.4 * clamp(15px,4.2vw,22px) + 16px + env(safe-area-inset-bottom));width:min(40vw,220px)}
+.tk-obake{left:4vw;bottom:calc(10px + 5.4 * clamp(15px,4.2vw,22px) + 24px + env(safe-area-inset-bottom));width:min(40vw,220px)}
 .tk-corner .tk-kami{right:2vw;top:34vh;width:min(25vw,143px)}
 .tk-corner .tk-obake{left:2vw;width:min(22vw,121px)}
 .tk-dim{filter:saturate(.75) brightness(.92);opacity:.85}
@@ -26,7 +26,7 @@ const CSS = `
 .tk-box rt{font-size:.5em;line-height:1;color:#7a5a20}
 .tk-tx .tc{opacity:0;transition:opacity .08s}
 .tk-tx .tc.on{opacity:1}
-.tk-nm{position:absolute;top:-14px;left:calc(1.5 * clamp(15px,4.2vw,22px) - 12px);background:#ffd66b;color:#5a3b00;border-radius:9px;padding:1px 12px;font-weight:bold;font-size:clamp(12px,3.4vw,16px)}
+.tk-nm{position:absolute;top:calc(4px - 1.5em - 2px);line-height:1.5;left:calc(1.5 * clamp(15px,4.2vw,22px) - 12px);background:#ffd66b;color:#5a3b00;border-radius:9px;padding:1px 12px;font-weight:bold;font-size:clamp(12px,3.4vw,16px)}   /* 名前の 札は 箱の ふちに 乗せる (下は 箱の 中へ 4px だけ): 行の 始めの ふりがな (日本・人・家) と 重なった、11/4 社長 */
 .tk-nm.tk-k{background:#fff3c4}
 .tk-go{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:clamp(18px,5vw,28px);font-weight:bold;color:#fff;text-shadow:0 0 6px rgba(80,60,0,.8),0 0 2px #000;display:none;pointer-events:none;animation:tk-blink 1.2s ease-in-out infinite}
 .tk-end .tk-go{display:block}

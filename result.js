@@ -3,10 +3,10 @@
 import { rubyHtml, playSound } from './talk.js';
 
 export const FAIL_LINES = [   // 足りなかった時の 神様の言葉 (声の台本 ファイル 6 の 1〜4)
-  { id:'fail-01', text:'おしい！ もういちど いってみよう' },
-  { id:'fail-02', text:'みんなを おどろかせるんでしょ？ ほら、もういっかい！' },
+  { id:'fail-01', text:'おしい！ もういちど {行|い}ってみよう' },
+  { id:'fail-02', text:'みんなを おどろかせるんでしょ？ ほら、もう{一回|いっかい}！' },
   { id:'fail-03', text:'だいじょうぶ。おばけは なんども ちょうせん できるんだから' },
-  { id:'fail-04', text:'つぎこそ いけそうな きが する！' }
+  { id:'fail-04', text:'つぎこそ {行|い}けそうな {気|き}が する！' }
 ];
 export function failLine(n){ return n <= 4 ? FAIL_LINES[Math.max(1, n) - 1] : FAIL_LINES[1 + (n - 5) % 3]; }   // n = その面で 足りなかった回数 (5 回目から 2・3・4 を くり返す)
 
