@@ -3,7 +3,7 @@ export const VOLUMES = [0, 0.2, 0.5, 1];   // 音の 大きさの 段 (records �
 const VOL_LABELS = ['なし', 'とても ちいさい', 'ちいさい', 'ふつう'];
 
 const CSS = `
-.op-root{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(40,50,80,.35);font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;user-select:none;-webkit-user-select:none;animation:op-in .25s ease}
+.op-root{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(40,50,80,.35);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;user-select:none;-webkit-user-select:none;animation:op-in .25s ease}
 @keyframes op-in{from{opacity:0}}
 .op-panel{width:min(560px,100%);max-height:100%;overflow:auto;box-sizing:border-box;padding:18px 20px 16px;border-radius:22px;background:#fffaf2;color:#5a4030;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.25)}
 .op-panel h2{margin:0 0 4px;font-size:22px;color:#c0603a}

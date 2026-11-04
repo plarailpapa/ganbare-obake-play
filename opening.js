@@ -40,7 +40,7 @@ export function sparkle(actx){   // 杖の キラキラの音 (高い音 5 つ�
 }
 
 const OP_CSS = `
-.ot-root{position:fixed;inset:0;z-index:35;pointer-events:none;font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;transition:opacity .5s ease}
+.ot-root{position:fixed;inset:0;z-index:35;pointer-events:none;font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;transition:opacity .5s ease}
 .ot-out{opacity:0}
 .ot-logo{position:absolute;left:0;right:0;top:calc(9vh + env(safe-area-inset-top));text-align:center;font-size:clamp(38px,11vw,96px)}
 .ot-logo img{width:min(92vw,640px);height:auto;animation:ot-bob 2.4s ease-in-out infinite}
@@ -81,12 +81,12 @@ const OP_CSS = `
 .ot-btn.ot-small{font-size:clamp(13px,3.4vw,16px);padding:.35em 1em;background:rgba(255,255,255,.82);color:#6a5a8a;box-shadow:none}
 @media (min-aspect-ratio:1/1){
   .ot-baby{width:auto;height:30vh;left:2vw;bottom:calc(1vh + env(safe-area-inset-bottom))}
-  .ot-bub.b1{left:calc(2vw + 21vh);bottom:28vh} .ot-bub.b2{left:calc(2vw + 25vh);bottom:34vh} .ot-bub.b3{left:calc(2vw + 30vh);bottom:42vh}
+  .ot-bub.b1{left:calc(2vw + 15vh);bottom:25vh} .ot-bub.b2{left:calc(2vw + 19.5vh);bottom:28.5vh} .ot-bub.b3{left:calc(2vw + 25.5vh);bottom:32.5vh}   /* 泡は 頭の 右上から 雲の 縁へ。いちばん 上でも 下から 40% = おばけの 通り道 (いちばん 低くて 下から 約 43%) に かからない (11/4 社長「おばけが 丸の 後ろに」) */
   .ot-z.z1{left:calc(2vw + 9vh);bottom:27vh} .ot-z.z2{left:calc(2vw + 12vh);bottom:31vh}
   .ot-dream .ot-logo{left:3vw;right:26vw;top:calc(8vh + env(safe-area-inset-top))} .ot-dream .ot-logo img{width:auto;height:min(30vh,26vw)}
   .ot-dream .ot-menu{right:2.5vw;bottom:calc(5vh + env(safe-area-inset-bottom))} .ot-dream .ot-tap{right:3vw}
 }   /* 夢の タイトル (10/27 設計書 ⑦): 夜空の 下に 眠る 赤ちゃん (左下)・頭から 泡と z、右下に ボタン。縦持ち = 雲は 上 6 割、横長 = 雲は 左 7 割 */
-.op-speed{position:fixed;left:0;right:0;top:calc(5vh + env(safe-area-inset-top));z-index:36;text-align:center;pointer-events:none;font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;font-weight:900;font-size:clamp(26px,7vw,52px);color:#fff;-webkit-text-stroke:.12em #3a7ad8;paint-order:stroke fill;opacity:0;transition:opacity .4s ease}
+.op-speed{position:fixed;left:0;right:0;top:calc(5vh + env(safe-area-inset-top));z-index:36;text-align:center;pointer-events:none;font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;font-weight:900;font-size:clamp(26px,7vw,52px);color:#fff;-webkit-text-stroke:.12em #3a7ad8;paint-order:stroke fill;opacity:0;transition:opacity .4s ease}
 .op-speed rt{font-size:.38em;-webkit-text-stroke:.1em #3a7ad8}
 .op-speed.on{opacity:1}
 .op-credit{position:fixed;left:8px;top:calc(6px + env(safe-area-inset-top));z-index:36;max-width:72vw;font:10px/1.4 sans-serif;color:rgba(255,255,255,.82);text-shadow:0 0 3px #000;pointer-events:none;display:none;white-space:pre-line}

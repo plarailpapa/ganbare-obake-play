@@ -4,8 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>がんばれおばけ！ (3D 試作 2・地上から空へ)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">   <!-- 丸文字 (11/4 社長「ランキングの 文字が 可愛くない」= Windows には ヒラギノ丸ゴが 無く 細い 游ゴシックに なって いた。寄り道勇者と 同じ 文字。読めない 時は 今までの 文字) -->
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;font-family:'Hiragino Maru Gothic ProN','BIZ UDPGothic','Yu Gothic',sans-serif;
+  html,body{margin:0;height:100%;overflow:hidden;font-family:'M PLUS Rounded 1c','Hiragino Maru Gothic ProN','BIZ UDPGothic','Yu Gothic',sans-serif;
     background:linear-gradient(#141036 0%,#3a2560 30%,#b45a7a 55%,#ff9a5c 72%,#ffd9a0 100%);}   /* 夕暮れの空 (3D の背景は透明にして この色を見せる) */
   body{isolation:isolate}   /* 夢の タイトルの 夜空 (z-index −1) を この 背景の 上・3D の 画面の 下に 描く (無いと 背景の 後ろに 隠れて 夕暮れが 見えた、Codex 指摘 10/27) */
   canvas{display:block;position:fixed;inset:0;touch-action:none;z-index:0}
@@ -225,6 +228,7 @@ const ENDING_Q = Q.get('ending')==='1';   // 確かめ用: 子ども部屋に �
 const NURSERY_Q = Q.get('nursery')==='1';   // 確かめ用: ?stage=3&nursery=1 で 子ども部屋 & エンディング から (3 面の 当たりの「つぎへ」の 先、10/28)
 let nursery3Run = NURSERY_Q;   // 3 面を 子ども部屋だけで 走る (当たりの 結果発表の「つぎへ」、10/28 社長)。曲は きらきら星
 const CLEARED_Q = Q.get('cleared')==='1';   // 確かめ用: クリア済みの 夢の タイトル (記録は 書かない、10/27)
+const RKDEMO_Q = Q.has('rkdemo');   // 確かめ用: ランキングの 板に 見本の「あなた」(1 位 = フルコンボ・3 位 = ふつう) を 足して 出す (保存は しない、11/4)
 if(Q.get('save')==='reset') REC.resetRecords();   // 確かめ用: ?save=reset で 記録を 消してから 始める (10/27)
 const SCORE_Q = !['stage', 'world', 'w3', 'branch', 'draft', 'kmh', 'result', 'planet', 'ending', 'room', 'talk', 'op'].some(k=>Q.has(k));   // ハイスコアを 貯めるのは ふつうに 遊んだ 時だけ (試しの 入口で 出した 速さは 入れない)
 const BABIES = ['assets/ending/sleep-1.png'];   // 夢の タイトルの 眠る 赤ちゃん (11/4 届いた 絵、4000 四方 → 1024 四方。何通りか 届いたら 並べる = 開くたびに 1 つ)
@@ -2121,7 +2125,7 @@ const layerAnn={strato:false, ozone:false, plasma:false};   // 高さの境目�
 function updateLadderHUD(){ const L=ladderNow(), H=hudRungs(); [...ladderEl.children].forEach((el,i)=>el.classList.toggle('on', i<=rung)); const nx= rung+1<H ? L[rung+1] : null; $('target').textContent= nx ? 'つぎの あいて: '+nx.name+(nx.kmh ? ' じそく '+nx.kmh.toLocaleString('ja-JP')+' km' : '') : 'ぜんぶ ぬいた！'; }
 function pop(text, small){ const d=document.createElement('div'); d.className='pop'+(small?' small':''); d.textContent=text; $('pops').appendChild(d); setTimeout(()=>d.remove(), 1500); }
 function showGain(add, cb=0){ const g=$('gain'); g.innerHTML='+'+fmtKmh(add-cb/3.6)+' km/h'+(cb ? '<span class="cb">＋'+cb+' ボーナス</span>' : '');   /* コンボ ボーナスは 別に 小さく黄色で */ g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
-let combo=0;
+let combo=0, fcMiss=false;   // fcMiss = この 回で 1 回でも 取りこぼした (ランキングの フルコンボの 王冠、11/4 社長)
 let titleOpening=false;   // タイトルに もどった後は どの入口から始めても 導入から (10/20)
 function beginRun(){ if((OPENING_ON || titleOpening) && !openingSeen) beginOpening(titleOpening ? 0 : OP_FROM); else startRun(); }   // 題名のタップ: 1 面の入口なら 先に導入 (10/19)
 function beginOpening(from){   // 導入: 天国の場面と 会話の画面を作って 台本を流す
@@ -2150,7 +2154,7 @@ function diveStep(dt){
   else { OP.cloudReveal(); d.wc.remove(); }   /* 1 面: 白い幕を 雲が晴れていく 演出に入れ替える (10/19 社長) */
 }
 function startRun(){
-  s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
+  s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; fcMiss=false; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
   for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.loopT=null; resetShuttle(r); r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
   resetCourse(); resetPlates(); if(stage===3) prepGal3();   /* やり直し・確かめ用の 入口で 待たずに 始まる 時も ここで 用意 (走り出しの 1 コマ目) */
   $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; updateLadderHUD();
@@ -2180,6 +2184,7 @@ const RIVALS = {   // ハイスコアの 表に 最初から 並ぶ ライバル
   3: [...RS.COSMIC3, {name:'ヘリオス 2 号', kana:'へりおす 2 ごう', kmh:252800}, ...['金星', '地球'].map(n=>S2.LADDER2.find(o=>o.name===n))]   /* 3 面の 段は 3 つ → 太陽の 近くを 飛んだ 探査機 ヘリオス 2 号 (1976 年、時速 約 25 万 km) と 2 面の 惑星で 補う */
 };
 for(const k in RIVALS) RIVALS[k]=RIVALS[k].filter(Boolean).map(o=>({name:o.name, kana:o.kana, kmh:o.kmh, rival:true}));   // 名前の 書き間違いで 見つからない 相手は 外す
+{ const w=()=>RK.warmFont(Object.values(RIVALS).flat().map(o=>o.name+(o.kana||'')).join('')); if(document.readyState==='complete') w(); else addEventListener('load', w, {once:true}); }   // ランキングの 丸文字を 先に 読む (ライバルの 名前の 漢字も、11/4)
 const EARTH2_KMH = S2.PLANETS2.find(p=>p.name==='地球').kmh, GOAL3_KMH = 830000;   // 2 面の合格 = 地球の公転 (時速 107,200)、3 面の「おいぬいた」= 太陽系の公転
 function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め言葉・ボタン・足りない時の 神様
   resultShown=true; $('speed').style.visibility='hidden';
@@ -2191,11 +2196,11 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   const rest=Math.max(1, goal-kmh).toLocaleString('en-US'), remainLine= stage===1 ? '{自転|じてん}まで あと '+rest+' km！' : '{公転|こうてん}まで あと '+rest+' km！';
   const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] :   /* 3 面の 当たり (太陽に 追いついた 映画の 後) は つぎへ = 子ども部屋 & エンディング だけ (10/28 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
   const soloButtons= ok ? [...(stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] : []), {id:'retry', label:'もういちど', big:stage!==3}, {id:'title', label:'タイトルに もどる'}] : [...buttons, {id:'title', label:'タイトルに もどる'}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎの 面へは 出さず タイトルへ (10/27 設計書)。3 面の 当たりは 子ども部屋 & エンディングへも 進める */
-  const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage]) : null;   /* 速さを 面ごとの 上位 10 件へ (ランキングの 板に 出る)。自分の 1 位を 超えたら「しんきろく！」(順位の 札は 出さない、10/27 社長) */
+  const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage], !fcMiss && combo>0) : null;   /* 速さを 面ごとの 上位 10 件へ (ランキングの 板に 出る)。自分の 1 位を 超えたら「しんきろく！」(順位の 札は 出さない、10/27 社長) */
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
   resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:!!(sc && sc.best), god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons: soloStage ? soloButtons : buttons, confetti:ok,
     onButton:id=>{ if(ERRLOG) logSend({button:id}); if(id==='retry') retry(false); else if(id==='booster') retry(true); else if(id==='next') goNext(); else if(id==='nursery') goNursery3(); else goTitle(); } });
-  if(ERRLOG) logSend({result: ok ? 'ok' : 'ng', kmh, stage, fail:failCount[stage]});
+  if(ERRLOG) logSend({result: ok ? 'ok' : 'ng', kmh, stage, fail:failCount[stage], fc:!fcMiss && combo>0, combo});
 }
 function goNursery3(){ whiteSwap(()=>{ setBooster(false); resetRun(); nursery3Run=true; setStage(3); pendingT=0; $('hud').style.visibility=''; pendingStart=true; if(ERRLOG) logSend({nursery3:'start'}); }); }   // 3 面の 当たりの つぎへ: 白 → 子ども部屋 & エンディング (きらきら星が 読めたら 始まる。白は 始まったら 晴れる)
 function retry(booster){ setBooster(booster); restart(); }   // もういちど: すぐ 同じ面 (天国には寄らない)
@@ -2245,7 +2250,8 @@ function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじ�
       panelUI=OPT.createOptions({ volume:REC.getVolume(), onVolume:n=>{ REC.setVolume(n); if(actx) setAudioVolume(actx, OPT.VOLUMES[n]); }, onReset:()=>{ REC.resetRecords(); reset=true; },
         onClose:()=>{ panelUI=null; if(reset && opTitle.dream && !CLEARED_Q) whiteSwap(()=>{ if(state!=='title') return; opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); }); } });   /* 夢の タイトルで 記録を 消したら クリア前の タイトルへ */ }
     else { const n=+id[1];   /* ステージ 1〜3: その面の ランキングと はじめる ボタン (ストーリー あり / なし・もどる、10/27 社長) */
-      panelUI=RK.createRanking({ stage:n, rows:REC.ranking(n, RIVALS[n]), onPick:p=>{ panelUI=null; if(p!=='back' && state==='title' && canStart() && !pendingStart) startSolo(n, p==='story'); } }); }
+      const rv=RIVALS[n].slice().sort((a, b)=>b.kmh-a.kmh), now=Date.now(), rows= RKDEMO_Q ? [...rv, {kmh:Math.round(rv[0].kmh*1.04), t:now, fc:true, you:true}, {kmh:rv[2].kmh+1, t:now-1.8*864e5, you:true}].sort((a, b)=>b.kmh-a.kmh).slice(0, 5) : REC.ranking(n, RIVALS[n]);
+      panelUI=RK.createRanking({ stage:n, rows, actx, onPick:p=>{ panelUI=null; if(p!=='back' && state==='title' && canStart() && !pendingStart) startSolo(n, p==='story'); } }); }
   });
 }
 function goTitle(){   // タイトルに もどる (3 面の結果): 白 → 天国の タイトル画面 (おばけが うろうろ)。タップで 導入から
@@ -2297,8 +2303,8 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
       b.hit=true; hits++; { frameAt(s,F); if(b.box || b.ring) ghostGlint(); else confettiBurst(F.p.x+F.r.x*laneX, F.p.y+0.9, F.p.z+F.r.z*laneX, F.t, v); }   // 地上の板 = 紙吹雪、空のボックスと 2 面 = おばけが きらりと光る
       if(b.ring){ placePlate(b, 1); ringBurstStart(b.lane); if(stage===3) sparkBurst3(b); }   // 2 面: くぐった輪は消え、おばけの周りに 光の輪が広がる
       boostHit(); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false); if(b.grp) b.grp.hit=true; }   // 踏んだ瞬間に 次の相手が前方に見えてくる
-      else if(!b.hit && !b.missed && b.s<s-1.6*b.sc){ b.missed=true; if(b.grp) grpMiss.push(b.grp); else combo=0; } }   /* 踏めなかったと決めるのは 踏める範囲 (板の長さの半分) を 過ぎてから (前は 3 m 後ろ固定で、大きい板は まだ踏めるのに コンボだけ先に切れた = ボーナスが付かない、Codex 指摘 10/26) */
-    for(const g of grpMiss) if(!g.hit && !g.cut){ g.cut=true; combo=0; }   /* 同じ 音の 3 本は 全部 調べて から: どれも 踏めて いない 時だけ 連続を 切る (1 コマで 3 本を 越えた時 先に 調べた 輪で 切れた、Codex 指摘 10/28) */
+      else if(!b.hit && !b.missed && b.s<s-1.6*b.sc){ b.missed=true; if(b.grp) grpMiss.push(b.grp); else { combo=0; fcMiss=true; } } }   /* 踏めなかったと決めるのは 踏める範囲 (板の長さの半分) を 過ぎてから (前は 3 m 後ろ固定で、大きい板は まだ踏めるのに コンボだけ先に切れた = ボーナスが付かない、Codex 指摘 10/26) */
+    for(const g of grpMiss) if(!g.hit && !g.cut){ g.cut=true; combo=0; fcMiss=true; }   /* 同じ 音の 3 本は 全部 調べて から: どれも 踏めて いない 時だけ 連続を 切る (1 コマで 3 本を 越えた時 先に 調べた 輪で 切れた、Codex 指摘 10/28) */
     if(stage===3) for(const g of gates3) if(!g.hit && g.at!=null && g.at<=s){ g.hit=true; hits++; ghostGlint(); ringBurstStart(lane); sparkBurst3({s:g.at, lane}); boostHit(); }   /* 世界が 変わる 輪も 加速の 輪と して 数える (10/28 社長。くぐる 時刻は 曲の 拍 = MUSIC3.gates)。輪の 位置が 後から 決まっても 抜けない (Codex 指摘 10/28) */
     $('combo').textContent= combo>=3 ? combo+' れんぞく' : '';
     if(stage===2){ updatePlanets2(dtMove, dt); updateSmall2(s-sPrev, dtMove); }   // 惑星イベント (追い風・ぬいた・ギアアップ) / 姿のある小物

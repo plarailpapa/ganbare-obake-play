@@ -32,7 +32,7 @@ const CSS = `
 .ed-baa-on .ed-baa{opacity:1;pointer-events:auto;transition:opacity .12s ease}
 .ed-bg{position:absolute;inset:-2%;background:url(assets/ending/haikei.jpg) center/cover}
 .ed-baby{position:absolute;left:0;top:0;width:1143px;height:1600px;max-width:none;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-select:none}
-.ed-owari{position:absolute;right:max(20px,4vw);bottom:calc(max(20px,5vh) + env(safe-area-inset-bottom));font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;font-weight:bold;font-size:clamp(30px,8vmin,64px);letter-spacing:.08em;color:#c0603a;text-shadow:0 0 6px #fff,0 0 3px #fff,0 2px 0 #fff;opacity:0;transform:translateY(12px);transition:opacity .9s ease,transform .9s cubic-bezier(.25,.6,.3,1)}
+.ed-owari{position:absolute;right:max(20px,4vw);bottom:calc(max(20px,5vh) + env(safe-area-inset-bottom));font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;font-weight:bold;font-size:clamp(30px,8vmin,64px);letter-spacing:.08em;color:#c0603a;text-shadow:0 0 6px #fff,0 0 3px #fff,0 2px 0 #fff;opacity:0;transform:translateY(12px);transition:opacity .9s ease,transform .9s cubic-bezier(.25,.6,.3,1)}
 .ed-owari-on .ed-owari{opacity:1;transform:none}
 .tk-root.ed-talk .tk-box{box-shadow:0 2px 16px rgba(170,130,50,.28)}
 .tk-root.ed-talk .tk-go{top:70%;color:#f29a1f;text-shadow:0 0 8px #fff,0 0 2px #fff}
@@ -98,7 +98,7 @@ export function createEnding({ root, talkRoot, actx, faces, onDone, log }){   //
       if(t < FADE){ const k = t / FADE; lid.style.display = 'block'; lid.style.background = LID; lid.style.opacity = (k * k * (3 - 2 * k)).toFixed(3); }
       else { lid.style.opacity = 1; drawLid(lid, lidOpen(t - TALK_AT)); }
       if(!talk && t >= TALK_AT){
-        talk = createTalk({ root:talkRoot, faces, actx, voiceDir:VOICE_DIR, endPrompt:'タップで ばあ！', onCue:n => { if(n === 'shadow') root.classList.add('ed-shadow-on'); return 0; }, onEnd:startBaa, log });
+        talk = createTalk({ root:talkRoot, faces, actx, voiceDir:VOICE_DIR, endPrompt:'タップで ばあ！', skip:false, onCue:n => { if(n === 'shadow') root.classList.add('ed-shadow-on'); return 0; }, onEnd:startBaa, log });
         talkRoot.classList.add('ed-talk'); talk.start(LINES);
       }
       if(talk) talk.update(dt);

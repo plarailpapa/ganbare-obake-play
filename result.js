@@ -23,7 +23,7 @@ export const COSMIC3 = [   // 3 面の 宇宙の速さの段 (最初の案。プ
 ];
 
 const CSS = `
-.rs-root{position:fixed;inset:0;z-index:44;font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;pointer-events:none;animation:rs-in .5s ease}
+.rs-root{position:fixed;inset:0;z-index:44;font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;pointer-events:none;animation:rs-in .5s ease}
 @keyframes rs-in{from{opacity:0}}
 .rs-conf{position:absolute;inset:0;width:100%;height:100%}
 .rs-speed{position:absolute;left:0;right:0;top:calc(7vh + env(safe-area-inset-top));text-align:center;color:#fff;font-weight:900;font-size:clamp(34px,9vw,72px);-webkit-text-stroke:.16em #3a7ad8;paint-order:stroke fill}
