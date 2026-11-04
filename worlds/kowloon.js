@@ -2,7 +2,7 @@
 // 1 回目: 谷間 (0〜13 秒)。色とりどりの トタンと 板の 家 (1 軒 30〜55 m = おばけが 小人に 見える 大きさ) を コースの 左右に 何十層も 積み、上ほど 谷へ せり出して 空は 細い 隙間に。渡り廊下・洗濯物・水タンク・配管・日よけ・支え柱。谷底は 暗い 路地の 灯り・深い 所は 暗く かすむ (空の 上と 分からない)。2 回目: 抜けると 青空 (はるか 下に 雲の 海・正面に 巨大な 入道雲・遠くに 超建築の 塔)、レールは 鉄骨の 橋の 上。3 回目: 出口 = 正面の 太い 塔の 壁に 3 つの 門 (トンネル・看板・提灯、社長「イ」)
 // 座標: 輪の 入口が 原点、+Z = 進む 向き、+Y = 上、+X = 左 (root)。家の 向き = コースの 水平な 向き (箱の x = 谷を 横切る 向き・z = コースに 沿う 向き)
 import * as THREE from 'three';
-import { coursePath3, exit3, RECONV3_SEC, FORK3_W } from '../stage3.js';
+import { coursePath3, exit3, RECONV3_SEC, FORK3_W, SPREAD3_SEC, LANE_W3 } from '../stage3.js';
 import { puffTex, puffMat } from './temple.js';   // 雲 (神殿と 同じ 作り方: カメラを 向く もくもくの 板)
 
 const clip = { pv:'#include <clipping_planes_pars_vertex>', v:'#include <clipping_planes_vertex>', pf:'#include <clipping_planes_pars_fragment>', f:'#include <clipping_planes_fragment>' };   // 輪の 窓の 中に 描く 時の 切り落とし
@@ -212,12 +212,12 @@ export function build(scene, root, P, opts, out){
 
   // 出口 = 超建築の 塔の 門 (11/3 社長「イ」): コースの 終わりの 正面に 太い 塔、手前の 壁に 3 つの 入り口 (中は トンネル)。門ごとに 鉄の 枠・レーンの 色の 看板・赤い 提灯、行き先の ない 門は トタンの シャッター
   // 座標: EO = まん中の 門 (輪の 中心 = コースの 終わり + 上 2.2 m = index.html の RING3_UP)、X5 = 左・Y5 = 上・D5 = 進む 向き。レーン k の 門 = EO + (1 − k) × ex.w 左・−(k − 1) × ex.h 上 (deepsea.js と 同じ 決まり)。家は 門の 面より 奥だけ (門を くぐると この 世界は 描かれなく なる)
-  const gateMeshes = [];
+  const gateMeshes = [], exitTW = [];   // exitTW = 出口の 塔の 根もと [x, z, 半径] (出口の 道の 脚を めり込ませない、Codex 指摘 11/4)
   if(branch){ const ex = exit3(P.def), OW = 13, OH = 15, LC = ['#4cd964', '#ffd54a', '#ff5a5a'], has = k => !opts.nextChoices || !!opts.nextChoices[k];
     path.frame(path.len, v, q); const qE = q.clone(), X5 = new THREE.Vector3(1, 0, 0).applyQuaternion(qE), Y5 = new THREE.Vector3(0, 1, 0).applyQuaternion(qE), D5 = new THREE.Vector3(0, 0, 1).applyQuaternion(qE), EO = v.clone().addScaledVector(Y5, 2.2), yawE = Math.atan2(D5.x, D5.z), yC = v.y;
     const G = k => [(1 - k) * ex.w, -(k - 1) * ex.h], inGate = (x, y, mx, my) => [0, 1, 2].some(k => { const [gx, gy] = G(k); return Math.abs(x - gx) < OW + mx && Math.abs(y - gy) < OH + my; });
     const EP = (x, y, z) => EO.clone().addScaledVector(X5, x).addScaledVector(Y5, y).addScaledVector(D5, z), rel = new THREE.Vector3();
-    { const R0 = 520, y1 = yC + 1900, y0 = SEA - 300, rc = R0 * (1 - 0.45 * (EO.y - y0) / (y1 - y0)), TC = EP(0, 0, rc + 110);   // 門の 塔 (中心は 門の 面から 門の 高さの 半径 + 110 m 奥 = 家の 外の 面は 門の 面より 奥)
+    { const R0 = 520, y1 = yC + 1900, y0 = SEA - 300, rc = R0 * (1 - 0.45 * (EO.y - y0) / (y1 - y0)), TC = EP(0, 0, rc + 110); exitTW.push([TC.x, TC.z, R0]);   // 門の 塔 (中心は 門の 面から 門の 高さの 半径 + 110 m 奥 = 家の 外の 面は 門の 面より 奥)
       tower(TC.x, TC.z, R0, y1, (x, y, z) => { rel.set(x, y, z).sub(EO); const lz = rel.dot(D5); return lz < 160 && inGate(rel.dot(X5), rel.dot(Y5), 40, 32); }); }
     cy0 = yC;
     for(let y = -230; y < 280; ){ const h = 22 + rnd() * 16; for(let x = -280; x < 280; ){ const w = 30 + rnd() * 22, D = 40 + rnd() * 25;   // 門の ある 壁 (家を 積んだ 平らな 壁、門の 穴の 所は あける)
@@ -236,8 +236,12 @@ export function build(scene, root, P, opts, out){
 
   // 鉄骨の 橋: レールの 下の 土台 (上の 面が レールの 1.2 m 下 = 加速の 輪の 下の 端より 下) と 骨組みの 脚 (谷間は 谷底まで、空は 雲の 海の 下まで)。入口の 3 本が 戻る 間・出口の 3 本に 広がる 間は 置かない
   const S1 = path.len - 1300;
+  const EXK = exit3(P.def), spK = SPREAD3_SEC * P.move, X0 = new THREE.Vector3(), Y0 = new THREE.Vector3(), hasK = k => k === 1 || !opts.nextChoices || !!opts.nextChoices[k];   // 出口の 3 本の 道 (11/4 社長「分かれ道を 選んだら 道路が なくなって いた」): 行き先の ない レーンは 道なし
+  const exLane = (s, k, o) => { path.frame(s, o, q); const b = path.len - s, u0 = !branch || b >= spK ? 0 : Math.min(1, (1 - Math.max(0, b) / spK) / EXK.sw), u = u0 * u0 * (3 - 2 * u0), w = LANE_W3 + (EXK.w - LANE_W3) * u;   // レーン k の 道の 下の 面の まん中 (stage3.js lanes3 と 同じ 広がり方、+X = 左)
+    return o.addScaledVector(X0.set(1, 0, 0).applyQuaternion(q), (1 - k) * w).addScaledVector(Y0.set(0, 1, 0).applyQuaternion(q), -(k - 1) * EXK.h * u - 3.7); };
   const TW = TOWERS.slice(0, mob ? 4 : 5).map(([fw, lt, , r0]) => [...W2(fw, lt), r0]);   // 塔の 根もと (下ほど 太い 塔に 脚が めり込む 所は 脚を 省く = 橋が 長く 渡る)
   for(let s = 900; s < S1; s += s < CANYON_END ? 320 : 170){ at(s); if(TW.some(([x, z, r]) => Math.hypot(v.x - x, v.z - z) < r + 130)) continue; const top = v.y - 3.7, bot = s < CANYON_END ? v.y + YLO : SEA - 200; put(L.truss, v.x, bot, v.z, Math.atan2(f.x, f.z), 7, top - bot, 7, '#5f6872'); }
+  if(branch) for(let s = S1 + 60; s < path.len - 40; s += 170) for(let k = 0; k < 3; k++){ if(!hasK(k)) continue; exLane(s, k, v); if(TW.concat(exitTW).some(([x, z, r]) => Math.hypot(v.x - x, v.z - z) < r + 130)) continue; Y0.set(0, 0, 1).applyQuaternion(q); const bot = SEA - 200; put(L.truss, v.x, bot, v.z, Math.atan2(Y0.x, Y0.z), 7, v.y - bot, 7, '#5f6872'); }   // 出口の 3 本の 道の 脚
 
   const mk = (geo0, mat, list) => { if(!list.length) return; const geo = geo0.clone(); geo.setAttribute('aY0', new THREE.InstancedBufferAttribute(new Float32Array(list.map(o => o.r)), 1)); const mesh = new THREE.InstancedMesh(geo, mat, list.length);
     list.forEach((o, i) => { mesh.setMatrixAt(i, m4.compose(v.set(o.x, o.y, o.z), q.setFromEuler(e.set(0, o.yaw, o.rz, 'YXZ')), s3.set(o.sx, o.sy, o.sz))); mesh.setColorAt(i, col.set(o.c)); });
@@ -248,11 +252,12 @@ export function build(scene, root, P, opts, out){
   mk(box, kMat(0, TX), L.house); mk(box, kMat(1, TX), L.roof); mk(box, kMat(2), L.awn); mk(box, kMat(3), L.post);
   mk(new THREE.CylinderGeometry(1, 1, 1, 16, 1).translate(0, 0.5, 0), kMat(3), L.tank); mk(new THREE.CylinderGeometry(1, 1, 1, 8, 1).translate(0, 0.5, 0), kMat(3), L.pipe);
   mk(box, new THREE.MeshBasicMaterial({ color:0xffffff }), L.line); mk(new THREE.PlaneGeometry(1, 1).translate(0, -0.5, 0), cm, L.cloth); mk(box, kMat(4), L.truss);
-  { const segs = []; for(let s = 0; s < S1; s += 20) segs.push(s);   // 土台 (20 m ごとに 前後へ 1 m 長い 箱 = 継ぎ目なし)。入口から (11/3 社長「スタートした 時に 初めから 道が あった ほうが いい」)
+  { const segs = []; for(let s = 0; s < (branch ? path.len + 40 : S1); s += 20) segs.push([s, 1]); if(branch) for(const k of [0, 2]) if(hasK(k)) for(let s = S1; s < path.len + 40; s += 20) segs.push([s, k]);   /* 出口: 道も 3 本に 分かれて 塔の 3 つの 門の 中まで (11/4) */   // 土台 (20 m ごとに 前後へ 1 m 長い 箱 = 継ぎ目なし)。入口から (11/3 社長「スタートした 時に 初めから 道が あった ほうが いい」)
     const ex0 = P.lane != null && opts.prevExit, d0 = ex0 ? P.lane - 1 : 0, bk = RECONV3_SEC * P.move;   // 入口で 3 本の レールが 前の 世界の 出口の レーンの 位置から 戻る (stage3.js の lanes3 と 同じ 式) → 道も その 真下から まん中へ 寄せる。確かめ用 (最初の 世界) は 前の 世界が ない ので まっすぐ
     const lane = (s, o) => { path.frame(s, o, q); const u = ex0 ? sm(0, bk, s) : 1; return o.addScaledVector(X1.set(1, 0, 0).applyQuaternion(q), -d0 * (ex0 ? ex0.w - FORK3_W : 0) * (1 - u)).addScaledVector(Y1.set(0, 1, 0).applyQuaternion(q), -d0 * (ex0 ? ex0.h : 0) * (1 - u) - 3.7); };   // 道の 下の 面の まん中 (+X = 左、レーンの ずれは 右向きが +)
     const X1 = new THREE.Vector3(), Y1 = new THREE.Vector3(), A = new THREE.Vector3(), Bv = new THREE.Vector3(), zx = new THREE.Vector3(), xx = new THREE.Vector3(), yy = new THREE.Vector3(), geo = box.clone(), mesh = new THREE.InstancedMesh(geo, kMat(3), segs.length);
-    segs.forEach((s, i) => { lane(s, A); lane(s + 20, Bv); zx.subVectors(Bv, A); const len = zx.length(); zx.normalize(); yy.set(0, 1, 0).applyQuaternion(q); xx.crossVectors(yy, zx).normalize(); yy.crossVectors(zx, xx);
+    const pos = (s, k, o) => s < S1 ? lane(s, o) : exLane(s, k, o);
+    segs.forEach(([s, k], i) => { pos(s, k, A); pos(s + 20, k, Bv); zx.subVectors(Bv, A); const len = zx.length(); zx.normalize(); yy.set(0, 1, 0).applyQuaternion(q); xx.crossVectors(yy, zx).normalize(); yy.crossVectors(zx, xx);
       mesh.setMatrixAt(i, m4.makeBasis(xx, yy, zx).scale(s3.set(9, 2.5, len + 2)).setPosition(A.lerp(Bv, 0.5))); mesh.setColorAt(i, col.set('#6d7680')); });
     geo.setAttribute('aY0', new THREE.InstancedBufferAttribute(new Float32Array(segs.length).fill(-3.7), 1)); mesh.frustumCulled = false; root.add(mesh); }
   { const puffs = [], K = mob ? 0.65 : 1;   // 雲 (神殿と 同じ もくもくの 板、遠い 順に 描く)
