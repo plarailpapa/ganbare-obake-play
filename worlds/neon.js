@@ -230,7 +230,7 @@ export function build(scene, root, P, opts, out){
       const g = new THREE.Group(), c = Math.cos(ry), sn = Math.sin(ry), nc = NEON[(rnd() * NEON.length) | 0]; g.position.set(x, GROUND, z); g.rotation.y = ry; root.add(g);
       mk((px, py, pz, w, h, dd, r) => box.push({ x:x + px * c + pz * sn, y:GROUND + py, z:z - px * sn + pz * c, w, h, d:dd, c:nc, ry:ry + r }), g);
       marks.push({ x, z, r:Math.hypot(hw, hd) + 30 }); break; } }
-  if(branch){ path.frame(L, v, q); const E = v.clone(), QE = q.clone(); fwd(L); const ry = Math.atan2(f.x, f.z), yr = E.y + 2.2;   // 出口: まん中の 輪の 中心 (2.2 = index.html の RING3_UP)
+  if(branch){ path.frame(L, v, q); const E = v.clone(), QE = q.clone(); out.exitP = E.clone(); fwd(L);   /* exitP = 確かめ用 ?errlog=1 の 輪と 看板の ずれ 調べ (11/4 社長「真ん中の コースが 看板の 右」) */ const ry = Math.atan2(f.x, f.z), yr = E.y + 2.2;   // 出口: まん中の 輪の 中心 (2.2 = index.html の RING3_UP)
     const T = new THREE.Vector3(E.x + f.x * 46, GROUND, E.z + f.z * 46), tw = skyTower((yr - GROUND) / 350); tw.position.copy(T); root.add(tw); marks.push({ x:T.x, z:T.z, r:130 });   // 塔の 下の 展望台 (350 m) が 輪の 高さに なる 大きさ
     const grp = new THREE.Group(), sg = new THREE.Group(); grp.position.set(E.x, yr, E.z); grp.rotation.y = ry; sg.quaternion.copy(QE); sg.position.set(0, 2.2, 0).applyQuaternion(QE).add(E); root.add(grp, sg);   /* grp = 展望台 (まっすぐ 立てる)・sg = 看板と 枠 (輪と 同じ コースの 終わりの 向き。水平だけ だと 上下の 傾きが 残る 時に 輪と ずれる、Codex 指摘 10/29) */   // 出口の 座標: 原点 = まん中の 輪、+Z = 進む 向き、+X = 左
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(40, 36, 26, 48), new THREE.MeshBasicMaterial({ color:'#2a2350' })); drum.position.set(0, 0, 46); grp.add(drum);   // 展望台

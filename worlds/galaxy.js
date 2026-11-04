@@ -34,7 +34,7 @@ export function createBackdrop(opts){   // 遠景: group を 場面に 足し、
   const lay = new THREE.Group(); lay.renderOrder = -5;   // 毎コマ カメラの 前 DIST に 置き、カメラと 同じ 向き
 
   const gal = new THREE.Group(); gal.rotation.z = -Math.PI / 2; lay.add(gal);   // 天の川銀河の 想像図 (右へ 90° 回す = 太陽の 進む 向き (絵の 左) が 画面の 上)
-  const galMat = new THREE.MeshBasicMaterial({ map:tex('milkyway_eso1339g_2k.jpg'), alphaMap:radialMask(), transparent:true, blending:add, depthWrite:false, fog:false });
+  const galT = opts.galTex || tex('milkyway_eso1339g_2k.jpg'), galMat = new THREE.MeshBasicMaterial({ map:galT, alphaMap:radialMask(), transparent:true, blending:add, depthWrite:false, fog:false }); galMat.userData.keepMap = !!opts.galTex;   /* opts.galTex = 3 面の 遠景が 先に 用意した 同じ 銀河の 絵を 借りる (2048 四方を 2 回 用意すると 神殿で 0.07 秒 止まった、11/4)。借りた 絵は 持ち主 (遠景) が 片づける */
   gal.add(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), galMat));
   const markM = new THREE.SpriteMaterial({ map:glow, color:0xfff07a, transparent:true, blending:add, depthWrite:false, fog:false }), mark = new THREE.Sprite(markM); lay.add(mark);   // 銀河の 全体の 中の 太陽系の 場所の 光の 印
 
@@ -85,8 +85,8 @@ export function createBackdrop(opts){   // 遠景: group を 場面に 足し、
     }
   }
   function dispose(){ dead = true; lay.traverse(o => { if(o.geometry && !o.isSprite) o.geometry.dispose();   /* 光の 板 (Sprite) の 形は three.js 全体の 共用なので 捨てない */
-    for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map) m.map.dispose(); if(m.alphaMap) m.alphaMap.dispose(); m.dispose(); } }); }
-  return { group:lay, update, dispose, loading:() => pend };
+    for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map && !m.userData.keepMap) m.map.dispose(); if(m.alphaMap) m.alphaMap.dispose(); m.dispose(); } }); }
+  return { group:lay, update, dispose, loading:() => pend, galTex:galT };
 }
 
 export function build(scene, root, P, opts, out){   // 世界: 輪の 窓の 中に 見える 始まりの 銀河 だけ (くぐった 後は index.html の 遠景が 続ける)
