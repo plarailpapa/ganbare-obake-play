@@ -18,7 +18,14 @@
   :root{--s:1;--play-top:calc(206px + env(safe-area-inset-top));--pop-fs:22px;--sp-h:60px}
   #speed, #target, #gainBox, .pop{-webkit-text-stroke:5px #3a2a5c;paint-order:stroke fill;text-shadow:0 2px 0 #3a2a5c}
   #speed rt, #target rt, #gainBox rt, .pop rt{font-size:.45em;-webkit-text-stroke:3px #3a2a5c}
-  #trip{position:absolute;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top));height:46px;transform-origin:center top;transform:scale(var(--s))}   /* がんばる表示 (中身は 次の 便) */
+  #trip{position:absolute;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top));height:46px;transform-origin:center top;transform:scale(var(--s))}   /* がんばる表示: 点の 道・歩いた 後の 黄色・おばけ (--f = 進み 0〜1、tripTick)・右端の 地球の 四角 (3D は hud3d.js が キャンバスに 描く) */
+  #trip .road{position:absolute;left:6px;right:30px;bottom:9px;height:4px;background:radial-gradient(circle,rgba(255,255,255,.95) 45%,transparent 50%) 0 0/12px 4px repeat-x;opacity:.9}
+  #trip .done{position:absolute;left:6px;bottom:8px;height:6px;border-radius:3px;background:#ffd54a;box-shadow:0 0 6px #ffd54a;width:calc((100% - 30px) * var(--f,0))}
+  #trip .gh{position:absolute;bottom:6px;left:calc((100% - 34px) * var(--f,0));width:30px;height:39px}
+  #trip .gh .b{position:absolute;inset:0;overflow:hidden;animation:triphop .42s ease-in-out infinite alternate;transform-origin:50% 100%}
+  #trip .gh img{position:absolute;width:143.7%;left:-25.1%;top:-19.3%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+  #trip .earth{position:absolute;right:0;bottom:3px;width:38px;height:38px;border-radius:50%;box-shadow:0 0 10px 2px rgba(120,190,255,.8)}
+  @keyframes triphop{0%{transform:translateY(0) rotate(-6deg)}100%{transform:translateY(-5px) rotate(6deg)}}
   #target{position:absolute;left:16px;top:calc(70px + env(safe-area-inset-top));width:46%;line-height:1.2;transform-origin:left top;transform:scale(var(--s))}   /* つぎの あいて: 上から 字 → 模型の 場所 → 名前 (長い 名前は 2 行) → 相手の 時速 */
   #target .l{display:block;font-size:12px;font-weight:bold} #target.done .l{display:none}
   #nxSlot{display:block;width:56px;height:56px;margin:2px 0}
@@ -109,7 +116,7 @@
 <div id="ozone"></div>
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div id="hud">
-  <div id="trip"></div>
+  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div class="gh"><div class="b"><img src="assets/chara/obake-ganbaru.png" alt=""></div></div></div>
   <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
@@ -152,6 +159,7 @@ import * as OP from './opening.js';   // 導入 (天国の会話と 自転の説
 import * as RS from './result.js';   // 結果発表の画面 (10/20)
 import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
 import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会話と 3D の説明、10/20)
+import { createHud3d } from './hud3d.js';   // 表示の 中の 小さな 3D (がんばる表示の 地球、11/5)
 import * as MV from './movie3.js';   // 3 面の 最後「太陽に 追いつけ！」の 映画 (立ち絵の おばけ、10/28)
 
 /* ==================== 調整ノブ ==================== */
@@ -280,6 +288,8 @@ if(CANVAS_CLEAN) for(const C of [window.WebGL2RenderingContext, window.WebGLRend
 // 見た目の切替 (9/14): ?shadow=0 で影なし、?fps=1 で速度計、?px=1 で描画の細かさを画面ドット等倍に (既定は 1.5 倍まで)
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.has('px') ? +Q.get('px') : 1.5));
+const EARTH_MAP=new THREE.TextureLoader().load('planets/2k_earth_daymap.jpg'); EARTH_MAP.colorSpace=THREE.SRGBColorSpace;   // 地球の 地図は 1 面の ミニ地球と がんばる表示で 1 枚を 共有 (Codex 指摘 11/5)
+const hud3d=createHud3d(renderer); hud3d.earth(document.getElementById('tripEarth'), EARTH_MAP);
 const IS_MOBILE=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && Math.min(screen.width, screen.height)<900);
 const SHADOWS= Q.get('shadow')!=='0';   // 影 = 足元の丸影 (実質ゼロ負荷、スマホでも既定で あり)。本物の影の地図 (60 → 45 fps) と 形の押しつぶし影 (45 → 30 fps) は 社長の PC で不採用 (9/14〜15)
 renderer.setClearColor(0x000000, 0);
@@ -1430,7 +1440,7 @@ function mkFighter(){   // せんとうき (F-15 風): 灰色、主翼・双垂�
   box(8,0.12,2.6,c,0,0,-0.8,g); box(3.6,0.1,1.0,c,0,0.1,-3.3,g); for(const sx of [-1,1]){ box(0.1,1.6,1.4,c,sx*0.9,1.0,-3.0,g); cyl(0.4,0.4,2.6,c,sx*0.6,-0.1,-2.6,g); const fl=new THREE.Mesh(new THREE.ConeGeometry(0.35,2.0,8), fire); fl.rotation.x=-Math.PI/2; fl.position.set(sx*0.6,-0.1,-4.9); g.add(fl); }
   g.scale.setScalar(1.4); return g; }
 function mkMiniEarth(){   // ちきゅうの じてん (11/4 社長「1 面の 地球の 自転も ライバルに」→「ミニ地球の 方が よかった かも」): 直径 12 m の ミニ地球 (地図 = planets/2k_earth_daymap.jpg・雲 = 2k_earth_clouds.jpg を 透明度に、2 面と 同じ)・軸を 23.4 度 傾けて 自転 (雲は 少し 速く)・青い 大気の 光。夜の 側も 地図が うっすら 見える
-  const g=new THREE.Group(), tl=new THREE.TextureLoader(kitManager), map=tl.load('planets/2k_earth_daymap.jpg'), cm=tl.load('planets/2k_earth_clouds.jpg'); map.colorSpace=THREE.SRGBColorSpace;
+  const g=new THREE.Group(), tl=new THREE.TextureLoader(kitManager), map=EARTH_MAP, cm=tl.load('planets/2k_earth_clouds.jpg');
   const tilt=new THREE.Group(); tilt.rotation.z=23.4*Math.PI/180; g.add(tilt);   // 地軸の 傾き
   const earth=new THREE.Mesh(new THREE.SphereGeometry(6, 48, 24), new THREE.MeshLambertMaterial({ map, emissive:0xffffff, emissiveMap:map, emissiveIntensity:0.35 })), clouds=new THREE.Mesh(new THREE.SphereGeometry(6.12, 48, 24), new THREE.MeshLambertMaterial({ color:0xffffff, alphaMap:cm, transparent:true, opacity:0.85, depthWrite:false, emissive:0xffffff, emissiveIntensity:0.25 }));
   tilt.add(earth, clouds); const glow=new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color:0x6fb8ff, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false })); glow.scale.setScalar(20); g.add(glow);   // 大気の 光 (地球の 手前の 面に 隠れて ふちだけ 光る)
@@ -2155,6 +2165,11 @@ function creditLines(){   // クレジット (11/5 社長「いちばん 小さ�
 let creditShown=null, comboShown=0;
 function creditTick(){ const L=creditLines(), h=L[Math.floor(Math.max(0, stageT)/6)%L.length]; if(h===creditShown) return; creditShown=h; const el=$('credit'); el.textContent=h; let f=10; el.style.fontSize=f+'px'; while(el.scrollWidth>el.clientWidth && f>8){ f-=0.5; el.style.fontSize=f+'px'; } }   // 細い 画面で はみ出す 時だけ 少し 小さく (8px まで)
 function showCredit(){ creditShown=null; creditTick(); }
+let tripF=0, tripShown=-1, hudA=0;   // がんばる表示の 進み (0〜1) / 書き込んだ 値 / 3D の 地球の 濃さ
+function tripEnd(){ if(stage===3){ const c=plan3.find(o=>o.def.key==='catchup'); if(c) return c.t0; } return stageLen()-FINISH_LEAD; }   // おばけが 地球に 着く 時刻 (11/5 社長): 1・2 面 = FINISH・3 面 = 「太陽に 追いつけ」の 映画が 始まる 瞬間
+function tripTick(dt){ if(state==='run'){ const f=stageT/tripEnd(); if(Number.isFinite(f)) tripF=Math.min(1, Math.max(0, f)); } else   /* 終点が 0・NaN の 時は 前の 値の まま (Codex 指摘 11/5) */ if(state==='finish') tripF=Math.min(1, tripF+dt/0.6);   /* 残り 時間で 進む (速さの 合否で 変えない)。早く 終わる 回 (天の川・?result=) は 0.6 秒で 終点へ */
+  const q=Math.round(tripF*1000); if(q!==tripShown){ tripShown=q; $('trip').style.setProperty('--f', q/1000); } }
+function hudAlpha(dt){ if(resultShown || $('hud').style.visibility==='hidden' || !(state==='run' || state==='finish')) hudA=0; else if(document.body.classList.contains('hud-calm') || (stage===3 && movieOn3())) hudA=Math.max(0, hudA-dt/0.8); else hudA=1; return hudA; }   // 表示が ふわっと 消える (hud-calm = 0.8 秒) 時は 地球も 一緒に 薄く。結果発表・タイトルでは すぐ 消す
 
 /* ==================== 進行 ==================== */
 let state='title';   // title → (opening: 1 面の入口だけ) → run → finish
@@ -2175,13 +2190,12 @@ function updateLadderHUD(){ const L=ladderNow(), H=hudRungs(); [...ladderEl.chil
 const NAME_RUBY={'ハレー彗星':'ハレー<ruby>彗星<rt>すいせい</rt></ruby>', 'ボイジャー1号':'ボイジャー1<ruby>号<rt>ごう</rt></ruby>', '冥王星':'<ruby>冥王星<rt>めいおうせい</rt></ruby>', '月':'<ruby>月<rt>つき</rt></ruby>', '宇宙戦艦':'<ruby>宇宙<rt>うちゅう</rt></ruby><ruby>戦艦<rt>せんかん</rt></ruby>', 'アンドロメダ銀河':'アンドロメダ<ruby>銀河<rt>ぎんが</rt></ruby>'};
 function nameHtml(n){ if(NAME_RUBY[n]) return NAME_RUBY[n]; const o=S2.LADDER2.find(p=>p.name===n && p.kana); return o ? '<ruby>'+n+'<rt>'+o.kana+'</rt></ruby>' : n; }   // 漢字の 名前に ふりがな (惑星は 読みの データ、ほかは 表)。名前は 中の 決まった 文字だけ (innerHTML で よい)
 function layoutHUD(){   // 字の 大きさを 画面の 大きさで 決める (11/5 社長「桁が 増えたから 小さく するのは 良くない、はじめから その 桁数の 大きさに」)。読み込み時・画面の 大きさが 変わった 時だけ
-  const land=innerWidth>=innerHeight, s=land ? Math.min(1.5, Math.max(1, innerHeight/576)) : 1, R=document.documentElement.style; R.setProperty('--s', s);
-  const sp=$('speed'), k=$('kmh'), keep=k.textContent, lim= land ? 290 : 0.7*(innerWidth-32); k.textContent='8,888,888'; let fs=44; k.style.fontSize=fs+'px';
+  const land=innerWidth>=innerHeight, s=land ? Math.min(1.5, Math.max(0.7, Math.min(innerHeight/576, innerWidth/1024))) : 1, R=document.documentElement.style; R.setProperty('--s', s);   /* 横長は 見本 (1024×576) の 並びの まま 拡大・縮小。高さだけで 決めると 横幅の 狭い 窓で がんばる表示と 時速が ぶつかる (11/5 社長) */  const sp=$('speed'), k=$('kmh'), keep=k.textContent, lim= land ? 290 : 0.7*(innerWidth-32); k.textContent='8,888,888'; let fs=44; k.style.fontSize=fs+'px';
   while(sp.offsetWidth>lim && fs>20){ fs--; k.style.fontSize=fs+'px'; } k.textContent=keep;   /* 時速: 7 けたが 入る 大きさ (縦長 = 段の 幅の 7 割・横長 = 290px を 拡大) */
   R.setProperty('--sp-h', (sp.offsetHeight+6)+'px');   /* 連続と 加速は 時速の すぐ 下 (高さは 拡大・移動の 影響を 受けない) */
   const box=$('pops'), d=document.createElement('div'); d.className='pop'; d.style.cssText='visibility:hidden;animation:none'; box.appendChild(d); let pf=Math.round(22*s);
   for(const n of [...LADDER, ...S2.LADDER2, ...S3.LADDER3].map(o=>o.name)){ d.innerHTML='<span>「'+nameHtml(n)+'」を ぬいた！</span>'; const w=d.firstChild; d.style.fontSize=pf+'px'; while(w.offsetWidth*1.12+6>box.clientWidth && pf>12){ pf--; d.style.fontSize=pf+'px'; } }   /* 文字の 実際の 幅で 判定。飛び出す 時の 1.12 倍と 縁取りの 分も 見込む (Codex 指摘 11/5) */
-  d.remove(); R.setProperty('--pop-fs', pf+'px'); }   /* 「ぬいた！」: いちばん 長い 名前でも 1 行に 入る 大きさで 固定 */
+  d.remove(); R.setProperty('--pop-fs', pf+'px'); hud3d.relayout(); }   /* 「ぬいた！」: いちばん 長い 名前でも 1 行に 入る 大きさで 固定 */
 function pop(html, small){ const d=document.createElement('div'); d.className='pop'+(small?' small':''); d.innerHTML=html; $('pops').appendChild(d); setTimeout(()=>d.remove(), 1900); }
 function showGain(add, cb=0){ const g=$('gain'); g.innerHTML='＋'+fmtKmh(add-cb/3.6)+' km'+(cb ? '<span class="cb">＋'+cb+' ボーナス</span>' : '');   /* コンボ ボーナスは 別に 小さく黄色で */ g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
 let combo=0, fcMiss=false;   // fcMiss = この 回で 1 回でも 取りこぼした (ランキングの フルコンボの 王冠、11/4 社長)
@@ -2235,7 +2249,7 @@ function finishRun(){ ovStop(); for(const r of rivals3){ r.active=false; r.mesh.
   spaceDark0=parseFloat($('space').style.opacity)||0; launchS=s; ghostGlow.visible=true; shadow.visible=false;   // 空の暗さは ここから 6 秒で 1 へ (update で)
 }
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
-function resetRun(){ ovStop(); clearGalaxy3(); rivals3Reset(); if(movie3){ movie3.dispose(); movie3=null; } laneLock3=null; camRef3=0; $('tilt3').hidden=true; nursery3Run=false; ending3Over=false;bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
+function resetRun(){ ovStop(); clearGalaxy3(); rivals3Reset(); if(movie3){ movie3.dispose(); movie3=null; } laneLock3=null; camRef3=0; $('tilt3').hidden=true; nursery3Run=false; ending3Over=false;bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; $('speed').style.visibility=''; $('trip').style.visibility=''; tripF=0; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
 const RIVALS = {   // ハイスコアの 表に 最初から 並ぶ ライバル (10/27 社長「1 面なら スペースシャトル、2 面なら 金星などを ランクインさせて」)。名前と 速さは ゲームの 中の 相手と 同じ
   1: ['スペースシャトル', 'ミサイル', 'SR-71', 'ヴァルキリー', 'せんとうき', 'Tu-144', 'コンコルド', 'ちきゅうの じてん', 'おとの はやさ', 'ひこうき'].map(n=>LADDER.find(o=>o.name===n)),
@@ -2246,7 +2260,7 @@ for(const k in RIVALS) RIVALS[k]=RIVALS[k].filter(Boolean).map(o=>({name:o.name,
 { const w=()=>RK.warmFont(Object.values(RIVALS).flat().map(o=>o.name+(o.kana||'')).join('')); if(document.readyState==='complete') w(); else addEventListener('load', w, {once:true}); }   // ランキングの 丸文字を 先に 読む (ライバルの 名前の 漢字も、11/4)
 const EARTH2_KMH = S2.PLANETS2.find(p=>p.name==='地球').kmh, GOAL3_KMH = 830000;   // 2 面の合格 = 地球の公転 (時速 107,200)、3 面の「おいぬいた」= 太陽系の公転
 function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め言葉・ボタン・足りない時の 神様
-  resultShown=true; $('speed').style.visibility='hidden';
+  resultShown=true; $('speed').style.visibility='hidden'; $('trip').style.visibility='hidden';
   const kmh=Math.round(finalV*3.6), goal= stage===1 ? Math.round(V_GOAL*3.6) : stage===2 ? EARTH2_KMH : GOAL3_KMH;
   const ok= stage===1 ? finalV>=V_GOAL : stage===2 ? (passed2.has('地球') || kmh>=EARTH2_KMH) : (pass3 ?? finalV*3.6>=GOAL3_KMH);   /* 3 面: 最後の輪で 太陽系の公転に 届いていれば 子ども部屋へ = 合格 (10/21 社長)。輪で決めた合否を そのまま使う (丸めた数字で比べると 境目で 食い違う、Codex 指摘 10/21) */   /* 2 面: 地球を抜く前に 曲が終わっても 速さが届いていれば 合格 (付録 B) */
   if(ok) failCount[stage]=0; else failCount[stage]++;
@@ -2401,7 +2415,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     if(!sg.animals) continue; for(const an of sg.animals){ an.root.visible=near; if(near) an.mixer.update(dt); } }   // 野原の動物 (近い区間 700 m だけ動かして描く) と 風車の羽根 (ゆっくり回る)。タイトル画面でも動く
   updateStarTunnel(dt); updatePuffs(dt); updateHotAir(dt);   // 星のトンネル (ゴールが近い合図) と ブルーインパルスの煙の時計 (9/15)
   dispV += ((state==='finish' ? finalV : v)-dispV)*Math.min(1, dt*4);   // FINISH 後は 記録の速さで止める
-  $('kmh').textContent=fmtKmh(dispV); creditTick();   /* クレジットは 曲が 変わる・6 秒ごとの 切り替えの 時だけ 書き換わる */
+  $('kmh').textContent=fmtKmh(dispV); creditTick(); tripTick(dt);   /* クレジットは 曲が 変わる・6 秒ごとの 切り替えの 時だけ 書き換わる */
 
   // おばけの位置と向き
   frameAt(s, G); bob+=dt*3;
@@ -2575,6 +2589,7 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   else if(!white3Full){   // 子ども部屋で 真っ白の間は 見えないので 描かない (結果発表を 待つ間の 電池、Codex 指摘 10/27)
     if(stage===3){ const p= ERRLOG ? performance.now() : 0; renderWorlds3(Math.min(0.05, raw)); if(ERRLOG) PF3.w=performance.now()-p; }   // 3 面: 世界の景色を レールより先に (奥行きは消さない)
     renderer.render(scene,camera); }
+  hud3d.render(Math.min(0.05, raw), hudAlpha(Math.min(0.05, raw)));   /* 表示の 中の 小さな 3D (がんばる表示の 地球) は 最後に 上から */
   if(CARD_Q!=null && stage===3 && state==='run' && !cardShot3 && plan3[0] && stageT-plan3[0].t0>=(CARD_Q>0 ? CARD_Q : CARD3_SEC[plan3[0].def.key] ?? 6)){ const w=views3.get(pi3); if(w && w.placed){ cardShot3=true;   // 撮影用の 入口 (?w3=<key>&card[=秒]&errlog=1): 世界の 景色だけを 描き直して 1 枚 撮り、確認用 サーバーの 記録へ 送る (おばけ・レール・輪は 写さない)
       renderer.setRenderTarget(null); renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.render(w.scene, camera); const src=renderer.domElement, W=src.width, H=src.height, cw=480, ch=300; let sw=W, sh=W*ch/cw; if(sh>H){ sh=H; sw=H*cw/ch; }
       const c=document.createElement('canvas'); c.width=cw; c.height=ch; c.getContext('2d').drawImage(src, (W-sw)/2, (H-sh)/2, sw, sh, 0, 0, cw, ch); logSend({card:plan3[pi3].def.key, url:c.toDataURL('image/jpeg', 0.88)});
