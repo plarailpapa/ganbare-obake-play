@@ -38,7 +38,7 @@
   @keyframes tripbub{0%{opacity:0;transform:translateY(4px) scale(.8)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
   #tripRow{position:absolute;left:0;right:0;top:-20px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;font-size:12px;font-weight:bold;line-height:1.3;white-space:nowrap;-webkit-text-stroke:3px #3a2a5c;paint-order:stroke fill;text-shadow:0 1px 0 #3a2a5c}   /* がんばる表示の すぐ 上の 段 (おばけが 歩く 所の 外。地球の 左だと 終わり近くに おばけが 重なって 隠れた、Codex 指摘 11/5): 左 = おばけの 意味 (11/5 社長「残り 時間だと 分かる 文」)・右 = 地球の 上に いつも「目標 ○○ km」(超えたら 金色) */
   #tripNote{color:#c8f4ff;overflow:hidden;text-overflow:ellipsis;min-width:0;padding:2px 0} #tripGoal{color:#fff;flex:none;transform-origin:right bottom}
-  #tripGoal rt{font-size:.6em;-webkit-text-stroke:2px #3a2a5c} #tripGoal.hit{color:#ffe066}
+  #tripRow rt{font-size:.6em;-webkit-text-stroke:2px #3a2a5c} #tripGoal.hit{color:#ffe066}
   #trip.hint #tripGoal{animation:goalpulse .5s ease-in-out 8 alternate} @keyframes goalpulse{to{transform:scale(1.2)}}   /* 走り 始めの 説明の 間は 目標が ぴょこぴょこ */
   #howto{position:absolute;left:16px;right:16px;top:calc(var(--play-top) + 3.2 * var(--pop-fs));text-align:center;line-height:1.45;font-weight:bold;opacity:0;-webkit-text-stroke:5px #3a2a5c;paint-order:stroke fill;text-shadow:0 2px 0 #3a2a5c}   /* 走り 始めの 説明 (約 5 秒で 消える) */
   #howto span{display:block;margin-bottom:.35em} #howto .a{font-size:calc(22px * var(--s));color:#fff7c8} #howto .b{font-size:calc(16px * var(--s));color:#c8f4ff} #howto .c{font-size:calc(16px * var(--s));color:#fff}
@@ -136,7 +136,7 @@
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div class="edge" id="edgeL"></div><div class="edge" id="edgeR"></div>
 <div id="hud">
-  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div id="tripRow"><span id="tripNote">おばけが ちきゅうに つくと おしまい</span><span id="tripGoal"></span></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
+  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div id="tripRow"><span id="tripNote">おばけが <ruby>地球<rt>ちきゅう</rt></ruby>に つくまでに <ruby>目標<rt>もくひょう</rt></ruby>を こえよう</span><span id="tripGoal"></span></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
   <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
@@ -2204,7 +2204,8 @@ function creditTick(){ const L=creditLines(), h=L[Math.floor(Math.max(0, stageT)
 function showCredit(){ creditShown=null; creditTick(); }
 function goalKmh(){ return stage===3 ? GOAL3_KMH : stage===2 ? EARTH2_KMH : Math.round(V_GOAL*3.6); }   // 合格の 速さ (1 面 地球の 自転・2 面 地球の 公転・3 面 太陽系の 公転)
 let goalShown='', goalHit=null;
-function goalTick(){ const g=goalKmh(), t=g.toLocaleString('ja-JP'); if(t!==goalShown){ goalShown=t; $('tripGoal').innerHTML='<ruby>目標<rt>もくひょう</rt></ruby> '+t+' km'; }   // がんばる表示の 地球の 左に いつも「目標 ○○ km」(11/5 社長: 奥さま「何キロ 出せば いいか 分からない」)
+function goalTick(){ const g=goalKmh(), t=g.toLocaleString('ja-JP'); if(t!==goalShown){ goalShown=t; $('tripGoal').innerHTML='<ruby>目標<rt>もくひょう</rt></ruby> '+t+' km'; fitTripNote(); }   // がんばる表示の 地球の 左に いつも「目標 ○○ km」(11/5 社長: 奥さま「何キロ 出せば いいか 分からない」)
+function fitTripNote(){ const n=$('tripNote'); let f=12; n.style.fontSize=''; while(n.scrollWidth>n.clientWidth+1 && f>8){ f-=0.5; n.style.fontSize=f+'px'; } }   // がんばる表示の 上の 文が 目標の 文字と 並んで 入りきらない 時だけ 少し 小さく (幅の 狭い スマホ、11/5)
   const hit= (state==='finish' ? finalV : v)*3.6>=g; if(hit!==goalHit){ goalHit=hit; $('tripGoal').classList.toggle('hit', hit); } }   /* 超えたら 金色 */
 function showHowto(){ const touch=IS_MOBILE || matchMedia('(pointer: coarse)').matches, el=$('howto');   // 走り 始めの 説明 (約 5 秒、11/5 社長: 奥さま「何を すれば いいか 分からない」)
   el.innerHTML='<span class="a">'+(stage===1 ? 'ひかる いたを ふむと' : 'ひかる わを くぐると')+' はやく なるよ！</span><span class="b">'+(touch ? 'がめんの ひだり・みぎ を タップで いどう' : '← → キーで いどう')+'</span><span class="c">おばけが ちきゅうに つくまでに<br><ruby>時速<rt>じそく</rt></ruby> '+goalKmh().toLocaleString('ja-JP')+' km を こえよう！</span>';
@@ -2259,7 +2260,7 @@ function layoutHUD(){   // 字の 大きさを 画面の 大きさで 決める 
   R.setProperty('--sp-h', (sp.offsetHeight+6)+'px');   /* 連続と 加速は 時速の すぐ 下 (高さは 拡大・移動の 影響を 受けない) */
   const box=$('pops'), d=document.createElement('div'); d.className='pop'; d.style.cssText='visibility:hidden;animation:none'; box.appendChild(d); let pf=Math.round(22*s);
   for(const n of [...LADDER, ...S2.LADDER2, ...S3.LADDER3].map(o=>o.name)){ d.innerHTML='<span>「'+nameHtml(n)+'」を ぬいた！</span>'; const w=d.firstChild; d.style.fontSize=pf+'px'; while(w.offsetWidth*1.12+6>box.clientWidth && pf>12){ pf--; d.style.fontSize=pf+'px'; } }   /* 文字の 実際の 幅で 判定。飛び出す 時の 1.12 倍と 縁取りの 分も 見込む (Codex 指摘 11/5) */
-  d.remove(); R.setProperty('--pop-fs', pf+'px'); hud3d.relayout(); }   /* 「ぬいた！」: いちばん 長い 名前でも 1 行に 入る 大きさで 固定 */
+  d.remove(); R.setProperty('--pop-fs', pf+'px'); hud3d.relayout(); fitTripNote(); }   /* 「ぬいた！」: いちばん 長い 名前でも 1 行に 入る 大きさで 固定 */
 function pop(html, small){ const d=document.createElement('div'); d.className='pop'+(small?' small':''); d.innerHTML=html; $('pops').appendChild(d); setTimeout(()=>d.remove(), 1900); }
 function showGain(add, cb=0){ const g=$('gain'); g.innerHTML='＋'+fmtKmh(add-cb/3.6)+' km'+(cb ? '<span class="cb">＋'+cb+' ボーナス</span>' : '');   /* コンボ ボーナスは 別に 小さく黄色で */ g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
 let combo=0, fcMiss=false;   // fcMiss = この 回で 1 回でも 取りこぼした (ランキングの フルコンボの 王冠、11/4 社長)
