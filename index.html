@@ -30,6 +30,12 @@
   #trip .gh img{position:absolute;width:143.7%;left:-25.1%;top:-19.3%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
   #trip .earth{position:absolute;right:0;bottom:3px;width:38px;height:38px;border-radius:50%;box-shadow:0 0 10px 2px rgba(120,190,255,.8)}
   @keyframes triphop{0%{transform:translateY(0) rotate(-6deg)}100%{transform:translateY(-5px) rotate(6deg)}}
+  #trip .gh .j{position:absolute;inset:0;transform-origin:50% 100%} #trip .gh .j.on{animation:tripjump .75s ease-out}   /* おばけの リアクション (hudReact): 声に 合わせて 跳ねる・顔・吹き出し */
+  @keyframes tripjump{0%{transform:none}40%{transform:translateY(-11px) scale(1.15)}60%{transform:translateY(0) scale(1.05)}100%{transform:none}}
+  #trip .gh img.f{opacity:0} #trip .gh.egao img.n, #trip .gh.odoroki img.n{opacity:0} #trip .gh.egao img.fe, #trip .gh.odoroki img.fo{opacity:1}
+  #trip .gh .bub{position:absolute;left:24px;top:-10px;background:#fff;color:#3a2a5c;font-size:12px;font-weight:bold;line-height:1.5;padding:0 7px;border-radius:10px;white-space:nowrap;opacity:0;text-shadow:none;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  #trip .gh .bub.flip{left:auto;right:24px} #trip .gh .bub.on{animation:tripbub 1.2s ease-out}   /* 右の 方 (地球の 近く) では おばけの 左に 出す */
+  @keyframes tripbub{0%{opacity:0;transform:translateY(4px) scale(.8)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
   #target{position:absolute;left:16px;top:calc(70px + env(safe-area-inset-top));width:46%;line-height:1.2;transform-origin:left top;transform:scale(var(--s))}   /* つぎの あいて: 上から 字 → 模型の 場所 → 名前 (長い 名前は 2 行) → 相手の 時速 */
   #target .l{display:block;font-size:12px;font-weight:bold} #target.done .l{display:none}
   #nxSlot{display:block;position:relative;width:56px;height:56px;margin:2px 0}   /* 模型の 枠 (3D は hud3d.js が キャンバスに 描く) */
@@ -123,7 +129,7 @@
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div class="edge" id="edgeL"></div><div class="edge" id="edgeR"></div>
 <div id="hud">
-  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div class="gh"><div class="b"><img src="assets/chara/obake-ganbaru.png" alt=""></div></div></div>
+  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
   <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
@@ -1965,12 +1971,19 @@ const OV_VOL=0.8 /* 声の 大きさ (11/4 社長「少しだけ 下げる」) *
 const OV_COMBO={10:'rc-03', 20:'rc-04', 30:'rc-05', 40:'rc-06', 50:'rc-07', 60:'rc-08'}, OV_WOW=['rc-14', 'rc-15', 'rc-16', 'rc-17'];   // それっ・いい感じ・速ーい・止まらなーい・びゅんびゅーん・おばけパワー (70〜100 は ふわふわ〜ん) / へ〜・おお〜・すごーい・わあっ
 let ovSrc=null, ovPr=0, ovEnd=0, ovN=0, ovAlt=0, ovTok=0;
 const ovPick=a=>a[Math.floor(Math.random()*a.length)];
+const RC_TEXT={'rc-01':'行くぞー！', 'rc-02':'しゅっぱーつ！', 'rc-03':'それっ！', 'rc-04':'いい かんじ！', 'rc-05':'はやーい！', 'rc-06':'止まらなーい！', 'rc-07':'びゅんびゅーん！', 'rc-08':'おばけパワー！', 'rc-09':'ふわふわ〜ん！', 'rc-10':'あっ、いた！', 'rc-11':'まてまてー！', 'rc-12':'ぬいたー！', 'rc-13':'お先にー！', 'rc-14':'へ〜！', 'rc-15':'おお〜！', 'rc-16':'すごーい！', 'rc-17':'わあっ！', 'rc-18':'つぎの せかいだ！', 'rc-19':'よーし、もう 少し！', 'rc-20':'いっけー！', 'rc-21':'やったー！', 'rc-22':'おいついたー！', 'rc-23':'あーん、おしい…'},   // 吹き出しの セリフ (声と 同じ。漢字は 2 年生まで、ほかは ひらがな)
+  RC_ODOROKI=new Set(['rc-10', 'rc-11', 'rc-14', 'rc-15', 'rc-16', 'rc-17', 'rc-23']);   // 驚いた 顔 (大物を 見つけた・へ〜 おお〜 すごーい わあっ・おしい)。ほかは 笑顔
+let reactTm=0;
+function hudReact(id){ const t=RC_TEXT[id]; if(!t) return; const gh=$('tripGh'), bub=gh.querySelector('.bub');   // がんばる表示の おばけが 声に 合わせて 跳ねる・顔が 0.9 秒 変わる・吹き出し 1.2 秒 (11/5 社長「お化けが しゃべる タイミングで リアクション」)
+  gh.classList.remove('egao', 'odoroki'); gh.classList.add(RC_ODOROKI.has(id) ? 'odoroki' : 'egao'); bub.textContent=t; bub.classList.toggle('flip', tripF>0.55);
+  for(const el of [gh.firstChild, bub]){ el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
+  clearTimeout(reactTm); reactTm=setTimeout(()=>gh.classList.remove('egao', 'odoroki'), 900); }
 function ovPreload(){ if(!actx) return; for(let i=1;i<=23;i++) loadSound(actx, OV_DIR+'rc-'+String(i).padStart(2, '0')+'.mp3'); loadSound(actx, OV_DIR+'warp3-01.mp3'); }
 function say(id, pr){
   if(!actx || actx.state!=='running' || state!=='run' || (actx.currentTime<ovEnd && pr<=ovPr)) return;   // 鳴って いる 声より 大事で なければ 言わない
   const tk=ovTok, tq=actx.currentTime; loadSound(actx, OV_DIR+id+'.mp3').then(buf=>{ const t0=actx.currentTime; if(!buf || tk!==ovTok || state!=='run' || t0-tq>0.6 || (t0<ovEnd && pr<=ovPr)) return;   /* 読み込みが 遅れた 声は 捨てる (結果の 画面で 古い 声が 鳴らない、Codex 指摘 11/4) */
     if(ovSrc){ try{ ovSrc.stop(); }catch(_){} }
-    const src=actx.createBufferSource(), g=actx.createGain(); g.gain.value=OV_VOL; src.buffer=buf; src.connect(g).connect(audioOut(actx)); src.start(); ovSrc=src; ovPr=pr; ovEnd=t0+buf.duration;
+    const src=actx.createBufferSource(), g=actx.createGain(); g.gain.value=OV_VOL; src.buffer=buf; src.connect(g).connect(audioOut(actx)); src.start(); ovSrc=src; ovPr=pr; ovEnd=t0+buf.duration; hudReact(id);
     if(ERRLOG) logSend({ov:id, pr}); });
 }
 const SFX3={ robot:{url:'assets/sfx/robot-pose.mp3', vol:0.7}, ship:{url:'assets/sfx/ship-motor.mp3', vol:0.35} }, sfx3Live={}, sfx3Tok={};   // 3 面の ライバルの 音 (11/5 社長・効果音ラボ: ロボットの 決めポーズ「ロボット合体3」・宇宙戦艦に 近寄ったら こっそり「巨大モーター起動」) / 鳴って いる 音 / 読み込み中の 音を 取り消す 番号
