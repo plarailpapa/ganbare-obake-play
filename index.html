@@ -36,7 +36,8 @@
   #trip .gh .bub{position:absolute;left:24px;top:-10px;background:#fff;color:#3a2a5c;font-size:12px;font-weight:bold;line-height:1.5;padding:0 7px;border-radius:10px;white-space:nowrap;opacity:0;text-shadow:none;box-shadow:0 1px 3px rgba(0,0,0,.35)}
   #trip .gh .bub.flip{left:auto;right:24px} #trip .gh .bub.on{animation:tripbub 1.2s ease-out}   /* 右の 方 (地球の 近く) では おばけの 左に 出す */
   @keyframes tripbub{0%{opacity:0;transform:translateY(4px) scale(.8)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
-  #tripGoal{position:absolute;right:0;top:-18px;font-size:12px;font-weight:bold;line-height:1.3;color:#fff;white-space:nowrap;-webkit-text-stroke:3px #3a2a5c;paint-order:stroke fill;text-shadow:0 1px 0 #3a2a5c;transform-origin:right bottom}   /* 地球の すぐ 上の 段に いつも「目標 ○○ km」(超えたら 金色)。おばけが 歩く 所の 外 (地球の 左だと 終わり近くに おばけが 重なって 隠れた、Codex 指摘 11/5) */
+  #tripRow{position:absolute;left:0;right:0;top:-20px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;font-size:12px;font-weight:bold;line-height:1.3;white-space:nowrap;-webkit-text-stroke:3px #3a2a5c;paint-order:stroke fill;text-shadow:0 1px 0 #3a2a5c}   /* がんばる表示の すぐ 上の 段 (おばけが 歩く 所の 外。地球の 左だと 終わり近くに おばけが 重なって 隠れた、Codex 指摘 11/5): 左 = おばけの 意味 (11/5 社長「残り 時間だと 分かる 文」)・右 = 地球の 上に いつも「目標 ○○ km」(超えたら 金色) */
+  #tripNote{color:#c8f4ff;overflow:hidden;text-overflow:ellipsis;min-width:0;padding:2px 0} #tripGoal{color:#fff;flex:none;transform-origin:right bottom}
   #tripGoal rt{font-size:.6em;-webkit-text-stroke:2px #3a2a5c} #tripGoal.hit{color:#ffe066}
   #trip.hint #tripGoal{animation:goalpulse .5s ease-in-out 8 alternate} @keyframes goalpulse{to{transform:scale(1.2)}}   /* 走り 始めの 説明の 間は 目標が ぴょこぴょこ */
   #howto{position:absolute;left:16px;right:16px;top:calc(var(--play-top) + 3.2 * var(--pop-fs));text-align:center;line-height:1.45;font-weight:bold;opacity:0;-webkit-text-stroke:5px #3a2a5c;paint-order:stroke fill;text-shadow:0 2px 0 #3a2a5c}   /* 走り 始めの 説明 (約 5 秒で 消える) */
@@ -135,7 +136,7 @@
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div class="edge" id="edgeL"></div><div class="edge" id="edgeR"></div>
 <div id="hud">
-  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><span id="tripGoal"></span><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
+  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div id="tripRow"><span id="tripNote">おばけが ちきゅうに つくと おしまい</span><span id="tripGoal"></span></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
   <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
