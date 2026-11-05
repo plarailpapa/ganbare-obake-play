@@ -82,7 +82,18 @@ export function createResult(root, { actx, faces }){
     sp.style.fontSize = ''; for(let i = 0; i < 2; i++){ const w = num.getBoundingClientRect().width, avail = innerWidth - 16; if(w <= avail) break;   /* 札の 字は 11px より 小さく しないので 2 回 合わせる */
       sp.style.fontSize = (parseFloat(getComputedStyle(sp).fontSize) * avail / w).toFixed(1) + 'px'; }
   };
-  addEventListener('resize', fitSpeed);
+  const stack = () => {   // スマホ (縦長) だけ: 文字を 上から 実際の 高さで 積む (長い 名前で 褒め言葉が 2 行に なっても 重ならない)・おばけは 文字と ボタンの 間の 真ん中へ (11/5 社長)。横長 (パソコン) は 今までの 位置
+    const q = s => root.querySelector(s), parts = [q('.rs-praise'), q('.rs-line')], chars = [...root.querySelectorAll('.rs-ch')], sp = q('.rs-speed'), btns = q('.rs-btns'), box = q('.rs-box');
+    for(const el of parts) if(el) el.style.top = ''; for(const el of chars){ el.style.top = ''; el.style.width = ''; }
+    if(!sp || innerWidth >= innerHeight) return;
+    let y = sp.getBoundingClientRect().bottom + 4;
+    for(const el of parts){ if(!el) continue; el.style.top = y + 'px'; y = el.getBoundingClientRect().bottom + 4; }
+    const lim = box && getComputedStyle(box).display !== 'none' ? box : btns; if(!lim) return; const b = lim.getBoundingClientRect().top;   /* 下の 限り = 神様の 言葉の 箱 (出て いる 時) か ボタン */
+    for(const el of chars){ let r = el.getBoundingClientRect(); const room = b - y - 16;   /* 足りない 時の おばけと 神様も 文字の 下へ。入りきらない 時は 小さく して 収める (Codex 指摘 11/5) */
+      if(r.height > room && room > 0){ el.style.width = Math.max(40, r.width * room / r.height) + 'px'; r = el.getBoundingClientRect(); }
+      el.style.top = Math.max(y + 8, (y + b - r.height) / 2) + 'px'; }
+  };
+  addEventListener('resize', () => { fitSpeed(); stack(); });
   function clear(){ gen++; if(voice){ try{ voice.stop(); }catch(e){} voice = null; } if(stopConf){ stopConf(); stopConf = null; } root.innerHTML = ''; root.className = ''; root.hidden = true; }
   return {
     show(d){
@@ -98,6 +109,7 @@ export function createResult(root, { actx, faces }){
       root.innerHTML = h; fitSpeed();
       const btns = root.querySelector('.rs-btns');
       root.style.setProperty('--rs-bh', btns.getBoundingClientRect().height + 'px');   // 神様の言葉の箱は ボタンの上に
+      stack(); { const my = gen; document.fonts.ready.then(() => { if(my === gen){ fitSpeed(); stack(); } }); }   /* 丸文字の 読み込みが 終わったら 並べ直す (字の 高さが 変わる、Codex 指摘 11/5) */
       let done = false;
       const press = e => {   // 1 回押したら 全部のボタンを 効かなくする (連打・2 本指で 2 回始まらない)。指・マウスは pointerdown、キーボード (Tab → Enter・Space) は click (Codex 指摘 10/20)
         const b = e.target.closest('.rs-btn'); if(!b || done) return;
@@ -106,7 +118,7 @@ export function createResult(root, { actx, faces }){
       btns.addEventListener('pointerdown', press); btns.addEventListener('click', press);
       if(d.confetti) stopConf = startConfetti(root.querySelector('.rs-conf'));
       if(d.god){ const my = gen;   // 神様は 声だけ (10/20 社長)。声のファイルが無い間だけ 文字の窓を ボタンの上に出す
-        playSound(actx, 'assets/voice/' + d.god.line.id + '.mp3', 1, () => my === gen).then(s => { if(my !== gen){ if(s) s.stop(); return; } if(s) voice = s; else root.classList.add('rs-textgod'); }); }
+        playSound(actx, 'assets/voice/' + d.god.line.id + '.mp3', 1, () => my === gen).then(s => { if(my !== gen){ if(s) s.stop(); return; } if(s) voice = s; else { root.classList.add('rs-textgod'); stack(); } }); }   /* 文字の 窓が 出たら その 上に 収め直す */
     },
     hide: clear,
     dispose: clear
