@@ -13,6 +13,7 @@ export function createHud3d(renderer){
     const ball=new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20), mat); tilt.add(ball);
     const sun=new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(-2, 1.5, 3); scene.add(sun, new THREE.AmbientLight(0xffffff, 0.3));   /* 左上の 前から 照らす (右下が 夜) */
     views.push({ el, scene, camera, rect:null, mats:[mat], tick:dt=>{ ball.rotation.y+=dt*Math.PI/4; } });
+    try{ renderer.compile(scene, camera); }catch(e){ console.warn('がんばる表示の 地球の 下ごしらえ', e); }   /* 描き方の 準備は 読み込みの 時に (走り 始めの 一瞬の 止まりを 防ぐ) */
     relayout();
   }
 
@@ -26,7 +27,8 @@ export function createHud3d(renderer){
     model.position.set(0, 0, 0); model.quaternion.identity(); model.updateMatrixWorld(true);
     const b=new THREE.Box3().setFromObject(model), c=b.getCenter(new THREE.Vector3()), z=b.getSize(new THREE.Vector3()), r=Math.max(z.x, z.y, z.z)/2;
     model.position.sub(c); const spin=new THREE.Group(); spin.add(model); spin.scale.setScalar(r>0 ? 1/r : 1); spin.rotation.y=Math.PI/2;
-    const root=new THREE.Group(); root.rotation.x=0.3; root.add(spin); root.visible=false; mScene.add(root); return { root, spin, model, t:0 }; }
+    const root=new THREE.Group(); root.rotation.x=0.3; root.add(spin); root.visible=false; mScene.add(root); return { root, spin, model, t:0, fog:!!model.userData.hudFog }; }
+  const FOG=new THREE.Fog(0x000000, 1e8, 2e8);   // 霧の ある 場所の 相手 (1・3 面) は 霧 (届かない 遠さ) を 付けて 描く = ゲームと 同じ 描き方を 使い回す (無いと 相手が 初めて 出る たびに 描き方の 準備を し直して スマホで 一瞬 止まった、11/5 社長「1 面で カクカク 2 か所」)
   function drop(w){ mScene.remove(w.root); const sk=new Set(); w.root.traverse(o=>{ if(o.material) for(const m of [].concat(o.material)) m.dispose(); if(o.isSkinnedMesh && o.skeleton) sk.add(o.skeleton); }); for(const s of sk) s.dispose(); if(w.model.userData.dispose) w.model.userData.dispose(); }   // 材質・骨組みは 複製なので 捨てる (形・絵は ゲームと 共有。自前の 物は userData.dispose、Codex 指摘 11/5)
   function setNext(model, { animate=false }={}){
     if(cur){ if(animate && cur.t>=0){ cur.from={ ox:cur.ox||0, oy:cur.oy||0, k:cur.k||1 }; cur.t=0; leaving.push(cur); } else drop(cur); }   /* 入る 途中で 替わっても 今 いる 所から 飛ぶ (Codex 指摘 11/5) */
@@ -36,7 +38,7 @@ export function createHud3d(renderer){
     for(let i=0;i<20;i++){ t=(lo+hi)/2; const x=3*(1-t)*(1-t)*t*x1+3*(1-t)*t*t*x2+t*t*t; if(x<p) lo=t; else hi=t; } return 3*(1-t)*(1-t)*t*y1+3*(1-t)*t*t*y2+t*t*t; };
   const easeIn=bez(0.3, 0.7, 0.4, 1), easeFly=bez(0.5, 0, 0.9, 0.4);
   function drawModel(w, ox, oy, k, roll){ const r=slotRect, cx=r.left+r.width/2+ox, cy=r.top+r.height/2+oy, s=r.width*FIT*k;
-    if(s<1) return; mCam.rotation.z=roll; w.root.visible=true;
+    if(s<1) return; mCam.rotation.z=roll; mScene.fog= w.fog ? FOG : null; w.root.visible=true;
     const x=cx-s/2, y=size.y-(cy+s/2); renderer.setViewport(x, y, s, s); renderer.setScissor(x, y, s, s); renderer.setScissorTest(true);
     renderer.clearDepth(); renderer.render(mScene, mCam); w.root.visible=false; }
   function renderModels(dt){ if(!mScene || !slotRect || slotRect.width<1) return; const r=slotRect, S=r.width/56, R=r.left+r.width/2;   /* S = 表示の 拡大率・R = 弾倉の 半径 (画面の 左ふち → 枠の 真ん中) */

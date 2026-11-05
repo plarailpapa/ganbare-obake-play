@@ -19,10 +19,10 @@
   .edge.on{animation:edgeflash .32s ease-out} @keyframes edgeflash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
   /* ステージ中の 表示 (11/5 社長と 作り直し、見本 hud-mock.html / hud-mock-pc.html): 縦長 = 上から がんばる表示 → 左 つぎの あいて (字・模型・名前・相手の 時速) / 右 時速 → その 下に 連続と 加速 → 遊ぶ 場所 (上の 端に「ぬいた！」) → いちばん 下に クレジット 1 行。
      横長 = 左上 つぎの あいて・上の 真ん中 がんばる表示・右上 時速 (3 つの 塊を 画面の 高さに 合わせて 拡大 = --s)。板・帯は 敷かず 太い 縁取り。--play-top = 遊ぶ 場所の 上の 端・--pop-fs = 「ぬいた！」の 字 (layoutHUD が 決める) */
-  :root{--s:1;--play-top:calc(206px + env(safe-area-inset-top));--pop-fs:22px;--sp-h:60px}
+  :root{--s:1;--play-top:calc(218px + env(safe-area-inset-top));--pop-fs:22px;--sp-h:60px}
   #speed, #target, #gainBox, .pop{-webkit-text-stroke:5px #3a2a5c;paint-order:stroke fill;text-shadow:0 2px 0 #3a2a5c}
   #speed rt, #target rt, #gainBox rt, .pop rt{font-size:.45em;-webkit-text-stroke:3px #3a2a5c}
-  #trip{position:absolute;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top));height:46px;transform-origin:center top;transform:scale(var(--s))}   /* がんばる表示: 点の 道・歩いた 後の 黄色・おばけ (--f = 進み 0〜1、tripTick)・右端の 地球の 四角 (3D は hud3d.js が キャンバスに 描く) */
+  #trip{position:absolute;left:16px;right:16px;top:calc(28px + env(safe-area-inset-top));height:46px;transform-origin:center top;transform:scale(var(--s))}   /* がんばる表示: 点の 道・歩いた 後の 黄色・おばけ (--f = 進み 0〜1、tripTick)・右端の 地球の 四角 (3D は hud3d.js が キャンバスに 描く) */
   #trip .road{position:absolute;left:6px;right:30px;bottom:9px;height:4px;background:radial-gradient(circle,rgba(255,255,255,.95) 45%,transparent 50%) 0 0/12px 4px repeat-x;opacity:.9}
   #trip .done{position:absolute;left:6px;bottom:8px;height:6px;border-radius:3px;background:#ffd54a;box-shadow:0 0 6px #ffd54a;width:calc((100% - 30px) * var(--f,0))}
   #trip .gh{position:absolute;bottom:6px;left:calc((100% - 34px) * var(--f,0));width:30px;height:39px}
@@ -36,16 +36,22 @@
   #trip .gh .bub{position:absolute;left:24px;top:-10px;background:#fff;color:#3a2a5c;font-size:12px;font-weight:bold;line-height:1.5;padding:0 7px;border-radius:10px;white-space:nowrap;opacity:0;text-shadow:none;box-shadow:0 1px 3px rgba(0,0,0,.35)}
   #trip .gh .bub.flip{left:auto;right:24px} #trip .gh .bub.on{animation:tripbub 1.2s ease-out}   /* 右の 方 (地球の 近く) では おばけの 左に 出す */
   @keyframes tripbub{0%{opacity:0;transform:translateY(4px) scale(.8)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
-  #target{position:absolute;left:16px;top:calc(70px + env(safe-area-inset-top));width:46%;line-height:1.2;transform-origin:left top;transform:scale(var(--s))}   /* つぎの あいて: 上から 字 → 模型の 場所 → 名前 (長い 名前は 2 行) → 相手の 時速 */
+  #tripGoal{position:absolute;right:0;top:-18px;font-size:12px;font-weight:bold;line-height:1.3;color:#fff;white-space:nowrap;-webkit-text-stroke:3px #3a2a5c;paint-order:stroke fill;text-shadow:0 1px 0 #3a2a5c;transform-origin:right bottom}   /* 地球の すぐ 上の 段に いつも「目標 ○○ km」(超えたら 金色)。おばけが 歩く 所の 外 (地球の 左だと 終わり近くに おばけが 重なって 隠れた、Codex 指摘 11/5) */
+  #tripGoal rt{font-size:.6em;-webkit-text-stroke:2px #3a2a5c} #tripGoal.hit{color:#ffe066}
+  #trip.hint #tripGoal{animation:goalpulse .5s ease-in-out 8 alternate} @keyframes goalpulse{to{transform:scale(1.2)}}   /* 走り 始めの 説明の 間は 目標が ぴょこぴょこ */
+  #howto{position:absolute;left:16px;right:16px;top:calc(var(--play-top) + 3.2 * var(--pop-fs));text-align:center;line-height:1.45;font-weight:bold;opacity:0;-webkit-text-stroke:5px #3a2a5c;paint-order:stroke fill;text-shadow:0 2px 0 #3a2a5c}   /* 走り 始めの 説明 (約 5 秒で 消える) */
+  #howto span{display:block;margin-bottom:.35em} #howto .a{font-size:calc(22px * var(--s));color:#fff7c8} #howto .b{font-size:calc(16px * var(--s));color:#c8f4ff} #howto .c{font-size:calc(16px * var(--s));color:#fff}
+  #howto rt{font-size:.45em;-webkit-text-stroke:3px #3a2a5c} #howto.on{animation:howto 5s ease-out forwards} @keyframes howto{0%{opacity:0;transform:scale(.9)}8%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
+  #target{position:absolute;left:16px;top:calc(82px + env(safe-area-inset-top));width:46%;line-height:1.2;transform-origin:left top;transform:scale(var(--s))}   /* つぎの あいて: 上から 字 → 模型の 場所 → 名前 (長い 名前は 2 行) → 相手の 時速 */
   #target .l{display:block;font-size:12px;font-weight:bold} #target.done .l{display:none}
   #nxSlot{display:block;position:relative;width:56px;height:56px;margin:2px 0}   /* 模型の 枠 (3D は hud3d.js が キャンバスに 描く) */
   #nxFlash{position:absolute;left:-6px;top:-6px;right:-6px;bottom:-6px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,240,180,0) 70%);opacity:0} #nxFlash.on{animation:nxflash .35s ease-out}
   @keyframes nxflash{0%{opacity:0;transform:scale(.6)}30%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(1.5)}}
   #nxName{display:block;font-size:16px;font-weight:bold} #nxKmh{display:block;font-size:12px;font-weight:bold}
-  #speed{position:absolute;right:16px;top:calc(70px + env(safe-area-inset-top));text-align:right;line-height:1;white-space:nowrap;transform-origin:right top;transform:scale(var(--s));
+  #speed{position:absolute;right:16px;top:calc(82px + env(safe-area-inset-top));text-align:right;line-height:1;white-space:nowrap;transform-origin:right top;transform:scale(var(--s));
     transition:top 1.2s cubic-bezier(.2,.8,.2,1), transform 1.2s cubic-bezier(.2,.8,.2,1)}   /* 時速: 右上に 固定 (上下に 動かない)。「時速」は 数字に くっつく。FINISH: スーッと右中央へ */
   #speed .u{font-size:16px;font-weight:bold} #kmh{font-size:44px;font-weight:bold;margin:0 3px;letter-spacing:.02em}   /* 数字の 大きさは layoutHUD が 7 けた (8,888,888) で 決める (けたで 変えない) */
-  #gainBox{position:absolute;right:16px;top:calc(70px + env(safe-area-inset-top) + var(--sp-h) * var(--s));text-align:right;line-height:1.35;transform-origin:right top;transform:scale(var(--s))}   /* 時速の すぐ 下 (--sp-h = 時速の 高さ + 6px、layoutHUD が 決める。動いて いる 時速の 位置は 測らない、Codex 指摘 11/5) */
+  #gainBox{position:absolute;right:16px;top:calc(82px + env(safe-area-inset-top) + var(--sp-h) * var(--s));text-align:right;line-height:1.35;transform-origin:right top;transform:scale(var(--s))}   /* 時速の すぐ 下 (--sp-h = 時速の 高さ + 6px、layoutHUD が 決める。動いて いる 時速の 位置は 測らない、Codex 指摘 11/5) */
   #combo{display:block;font-size:16px;font-weight:bold;color:#ffe9a0;min-height:22px;transform-origin:right center}   /* 3 連続から。10 ごとに 光る */
   #combo.shine{animation:shine .8s ease-out}
   @keyframes shine{0%{transform:scale(1)}25%{transform:scale(1.3);filter:brightness(1.8) drop-shadow(0 0 10px #ffd54a)}100%{transform:scale(1)}}
@@ -56,7 +62,7 @@
   #ladder, #dist2{display:none !important}   /* 全ライバルの 目盛り・2 面の「たいようまで」は やめた (11/5、がんばる表示が 残りを 表す) */
   @media (min-aspect-ratio:1/1){
     :root{--play-top:calc(152px * var(--s))}
-    #trip{left:50%;right:auto;width:400px;margin-left:-200px;top:18px}
+    #trip{left:50%;right:auto;width:400px;margin-left:-200px;top:30px}
     #target{left:calc(20px + env(safe-area-inset-left));top:16px;width:240px}
     #speed{right:calc(20px + env(safe-area-inset-right));top:16px}
     #gainBox{right:calc(20px + env(safe-area-inset-right));top:calc(16px + var(--sp-h) * var(--s))}
@@ -129,7 +135,7 @@
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div class="edge" id="edgeL"></div><div class="edge" id="edgeR"></div>
 <div id="hud">
-  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
+  <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><span id="tripGoal"></span><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
   <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
@@ -138,6 +144,7 @@
   <div id="ladder"></div>
   <div id="dist2" hidden style="position:absolute;left:16px;top:calc(76px + env(safe-area-inset-top));font-size:13px;opacity:.9"></div>
   <div id="pops"></div>
+  <div id="howto"></div>
   <div id="ptitle"></div>
   <div id="sign3"></div>
   <div id="title" class="panel"><h1>がんばれおばけ！</h1><p>3D 試作 4 ・ 空へ、そして 宇宙へ</p><p>ひだり / みぎ を タップで レールを うつる。<br>かそくを ふむと はやくなる！</p></div>
@@ -328,9 +335,9 @@ const tieGeo  = new THREE.BoxGeometry((LANES-1)*LANE_W+0.8, 0.06, 0.25);
 const plateMap=(()=>{ const c=document.createElement('canvas'); c.width=64; c.height=128; const g=c.getContext('2d'); g.fillStyle='#c4c4c4'; g.fillRect(0,0,64,128);   // 加速板の模様: 明るい灰色の地 (インスタンスの色 = 橙などを掛ける。9/12 社長: 視認性が落ちたので明るく) に 白い山形の矢印 (≫) 3 つ
   g.fillStyle='#ffffff'; for(let k=0;k<3;k++){ const y0=k*128/3; g.beginPath(); g.moveTo(6,y0+30); g.lineTo(32,y0+8); g.lineTo(58,y0+30); g.lineTo(58,y0+42); g.lineTo(32,y0+20); g.lineTo(6,y0+42); g.closePath(); g.fill(); }
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.colorSpace=THREE.SRGBColorSpace; t.flipY=false; return t; })();   // 矢印の先は v の小さい側 (= 板の前)。flipY=false で canvas の上 = v 0 (Codex 指摘)。流れは offset.y を増やす
-const plateMat= new THREE.MeshBasicMaterial({map:plateMap, color:0xffffff});
-const plateSideMat=new THREE.MeshBasicMaterial({color:new THREE.Color(1.5,1.5,1.5)});   // 箱の側面: レールの色を 明るめに (上面の灰色の地より 光って見える)
-const plateGlowMat=new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false});   // 板の下に重ねる ぼんやり光る板 (一回り大きい)。遠くからでも光って見える
+const plateMat= new THREE.MeshBasicMaterial({map:plateMap, color:0xffffff, fog:false});   /* 加速の 板は 霧に 溶けない (11/5 社長: 時速 700 km あたりから 板が 見えない = 板の 間が 約 350 m・霧は 150 m から → 手前 1 秒しか 見えなかった) */
+const plateSideMat=new THREE.MeshBasicMaterial({color:new THREE.Color(1.5,1.5,1.5), fog:false});   // 箱の側面: レールの色を 明るめに (上面の灰色の地より 光って見える)
+const plateGlowMat=new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false, fog:false});   // 板の下に重ねる ぼんやり光る板 (一回り大きい)。遠くからでも光って見える
 const PLATE_H=0.22, plateGeo= new THREE.BoxGeometry(LANE_W*0.9, 1, 3.2);   // 加速板 = 背の低い箱 (10/26 社長: 平らな板は見えにくい → 厚みを付けて 側面も光らせる)。高さ 0.22 m = おばけの体の下端 (レールの中心から 約 0.37 m) に届かない。上面の模様の向きは 前の平らな板と同じ (+v が後ろ)
 const plateGlowGeo=new THREE.PlaneGeometry(LANE_W*0.9, 3.2).rotateX(-Math.PI/2);   // 光る下敷き (平面)
 /* 街並みの追加物 (9/11): 横断歩道の模様、電線の線、街灯と玄関の明かり (光の点) */
@@ -1640,11 +1647,12 @@ function mkHalley(){   // ハレー彗星 (10/7 社長: 尾あり。本物は 2 
   return g;
 }
 function resetSmall2(){ for(const r of small2){ r.active=false; r.passed=false; r.passDrift=null; r.mesh.visible=false; } }
+function ladder2Before(name){ for(const o of S2.LADDER2){ if(o.name===name) return true; if(!passed2.has(o.name)) return false; } return true; }   // 2 面の 並びで この 相手より 前を 全部 抜いたか
 function updateSmall2(ds, dt){   // ds = この コマで おばけが進んだ距離 (m)、dt = 秒
   const vm=moveSpeed(v), hold=events2.length>0 || warp2>=0, fin=state==='finish';
   for(const r of small2){
     if(hold){ if(r.active){ r.active=false; r.mesh.visible=false; } continue; }   // 惑星の専用コース・特別カメラ・ワープの間は 隠す (抜く前なら 終わってから 先に出直す、Codex 指摘 10/7)
-    if(!r.active){ if(fin || r.passed || passed2.has(r.def.name) || v<r.msShow || small2.some(o=>o!==r && o.active && !o.passed)) continue;   /* 小物は 1 つずつ (前の小物を抜き終わってから 次が現れる、10/7 エリスと冥王星) */
+    if(!r.active){ if(fin || r.passed || passed2.has(r.def.name) || v<r.msShow || small2.some(o=>o!==r && o.active && !o.passed) || (!KMH2_Q && !ladder2Before(r.def.name))) continue;   /* 自分より 遅い 相手 (惑星も) を 全部 抜くまで 出ない (11/5 社長: 木星より 先に ケレス・ボイジャーが 出て 抜かれ、「つぎの あいて」に 出ないまま 飛ばされた) */   /* 小物は 1 つずつ (前の小物を抜き終わってから 次が現れる、10/7 エリスと冥王星) */
       r.active=true; r.s=s+r.L.gap-ds; r.paceT=0; r.fade=0; r.passDrift=null; r.mesh.visible=true; ovSeen(r.def.name); }
     const L=r.L; r.s+=ds; const gap=r.s-s;   // まず おばけと同じだけ進めてから 間を測る (おばけだけ先に進んだ所で測ると 並ぶ位置が 1 コマ分 先へずれる = 時速 6 万 km で 約 300 m、Codex 指摘 10/7)
     if(fin){}   // 曲の終わり (FINISH) は 抜いた判定をせず 今の間のまま一緒に飛ぶ (止まると おばけだけが追い越していく、Codex 指摘 10/7)
@@ -2193,6 +2201,13 @@ function creditLines(){   // クレジット (11/5 社長「いちばん 小さ�
 let creditShown=null, comboShown=0;
 function creditTick(){ const L=creditLines(), h=L[Math.floor(Math.max(0, stageT)/6)%L.length]; if(h===creditShown) return; creditShown=h; const el=$('credit'); el.textContent=h; let f=10; el.style.fontSize=f+'px'; while(el.scrollWidth>el.clientWidth && f>8){ f-=0.5; el.style.fontSize=f+'px'; } }   // 細い 画面で はみ出す 時だけ 少し 小さく (8px まで)
 function showCredit(){ creditShown=null; creditTick(); }
+function goalKmh(){ return stage===3 ? GOAL3_KMH : stage===2 ? EARTH2_KMH : Math.round(V_GOAL*3.6); }   // 合格の 速さ (1 面 地球の 自転・2 面 地球の 公転・3 面 太陽系の 公転)
+let goalShown='', goalHit=null;
+function goalTick(){ const g=goalKmh(), t=g.toLocaleString('ja-JP'); if(t!==goalShown){ goalShown=t; $('tripGoal').innerHTML='<ruby>目標<rt>もくひょう</rt></ruby> '+t+' km'; }   // がんばる表示の 地球の 左に いつも「目標 ○○ km」(11/5 社長: 奥さま「何キロ 出せば いいか 分からない」)
+  const hit= (state==='finish' ? finalV : v)*3.6>=g; if(hit!==goalHit){ goalHit=hit; $('tripGoal').classList.toggle('hit', hit); } }   /* 超えたら 金色 */
+function showHowto(){ const touch=IS_MOBILE || matchMedia('(pointer: coarse)').matches, el=$('howto');   // 走り 始めの 説明 (約 5 秒、11/5 社長: 奥さま「何を すれば いいか 分からない」)
+  el.innerHTML='<span class="a">'+(stage===1 ? 'ひかる いたを ふむと' : 'ひかる わを くぐると')+' はやく なるよ！</span><span class="b">'+(touch ? 'がめんの ひだり・みぎ を タップで いどう' : '← → キーで いどう')+'</span><span class="c">おばけが ちきゅうに つくまでに<br><ruby>時速<rt>じそく</rt></ruby> '+goalKmh().toLocaleString('ja-JP')+' km を こえよう！</span>';
+  for(const e of [el, $('trip')]){ e.classList.remove('hint', 'on'); void e.offsetWidth; } el.classList.add('on'); $('trip').classList.add('hint'); }
 let tripF=0, tripShown=-1, hudA=0;   // がんばる表示の 進み (0〜1) / 書き込んだ 値 / 3D の 地球の 濃さ
 function tripEnd(){ if(stage===3){ const c=plan3.find(o=>o.def.key==='catchup'); if(c) return c.t0; } return stageLen()-FINISH_LEAD; }   // おばけが 地球に 着く 時刻 (11/5 社長): 1・2 面 = FINISH・3 面 = 「太陽に 追いつけ」の 映画が 始まる 瞬間
 function tripTick(dt){ if(state==='run'){ const f=stageT/tripEnd(); if(Number.isFinite(f)) tripF=Math.min(1, Math.max(0, f)); } else   /* 終点が 0・NaN の 時は 前の 値の まま (Codex 指摘 11/5) */ if(state==='finish') tripF=Math.min(1, tripF+dt/0.6);   /* 残り 時間で 進む (速さの 合否で 変えない)。早く 終わる 回 (天の川・?result=) は 0.6 秒で 終点へ */
@@ -2225,7 +2240,8 @@ function hudModelFor(entry, i){   // 次の 相手の 模型 = ゲームの 中�
   else if(stage===2){ const o=small2.find(o=>o.def.name===entry.name); if(o) src=o.mesh; else { const p=S2.PLANETS2.find(p=>p.name===entry.name); if(p && p.tex) return hudPlanet(p); } }
   else src=rivals3.find(r=>r.name===entry.name)?.mesh;
   if(!src) return null;
-  const c=skeletonClone(src); c.visible=true; c.traverse(o=>{ if(o.material) o.material= Array.isArray(o.material) ? o.material.map(m=>hudMat(m, o)) : hudMat(o.material, o); }); return c; }
+  const c=skeletonClone(src); c.visible=true; c.traverse(o=>{ if(o.material) o.material= Array.isArray(o.material) ? o.material.map(m=>hudMat(m, o)) : hudMat(o.material, o); });
+  let top=src; while(top.parent) top=top.parent; c.userData.hudFog=!!(top.isScene && top.fog); return c; }   /* 元の 相手が いる 場所に 霧が あるか (模型も 同じ 描き方で 描く) */
 function snapOps(root){ root.traverse(o=>{ if(o.material) for(const m of [].concat(o.material)){ if(m.userData.op0===undefined) m.userData.op0=m.opacity; if(m.uniforms && m.uniforms.uA && m.userData.uA0===undefined) m.userData.uA0=m.uniforms.uA.value; } }); }   // 作った 時の 濃さを 控える (模型は この 濃さで 出す: 出入りの 透明度は 戻し、祝砲の 光など 最初から 見えない 部品は 見えない まま、Codex 指摘 11/5)
 function hudMat(m, o){ const n=m.clone(); n.opacity= m.userData.op0 ?? (o.isSprite || m.blending!==THREE.NormalBlending ? m.opacity : 1);
   if(n.uniforms && n.uniforms.uA){ n.uniforms.uA.value= m.userData.uA0 ?? 1; if(n.blending===THREE.NormalBlending) n.depthWrite=true; } return n; }   /* 独自の 描き方の 本体 (uA = 濃さ) も 作った 時の 濃さへ */
@@ -2281,7 +2297,7 @@ function startRun(){
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
   if(stage===3) stageT= nursery3Run ? 0 : plan3[0].t0;   /* 3 面: 途中の世界から始める時 (?world=N) は 時計も曲も その世界の始まりから (設計書 3.2)。子ども部屋の 回は 霧の 道から (0) */
   if(stage===3 && nursery3Run) document.body.classList.add('hud-calm');   /* 子ども部屋の 回: 速さ などの 表示なし (字幕・スタッフロールは 出る) */
-  state='run'; bgmPlay(); ovPreload(); preloadSfx(actx); if(!nursery3Run) ovStart();   /* 子ども部屋 (エンディング) では 言わない */   // 「よーい… ドン！」の文字は 9/14 社長指示で撤去
+  state='run'; bgmPlay(); ovPreload(); preloadSfx(actx); if(!nursery3Run){ ovStart(); showHowto(); }   /* 子ども部屋 (エンディング) では 言わない */   // 「よーい… ドン！」の文字は 9/14 社長指示で撤去
   if(stage===1){ { frameAt(START_S+12,F); for(const dx of [-3,0,3]) confettiBurst(F.p.x+F.r.x*dx, F.p.y+6.2, F.p.z+F.r.z*dx, F.t, 0); }   // スタートの合図で ゲートの上から紙吹雪 (9/12 ゴージャス化)
     hotAirUp=0; }   // 熱気球も 同じ合図で 浮かび始める (9/30)
 }
@@ -2424,7 +2440,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     if(stage===2) updateIce2();   /* 土星の輪の石は おばけが このコマ進んだ後に並べる (進む前だと ひどいコマ落ちで 並べた石が 全部 後ろになった、Codex 指摘 10/26) */
     if(stage===3){ const e=laneX-laneOff(lane, sPrev); laneX=laneOff(lane, s)+e*(1-Math.min(1, dt*LANE_SMOOTH)); }   /* 3 面: レールに 乗った まま 運ばれ、レーンを 移る 分だけ なめらかに (分かれ道で レールが 横へ 大きく 動く 間 おばけが 遅れて はみ出した、10/28 社長) */
     else laneX += (laneOff(lane, s)-laneX)*Math.min(1, dt*LANE_SMOOTH);
-    const grpMiss=[]; for(const b of plates){ if(!b.hit && !b.missed && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.45){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)
+    const grpMiss=[]; for(const b of plates){ if(!b.hit && !b.missed && !(b.grp && b.grp.hit) && b.s>sPrev-1.6*b.sc && b.s<=s+1.6*b.sc && Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.7){   // いま実際にいる横位置で 板の上を通ったか (1 コマで飛び越しても拾う)。踏める 幅 = レーンの 7 割 (11/5 社長: 0.45 は 移る 途中で 取れず 難しい)。同じ 音の 3 本は 1 本だけ
       b.hit=true; hits++; { frameAt(s,F); if(b.box || b.ring) ghostGlint(); else confettiBurst(F.p.x+F.r.x*laneX, F.p.y+0.9, F.p.z+F.r.z*laneX, F.t, v); }   // 地上の板 = 紙吹雪、空のボックスと 2 面 = おばけが きらりと光る
       if(b.ring){ placePlate(b, 1); ringBurstStart(b.lane); if(stage===3) sparkBurst3(b); }   // 2 面: くぐった輪は消え、おばけの周りに 光の輪が広がる
       boostHit(); setMarkColor(b,true); markDirty(); if(stage===1) trySpawnRival(false); if(b.grp) b.grp.hit=true; }   // 踏んだ瞬間に 次の相手が前方に見えてくる
@@ -2466,7 +2482,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
     if(!sg.animals) continue; for(const an of sg.animals){ an.root.visible=near; if(near) an.mixer.update(dt); } }   // 野原の動物 (近い区間 700 m だけ動かして描く) と 風車の羽根 (ゆっくり回る)。タイトル画面でも動く
   updateStarTunnel(dt); updatePuffs(dt); updateHotAir(dt);   // 星のトンネル (ゴールが近い合図) と ブルーインパルスの煙の時計 (9/15)
   dispV += ((state==='finish' ? finalV : v)-dispV)*Math.min(1, dt*4);   // FINISH 後は 記録の速さで止める
-  $('kmh').textContent=fmtKmh(dispV); creditTick(); tripTick(dt);   /* クレジットは 曲が 変わる・6 秒ごとの 切り替えの 時だけ 書き換わる */
+  $('kmh').textContent=fmtKmh(dispV); creditTick(); tripTick(dt); goalTick();   /* クレジットは 曲が 変わる・6 秒ごとの 切り替えの 時だけ 書き換わる */
 
   // おばけの位置と向き
   frameAt(s, G); bob+=dt*3;
@@ -2659,7 +2675,7 @@ if(Q.has('tap')){   /* ?tap=1 (10/12 社長: 加速の輪を 右手の旋律に�
 if(ERRLOG){   /* ?errlog=1 (10/12 ② で固まった調べ): エラーと 1 秒ごとの様子を送る。コマの途中で エラーが出ると 次のコマを頼まずに 止まるため */
   addEventListener('error', e=>logSend({err:String(e.message), at:`${e.filename}:${e.lineno}:${e.colno}`, stack:String(e.error && e.error.stack || '')}));
   addEventListener('unhandledrejection', e=>logSend({err:'promise '+String(e.reason && e.reason.message || e.reason), stack:String(e.reason && e.reason.stack || '')}));
-  setInterval(()=>{ const g= stage===3 ? nextGate3() : null; logSend({t:Math.round(stageT*10)/10, stage, s:Math.round(s), pi3, mv:Math.round(move3), ce:Math.round(courseEnd), gate: g ? Math.round(g.at) : null, cam:camera.position.toArray().map(Math.round)}); }, 1000); }
+  setInterval(()=>{ const g= stage===3 ? nextGate3() : null; logSend({t:Math.round(stageT*10)/10, kmh:Math.round(v*3.6), rung, nx:(ladderNow()[rung+1]||{}).name, small:stage===2 ? small2.filter(o=>o.active).map(o=>o.def.name+(o.passed ? '*' : '')).join(',') : undefined, stage, s:Math.round(s), pi3, mv:Math.round(move3), ce:Math.round(courseEnd), gate: g ? Math.round(g.at) : null, cam:camera.position.toArray().map(Math.round)}); }, 1000); }
 </script>
 </body>
 </html>
