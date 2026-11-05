@@ -28,7 +28,9 @@
   @keyframes triphop{0%{transform:translateY(0) rotate(-6deg)}100%{transform:translateY(-5px) rotate(6deg)}}
   #target{position:absolute;left:16px;top:calc(70px + env(safe-area-inset-top));width:46%;line-height:1.2;transform-origin:left top;transform:scale(var(--s))}   /* つぎの あいて: 上から 字 → 模型の 場所 → 名前 (長い 名前は 2 行) → 相手の 時速 */
   #target .l{display:block;font-size:12px;font-weight:bold} #target.done .l{display:none}
-  #nxSlot{display:block;width:56px;height:56px;margin:2px 0}
+  #nxSlot{display:block;position:relative;width:56px;height:56px;margin:2px 0}   /* 模型の 枠 (3D は hud3d.js が キャンバスに 描く) */
+  #nxFlash{position:absolute;left:-6px;top:-6px;right:-6px;bottom:-6px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,240,180,0) 70%);opacity:0} #nxFlash.on{animation:nxflash .35s ease-out}
+  @keyframes nxflash{0%{opacity:0;transform:scale(.6)}30%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(1.5)}}
   #nxName{display:block;font-size:16px;font-weight:bold} #nxKmh{display:block;font-size:12px;font-weight:bold}
   #speed{position:absolute;right:16px;top:calc(70px + env(safe-area-inset-top));text-align:right;line-height:1;white-space:nowrap;transform-origin:right top;transform:scale(var(--s));
     transition:top 1.2s cubic-bezier(.2,.8,.2,1), transform 1.2s cubic-bezier(.2,.8,.2,1)}   /* 時速: 右上に 固定 (上下に 動かない)。「時速」は 数字に くっつく。FINISH: スーッと右中央へ */
@@ -121,7 +123,7 @@
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
   <div id="songclock" hidden style="position:fixed;left:8px;bottom:calc(28px + env(safe-area-inset-bottom));font:14px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
-  <div id="target"><span class="l">つぎの あいて</span><span id="nxSlot"></span><span id="nxName">—</span><span id="nxKmh"></span></div>
+  <div id="target"><span class="l">つぎの あいて</span><span id="nxSlot"><span id="nxFlash"></span></span><span id="nxName">—</span><span id="nxKmh"></span></div>
   <div id="ladder"></div>
   <div id="dist2" hidden style="position:absolute;left:16px;top:calc(76px + env(safe-area-inset-top));font-size:13px;opacity:.9"></div>
   <div id="pops"></div>
@@ -289,7 +291,7 @@ if(CANVAS_CLEAN) for(const C of [window.WebGL2RenderingContext, window.WebGLRend
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.has('px') ? +Q.get('px') : 1.5));
 const EARTH_MAP=new THREE.TextureLoader().load('planets/2k_earth_daymap.jpg'); EARTH_MAP.colorSpace=THREE.SRGBColorSpace;   // 地球の 地図は 1 面の ミニ地球と がんばる表示で 1 枚を 共有 (Codex 指摘 11/5)
-const hud3d=createHud3d(renderer); hud3d.earth(document.getElementById('tripEarth'), EARTH_MAP);
+const hud3d=createHud3d(renderer); hud3d.earth(document.getElementById('tripEarth'), EARTH_MAP); hud3d.slot(document.getElementById('nxSlot'), document.getElementById('nxFlash'));
 const IS_MOBILE=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && Math.min(screen.width, screen.height)<900);
 const SHADOWS= Q.get('shadow')!=='0';   // 影 = 足元の丸影 (実質ゼロ負荷、スマホでも既定で あり)。本物の影の地図 (60 → 45 fps) と 形の押しつぶし影 (45 → 30 fps) は 社長の PC で不採用 (9/14〜15)
 renderer.setClearColor(0x000000, 0);
@@ -495,7 +497,7 @@ async function loadRivalModels(){
     r.mesh.scale.setScalar(1);   // 手作りの姿に付いていた倍率 (F-15 1.4・SR-71 1.5 など) も戻す (残ると二重に大きくなる、Codex 指摘)
     if(r.glbUp!=null) r.up=r.glbUp;   // 手作りの姿は 飛ぶ高さを形に含めていた (ハト 2.5 m など) → GLB は足元原点なので 高さを指定し直す
     const limbs=['legL','legR','armL','armR'].map(n=>sc.getObjectByName(n)); if(limbs.every(Boolean)) r.limbs=limbs;   // 脚・腕が別部品の形 (走る人) は 走った距離に合わせて振る (updateRivals)。読み込んだ形 (sc) の中から探す (r.mesh に足すのはこの後、Codex 指摘)
-    r.mesh.add(r.post ? r.post(sc) : sc); r.len=(box.max.z-box.min.z)*r.scale; r.bounce=r.bounce && !r.mixer;   // 長さは 本物の形から。動きのある形は 跳ねる演出を止める (動きのない生き物は 跳ねたまま)。post = 読み込んだ形から編隊などを組む
+    r.mesh.add(r.post ? r.post(sc) : sc); snapOps(r.mesh); r.len=(box.max.z-box.min.z)*r.scale; r.bounce=r.bounce && !r.mixer;   // 長さは 本物の形から。動きのある形は 跳ねる演出を止める (動きのない生き物は 跳ねたまま)。post = 読み込んだ形から編隊などを組む
     if(r.name==='ミサイル') r.flames=[addFlame(sc, 0, 0.48, -3.0, 0.9, 3.2)]; else if(r.name==='スペースシャトル') setupShuttle(r, sc);   /* 噴射口の炎・シャトルの切り離し (10/26 社長)。ミサイルは 模型の中で 長さ 6 m (6 倍で見せる) のお尻から */
     if(!r.fly && (r.len>8 || (box.max.x-box.min.x)*r.scale>2.2)){ const set=new Set(); sc.traverse(o=>{ if(!o.isMesh) return; for(const mt of (Array.isArray(o.material) ? o.material : [o.material])){ mt.transparent=true; set.add(mt); } }); r.fadeMats=[...set]; }   // 大きい地上の相手 (電車・新幹線・リニア・車など) は 追い抜く時に半透明に (9/12 社長: カメラが中に入って レールが見えない)
   }));
@@ -1476,7 +1478,7 @@ const RIVAL_DEFS={ 'カメ':{mk:mkTurtle, lead:12, len:0.8, up:0.11, glb:'craft/
    ブルーインパルス 右上 → おとの はやさ 左上 → X-1 右上の高い所 → フェアリー デルタ 2 左 → コンコルド 下 (レールの真下) → Tu-144 右 → せんとうき 左下 → ヴァルキリー 右下 → SR-71 上 → ミサイル 左 → スペースシャトル 右上。
    「下」は 空に上がってから出る相手だけ (地上を走る間に出る相手を下にすると 地面に埋まる)。地上の間は 旅客機 (ひこうき) が 真上 14 m にいるので、その前後に出る相手は 真上を避け 家や木より上 (12 m 以上) に */
 const rivals=[], rivalByRung={}, announced=[];
-LADDER.forEach((L,i)=>{ const d=RIVAL_DEFS[L.name]; if(!d) return; const r={i, name:L.name, ms:L.ms, lead:d.lead, len:d.len, up:d.up, bounce:!!d.bounce, fly:!!d.fly, side:d.side==null?7:d.side, climbTrigger:L.name==='ひこうき', mesh:d.mk(), glb:d.glb, scale:d.scale, anim:d.anim, post:d.post, glbUp:d.glbUp, mixer:null, active:false, passed:false, met:false, s:0, v:0, lane:0}; r.mesh.visible=false; scene.add(r.mesh); rivals.push(r); rivalByRung[i]=r; });
+LADDER.forEach((L,i)=>{ const d=RIVAL_DEFS[L.name]; if(!d) return; const r={i, name:L.name, ms:L.ms, lead:d.lead, len:d.len, up:d.up, bounce:!!d.bounce, fly:!!d.fly, side:d.side==null?7:d.side, climbTrigger:L.name==='ひこうき', mesh:d.mk(), glb:d.glb, scale:d.scale, anim:d.anim, post:d.post, glbUp:d.glbUp, mixer:null, active:false, passed:false, met:false, s:0, v:0, lane:0}; r.mesh.visible=false; snapOps(r.mesh); scene.add(r.mesh); rivals.push(r); rivalByRung[i]=r; });
 const START_RIVAL_V = 50/3.6;   // この速さ以下の相手 (カメ・ニワトリ・走る人・スケボー・自転車・ロバ・いぬ・キツネ) は スタートと同時に走り出す (運動会のいっせいスタート)
 function lineUpStartRivals(){ let k=0; for(const r of rivals){ if(r.fly || r.ms>START_RIVAL_V) continue; r.active=true; r.s= k===0 ? START_S+12 : START_S+3+k*4.5+(k%2===0 ? 2.5 : 0); r.v=V0; r.lane= k%2===0 ? 0 : LANES-1; r.mesh.visible=true; k++; } }   // 先頭 (カメ) はスタートライン (アーチ、+12 m) の真上に (9/12 社長)。同じ車線の次の走者は 2.5 m ずらして重ならないように
 const planeRival=rivals.find(r=>r.climbTrigger);
@@ -1581,7 +1583,7 @@ async function loadSmall2(){
       gltf.scene.traverse(o=>{ if(!o.isMesh) return; for(const mt of (Array.isArray(o.material) ? o.material : [o.material])){ if(!mt.emissive) continue; mt.metalness=0; mt.roughness=0.85; mt.emissive.copy(mt.color).multiplyScalar(SMALL2_FILL); if(mt.map) mt.emissiveMap=mt.map; } });   // 金属は 映り込む景色がないと黒くなるので 金属らしさを外し、影の側も うっすら見えるように
       gltf.scene.rotation.x=Math.PI/2; roll.rotation.z=-Math.PI/2; roll.add(gltf.scene); mesh.add(roll); }   // お皿を 進む向き (太陽の側) へ = 本物も 地球 (太陽の側) にお皿を向けて飛ぶ。棒は 右へ (輪のてっぺんより上なので かからない)
     mesh.visible=false; (L.planet ? farScene : scene).add(mesh);   // 準惑星は 遠景 (惑星と同じ層: レール・輪の後ろに描く)
-    small2.push({def, L, mesh, active:false, passed:false, s:0, ms:def.at ? def.at/3.6 : def.ms, msShow:L.showKmh ? L.showKmh/3.6 : def.ms*SMALL2_SHOW}); small2Names.add(def.name); small2.sort((a, b)=>a.ms-b.ms);   /* 抜く速さの順 = 出会う順 (読み込み終わりの順は ばらばら。ケレス → ボイジャー、Codex 指摘 10/7) */
+    snapOps(mesh); small2.push({def, L, mesh, active:false, passed:false, s:0, ms:def.at ? def.at/3.6 : def.ms, msShow:L.showKmh ? L.showKmh/3.6 : def.ms*SMALL2_SHOW}); small2Names.add(def.name); small2.sort((a, b)=>a.ms-b.ms);   /* 抜く速さの順 = 出会う順 (読み込み終わりの順は ばらばら。ケレス → ボイジャー、Codex 指摘 10/7) */
   }));
   for(const x of results) if(x.status==='rejected') console.warn('2 面の小物の姿を読み込めず (速さで抜く)', x.reason);
 }
@@ -1735,7 +1737,7 @@ function gal3On(g0){ const gi=plan3.findIndex(o=>o.def.key==='galaxy'); return g
 function clearGalaxy3(){ if(gx3){ scene.remove(gx3.group); gx3.dispose(); gx3=null; } }
 /* 3 面の ライバル (11/4 社長 C 案、速さ = S3.LADDER3): 姿の ある 相手は 速さの 8 割で コースの 先に 現れ、届くまで 前を 飛び (輪を くぐる たび 間が 詰まる)、届いたら 前の 上に 並んで 少し 一緒に 飛び、下がって 真上を 越えた 瞬間に「ぬいた！」(2 面の 小物と 同じ 動き)。姿の まだ ない 相手は 速さで。up = コースの 上の 高さ / gap = 現れる 先の 距離 / pace = 並んで 飛ぶ 所 / close = 寄る 速さの 上限 / drift = 下がる 速さ (m/秒) / tol = 並んだと みなす 幅 / paceSec = 並んで 飛ぶ 秒 / fadeIn = ふわっと 現れる 秒 */
 function disposeObj3(o){ o.traverse(x=>{ if(x.geometry && !x.isSprite) x.geometry.dispose(); if(x.material) for(const m of [].concat(x.material)) m.dispose(); }); }   // 使わなく なった 代わりの 形を 片づける (光の 板の 形と 共用の 絵は 残す)
-function warmObj3(o){ const hid=[]; o.traverse(x=>{ if(!x.visible){ hid.push(x); x.visible=true; } }); try{ renderer.compile(o, camera, scene); }catch(e){ console.warn('ライバルの 下ごしらえ', e); } for(const x of hid) x.visible=false; }   // ライバルの 描き方を 先に (隠れて いる 部品 = 決めポーズの 光の 翼 なども 含めて)
+function warmObj3(o){ snapOps(o); const hid=[]; o.traverse(x=>{ if(!x.visible){ hid.push(x); x.visible=true; } }); try{ renderer.compile(o, camera, scene); }catch(e){ console.warn('ライバルの 下ごしらえ', e); } for(const x of hid) x.visible=false; }   // ライバルの 描き方を 先に (隠れて いる 部品 = 決めポーズの 光の 翼 なども 含めて)
 const RIV3_LOOKS={ 'オウムアムア':{make:mkOumuamua, up:8, gap:1500, pace:45, close:500, drift:60, tol:4, paceSec:1, fadeIn:1.5}, 'ロボット':{make:mkRobot3, up:7, side:-8, gap:1500, pace:30, close:500, drift:40, tol:4, paceSec:1.8, fadeIn:1.5}, 'パーカー・ソーラー・プローブ':{make:mkParker3, up:8, gap:1500, pace:45, close:500, drift:60, tol:4, paceSec:1.2, fadeIn:1.5}, '宇宙戦艦':{make:mkBattleship3, up:12, side:-15, gap:2200, pace:60, close:700, drift:70, tol:6, paceSec:1.5, fadeIn:2}, 'アンドロメダ銀河':{make:mkAndromeda3, up:6, side:-14, gap:1800, pace:45, close:600, drift:50, tol:4, paceSec:1.5, fadeIn:2} }, RIV3_SHOW=0.8, rivals3=[], passed3=new Set();   // 宇宙戦艦は 大きい ので 左上 (左 15 m・上 18 m) を 並んで 飛び、横を すり抜けて 抜く (前は 左 45 m・上 30 m で 神殿などに ぶつかりそう、11/4 社長「もっと 近く」)
 function mkBattleship3(){   // 宇宙戦艦 (11/4 社長が Claude Design で 作った オリジナル: assets/craft/battleship3.glb = 重厚な 灰色の 船体・連装の 砲塔 4 つ (Turret_1〜4、原点 = 回る 中心)・司令塔・窓の 灯り・後ろに エンジン 4 つ、上 +Y・船首 +Z・長さ 100)。1.05 倍 (約 105 m)。読めない 時は 秘書の 組んだ 形 (mkBattleship3Box)
   const g=new THREE.Group(), sh=new THREE.Group(); sh.scale.setScalar(1.05); g.add(sh); g.frustumCulled=false;
@@ -1883,7 +1885,7 @@ function mkOumuamua(){   // オウムアムア (2017 年に 見つかった 太�
   const g=new THREE.Group(), rock=new THREE.Mesh(geo, mat); rock.scale.setScalar(2); g.add(rock); g.frustumCulled=false;
   let tt=0; g.userData.tick=(dt, a)=>{ tt+=dt; rock.rotation.z+=dt*0.8; rock.rotation.x=0.12*Math.sin(tt*0.7); rock.rotation.y=0.08*Math.sin(tt*0.5); mat.uniforms.uA.value=a; mat.depthWrite=a>0.99; };   // 長い 軸の まわりに くるくる 回り 少し 首を 振る (縦に 転がると 低く 飛ぶ 時に 端が レールに 当たる、11/4 社長「もう少し レールに 近く」)
   return g; }
-for(const o of S3.LADDER3){ const L=RIV3_LOOKS[o.name]; if(!L) continue; const mesh=L.make(); mesh.visible=false; scene.add(mesh); rivals3.push({name:o.name, ms:o.kmh/3.6, L, mesh, active:false, passed:false, s:0, paceT:0, fade:0}); }
+for(const o of S3.LADDER3){ const L=RIV3_LOOKS[o.name]; if(!L) continue; const mesh=L.make(); snapOps(mesh); mesh.visible=false; scene.add(mesh); rivals3.push({name:o.name, ms:o.kmh/3.6, L, mesh, active:false, passed:false, s:0, paceT:0, fade:0}); }
 let riv3Fresh=true; function rivals3Reset(){ riv3Fresh=true; passed3.clear(); for(const r of rivals3){ r.active=false; r.passed=false; r.mesh.visible=false; } }
 function recomputeRung3(){ let k=-1; for(let i=0;i<S3.LADDER3.length;i++){ if(!passed3.has(S3.LADDER3[i].name)) break; k=i; } if(k!==rung){ rung=k; updateLadderHUD(); } }   // 段 = 先頭から 続けて 抜いた 所まで
 function riv3Pass(name){ passed3.add(name); ovPassed(name); pop('「'+nameHtml(name)+'」を ぬいた！'); recomputeRung3(); }
@@ -2185,8 +2187,27 @@ function buildLadderHUD(){ ladderEl.innerHTML=''; ladderNow().slice(0, hudRungs(
 const fmtKmh=x=> Math.round(x*3.6).toLocaleString('ja-JP');   // 中の計算は m/s、表示は 時速 km
 let finalV=0, flashed=false;   // FINISH の瞬間の速さ (記録)。打ち上げ中に速くなっても 表示はこれを守る。flashed = ピカーンを出したか
 const layerAnn={strato:false, ozone:false, plasma:false};   // 高さの境目の一言を出したか
+let hudNextKey=null, hudRunT0=0;   // 模型を 出して いる 相手 ('面:名前') / 走り 始めた 時刻
 function updateLadderHUD(){ const L=ladderNow(), H=hudRungs(); [...ladderEl.children].forEach((el,i)=>el.classList.toggle('on', i<=rung)); const nx= rung+1<H ? L[rung+1] : null;   /* 次の 相手 1 人だけ (11/5 社長: 全員の 目盛りは やめた) */
-  $('target').classList.toggle('done', !nx); $('nxName').innerHTML= nx ? nameHtml(nx.name) : 'ぜんぶ ぬいた！'; $('nxKmh').innerHTML= nx && nx.kmh ? '<ruby>時速<rt>じそく</rt></ruby> '+nx.kmh.toLocaleString('ja-JP')+' km' : ''; }
+  $('target').classList.toggle('done', !nx); $('nxName').innerHTML= nx ? nameHtml(nx.name) : 'ぜんぶ ぬいた！'; $('nxKmh').innerHTML= nx && nx.kmh ? '<ruby>時速<rt>じそく</rt></ruby> '+nx.kmh.toLocaleString('ja-JP')+' km' : '';
+  const key=stage+':'+(nx ? nx.name : ''); if(key===hudNextKey) return;   /* 次の 相手の 模型: 相手が 変わった 時だけ。走り 始めの 1 秒 (途中の 速さから 始めて まとめて 抜いた 時など) と 面の 切り替えは 飛ぶ 演出 なしで 置き換え */
+  const animate= state==='run' && hudNextKey!==null && hudNextKey.split(':')[0]===String(stage) && performance.now()-hudRunT0>1000; hudNextKey=key;
+  hud3d.relayout(); hud3d.setNext(nx ? hudModelFor(nx, rung+1) : null, {animate}); }
+function hudModelFor(entry, i){   // 次の 相手の 模型 = ゲームの 中の 相手の 複製 (材質も 複製して 濃さを 戻す: ゲームの 出入りの 透明度・まだ 出て いない 相手の 非表示に 影響されない)。姿の ない 相手は null (名前だけ)
+  let src=null;
+  if(stage===1) src=rivalByRung[i]?.mesh;
+  else if(stage===2){ const o=small2.find(o=>o.def.name===entry.name); if(o) src=o.mesh; else { const p=S2.PLANETS2.find(p=>p.name===entry.name); if(p && p.tex) return hudPlanet(p); } }
+  else src=rivals3.find(r=>r.name===entry.name)?.mesh;
+  if(!src) return null;
+  const c=skeletonClone(src); c.visible=true; c.traverse(o=>{ if(o.material) o.material= Array.isArray(o.material) ? o.material.map(m=>hudMat(m, o)) : hudMat(o.material, o); }); return c; }
+function snapOps(root){ root.traverse(o=>{ if(o.material) for(const m of [].concat(o.material)){ if(m.userData.op0===undefined) m.userData.op0=m.opacity; if(m.uniforms && m.uniforms.uA && m.userData.uA0===undefined) m.userData.uA0=m.uniforms.uA.value; } }); }   // 作った 時の 濃さを 控える (模型は この 濃さで 出す: 出入りの 透明度は 戻し、祝砲の 光など 最初から 見えない 部品は 見えない まま、Codex 指摘 11/5)
+function hudMat(m, o){ const n=m.clone(); n.opacity= m.userData.op0 ?? (o.isSprite || m.blending!==THREE.NormalBlending ? m.opacity : 1);
+  if(n.uniforms && n.uniforms.uA){ n.uniforms.uA.value= m.userData.uA0 ?? 1; if(n.blending===THREE.NormalBlending) n.depthWrite=true; } return n; }   /* 独自の 描き方の 本体 (uA = 濃さ) も 作った 時の 濃さへ */
+function hudPlanet(p){   // 2 面の 惑星の 模型: 地図を 貼った 小さな 球 (土星・天王星は 環も)。地図・形は 自前なので 捨てる 時に 片づける
+  const own=p.tex!=='2k_earth_daymap.jpg', map= own ? new THREE.TextureLoader().load('planets/'+p.tex) : EARTH_MAP; map.colorSpace=THREE.SRGBColorSpace;
+  const g=new THREE.Group(), tilt=new THREE.Group(), ball=new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20), new THREE.MeshStandardMaterial({ map, roughness:1, metalness:0 })); g.add(tilt); tilt.add(ball);
+  let ring=null; if(p.ring){ const sat=p.ring==='saturn'; ring=new THREE.Mesh(new THREE.RingGeometry(1.25, sat ? 2.2 : 1.7, 64), new THREE.MeshBasicMaterial({ color: sat ? 0xd8c8a0 : 0xc8dcff, transparent:true, opacity: sat ? 0.8 : 0.35, side:THREE.DoubleSide, depthWrite:false })); ring.rotation.x=-Math.PI/2; tilt.add(ring); tilt.rotation.z= sat ? 0.47 : 1.71; }   /* 土星 27 度・天王星 98 度 */
+  g.userData.dispose=()=>{ if(own) map.dispose(); ball.geometry.dispose(); if(ring) ring.geometry.dispose(); }; return g; }
 const NAME_RUBY={'ハレー彗星':'ハレー<ruby>彗星<rt>すいせい</rt></ruby>', 'ボイジャー1号':'ボイジャー1<ruby>号<rt>ごう</rt></ruby>', '冥王星':'<ruby>冥王星<rt>めいおうせい</rt></ruby>', '月':'<ruby>月<rt>つき</rt></ruby>', '宇宙戦艦':'<ruby>宇宙<rt>うちゅう</rt></ruby><ruby>戦艦<rt>せんかん</rt></ruby>', 'アンドロメダ銀河':'アンドロメダ<ruby>銀河<rt>ぎんが</rt></ruby>'};
 function nameHtml(n){ if(NAME_RUBY[n]) return NAME_RUBY[n]; const o=S2.LADDER2.find(p=>p.name===n && p.kana); return o ? '<ruby>'+n+'<rt>'+o.kana+'</rt></ruby>' : n; }   // 漢字の 名前に ふりがな (惑星は 読みの データ、ほかは 表)。名前は 中の 決まった 文字だけ (innerHTML で よい)
 function layoutHUD(){   // 字の 大きさを 画面の 大きさで 決める (11/5 社長「桁が 増えたから 小さく するのは 良くない、はじめから その 桁数の 大きさに」)。読み込み時・画面の 大きさが 変わった 時だけ
@@ -2230,7 +2251,7 @@ function startRun(){
   s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; fcMiss=false; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
   for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.loopT=null; resetShuttle(r); r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
   resetCourse(); resetPlates(); if(stage===3) prepGal3();   /* やり直し・確かめ用の 入口で 待たずに 始まる 時も ここで 用意 (走り出しの 1 コマ目) */
-  $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; updateLadderHUD();
+  $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; hudRunT0=performance.now(); hudNextKey=null; updateLadderHUD();   /* 模型は 走り 始めに 作り直す (タイトルの 間に 動き付きの 動物が 読めて 姿が 変わって いる 時の ため) */
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
   if(stage===3) stageT= nursery3Run ? 0 : plan3[0].t0;   /* 3 面: 途中の世界から始める時 (?world=N) は 時計も曲も その世界の始まりから (設計書 3.2)。子ども部屋の 回は 霧の 道から (0) */
   if(stage===3 && nursery3Run) document.body.classList.add('hud-calm');   /* 子ども部屋の 回: 速さ などの 表示なし (字幕・スタッフロールは 出る) */
@@ -2267,7 +2288,7 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   const praise= stage===1 ? RS.praiseFor(LADDER, kmh, 'ちきゅうの じてん') : stage===2 ? RS.praiseFor(S2.LADDER2, kmh, '地球') : RS.praiseFor(RS.COSMIC3, kmh, '');
   const okLine= stage===1 ? '{地球|ちきゅう}の {自転|じてん}を おいぬいた！' : stage===2 ? '{地球|ちきゅう}の {公転|こうてん}を おいぬいた！' : '{太陽系|たいようけい}の {公転|こうてん}を おいぬいた！';
   const rest=Math.max(1, goal-kmh).toLocaleString('en-US'), remainLine= stage===1 ? '{自転|じてん}まで あと '+rest+' km！' : '{公転|こうてん}まで あと '+rest+' km！';
-  const buttons= !ok ? (failCount[stage]>=2 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 2 回続けて 足りなければ 救済の やり直し (10/20 社長) */ stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] :   /* 3 面の 当たり (太陽に 追いついた 映画の 後) は つぎへ = 子ども部屋 & エンディング だけ (10/28 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
+  const buttons= !ok ? (failCount[stage]>=1 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 足りなければ 1 回目から 救済の やり直し (10/20 社長「2 回続けて」→ 11/5 社長「1 回目の 失敗から」) */ stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] :   /* 3 面の 当たり (太陽に 追いついた 映画の 後) は つぎへ = 子ども部屋 & エンディング だけ (10/28 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}, {id:'retry', label:'もういちど'}];
   const soloButtons= ok ? [...(stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] : []), {id:'retry', label:'もういちど', big:stage!==3}, {id:'title', label:'タイトルに もどる'}] : [...buttons, {id:'title', label:'タイトルに もどる'}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎの 面へは 出さず タイトルへ (10/27 設計書)。3 面の 当たりは 子ども部屋 & エンディングへも 進める */
   const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage], !fcMiss && combo>0) : null;   /* 速さを 面ごとの 上位 10 件へ (ランキングの 板に 出る)。自分の 1 位を 超えたら「しんきろく！」(順位の 札は 出さない、10/27 社長) */
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
