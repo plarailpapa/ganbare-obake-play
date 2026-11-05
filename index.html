@@ -13,6 +13,10 @@
   body{isolation:isolate}   /* 夢の タイトルの 夜空 (z-index −1) を この 背景の 上・3D の 画面の 下に 描く (無いと 背景の 後ろに 隠れて 夕暮れが 見えた、Codex 指摘 10/27) */
   canvas{display:block;position:fixed;inset:0;touch-action:none;z-index:0}
   #hud{position:fixed;inset:0;pointer-events:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:1}
+  .edge{position:fixed;top:0;bottom:0;width:50%;pointer-events:none;z-index:1;opacity:0}   /* 左右の タップの 合図 (11/5 社長「タップした 側の 画面の 縁を 半分 光らせる」): 端と 上下の 縁が 白く 光り、真ん中へ 向かって 薄く なる */
+  #edgeL{left:0;box-shadow:inset 18px 0 22px -10px rgba(255,255,255,.95),inset 0 18px 22px -10px rgba(255,255,255,.95),inset 0 -18px 22px -10px rgba(255,255,255,.95);-webkit-mask-image:linear-gradient(to right,#000 55%,transparent);mask-image:linear-gradient(to right,#000 55%,transparent)}
+  #edgeR{right:0;box-shadow:inset -18px 0 22px -10px rgba(255,255,255,.95),inset 0 18px 22px -10px rgba(255,255,255,.95),inset 0 -18px 22px -10px rgba(255,255,255,.95);-webkit-mask-image:linear-gradient(to left,#000 55%,transparent);mask-image:linear-gradient(to left,#000 55%,transparent)}
+  .edge.on{animation:edgeflash .32s ease-out} @keyframes edgeflash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
   /* ステージ中の 表示 (11/5 社長と 作り直し、見本 hud-mock.html / hud-mock-pc.html): 縦長 = 上から がんばる表示 → 左 つぎの あいて (字・模型・名前・相手の 時速) / 右 時速 → その 下に 連続と 加速 → 遊ぶ 場所 (上の 端に「ぬいた！」) → いちばん 下に クレジット 1 行。
      横長 = 左上 つぎの あいて・上の 真ん中 がんばる表示・右上 時速 (3 つの 塊を 画面の 高さに 合わせて 拡大 = --s)。板・帯は 敷かず 太い 縁取り。--play-top = 遊ぶ 場所の 上の 端・--pop-fs = 「ぬいた！」の 字 (layoutHUD が 決める) */
   :root{--s:1;--play-top:calc(206px + env(safe-area-inset-top));--pop-fs:22px;--sp-h:60px}
@@ -117,6 +121,7 @@
 <div id="space"></div>
 <div id="ozone"></div>
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
+<div class="edge" id="edgeL"></div><div class="edge" id="edgeR"></div>
 <div id="hud">
   <div id="trip"><div class="road"></div><div class="done"></div><div class="earth" id="tripEarth"></div><div class="gh"><div class="b"><img src="assets/chara/obake-ganbaru.png" alt=""></div></div></div>
   <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
@@ -1753,8 +1758,9 @@ function mkBattleship3(){   // 宇宙戦艦 (11/4 社長が Claude Design で �
   const shots=[], tipL=new THREE.Vector3(0, 1.5, 10), tv=new THREE.Vector3(); let salT=-1, fired=0;   // 祝砲 (11/4 社長「祝砲 打って ほしい」): おばけが 追いついたら 砲塔が 前へ 向き、順番に 8 発。砲口が 光り、金色の 弾が 前の 空へ 上がって キラッと はじける (攻撃に 見えない ように おばけ では なく 前の 空へ)。tipL = 砲身の 先 (砲塔の 中の 位置、Blender で 測った 大きさから)
   const spr=(map, col)=>{ const s=new THREE.Sprite(new THREE.SpriteMaterial({ map, color:col, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false, fog:false })); g.add(s); return s; };
   for(let i=0;i<8;i++) shots.push({flash:spr(glowTex, 0xfff0c0), ball:spr(glowTex, 0xffd27a), burst:spr(glintTex, 0xffffff), t:-1, p:new THREE.Vector3(), v:new THREE.Vector3()});   // 砲口の 光・弾・はじける 光
-  g.userData.reset=()=>{ salT=-1; fired=0; for(const s of shots){ s.t=-1; s.flash.material.opacity=s.ball.material.opacity=s.burst.material.opacity=0; } };
-  g.userData.tick=(dt, a, r)=>{ if(fb){ fb.userData.tick(dt, a, r); return; } tt+=dt; sh.position.y=0.8*Math.sin(tt*0.6); sh.rotation.z=1.0+0.02*Math.sin(tt*0.4);   /* ゆっくり 上下 (重い 船)。甲板を おばけの 方 (右下) へ 向けて 57 度 傾けて 飛ぶ (35 度では カメラが 下すぎて まだ 甲板が 向こう向き) (下から 見上げると 甲板の 砲塔が 見えなかった、11/4 社長) */
+  let sndS=0;   // 巨大モーター起動: 0 = まだ・1 = 鳴って いる・2 = 止めた
+  g.userData.reset=()=>{ salT=-1; fired=0; sndS=0; for(const s of shots){ s.t=-1; s.flash.material.opacity=s.ball.material.opacity=s.burst.material.opacity=0; } };
+  g.userData.tick=(dt, a, r)=>{ if(r){ if(sndS===0 && !r.passed && r.gap<=300){ sndS=1; sfx3('ship'); } else if(sndS===1 && r.passed){ sndS=2; sfx3Stop('ship'); } }   /* 近寄ったら (300 m、800 m は 早すぎ 11/5 社長) こっそり 巨大モーター起動、抜いたら 止める (11/5 社長「結構 長い」) */ if(fb){ fb.userData.tick(dt, a, r); return; } tt+=dt; sh.position.y=0.8*Math.sin(tt*0.6); sh.rotation.z=1.0+0.02*Math.sin(tt*0.4);   /* ゆっくり 上下 (重い 船)。甲板を おばけの 方 (右下) へ 向けて 57 度 傾けて 飛ぶ (35 度では カメラが 下すぎて まだ 甲板が 向こう向き) (下から 見上げると 甲板の 砲塔が 見えなかった、11/4 社長) */
     if(r && (r.paceT>0 || r.passed) && salT<0){ salT=0; fired=0; }   // おばけが 追いついたら 祝砲
     if(salT>=0){ salT+=dt; while(fired<8 && salT>=0.5+fired*0.22 && turrets.length){ const t=turrets[fired%turrets.length], s=shots[fired]; t.localToWorld(tv.copy(tipL)); g.worldToLocal(tv); s.p.copy(tv); s.v.set((Math.random()-0.5)*10, 45+Math.random()*12, 70); s.t=0; s.flash.position.copy(tv); fired++; } }   // 0.5 秒 (前へ 向く 間) 待って から 0.22 秒 ごとに 1 発 (砲塔を 順番に 2 巡)
     for(const s of shots){ if(s.t<0) continue; s.t+=dt; const k=s.t; s.flash.material.opacity= k<0.15 ? (1-k/0.15)*a : 0; s.flash.scale.setScalar(8+30*k);
@@ -1818,8 +1824,8 @@ function mkRobot3(){   // ロボット (11/4 社長が Claude Design で 作っ�
     body.add(sc); ok=true; if(fb){ g.remove(fb); disposeObj3(fb); fb=null; } body.visible=true; warmObj3(g); if(ERRLOG) logSend({mech3:'ok', parts:sc.children.map(o=>o.name+(o.isMesh ? '' : '*'))});
   }).catch(e=>{ console.warn('ロボットの 模型を 読めず (秘書の 組んだ 形で)', e); if(ERRLOG) logSend({mech3:'fail', err:String(e).slice(0, 200)}); });
   let tt=0, pk=0, glT=-1;   // pk = 決めポーズの 進み (0 = 飛ぶ 形、1 = 決めポーズ)、glT = キラーンからの 秒 (−1 = まだ)
-  g.userData.reset=()=>{ pk=0; glT=-1; if(fb && fb.userData.reset) fb.userData.reset(); };
-  g.userData.tick=(dt, a, r)=>{ if(fb){ fb.userData.tick(dt, a, r); return; } tt+=dt; const want= r && (r.paceT>0 || r.passed) ? 1 : 0; pk+=(want-pk)*(1-Math.exp(-5*dt)); const e=pk*pk*(3-2*pk);   // 並んだら (おばけが 追いついたら) 決めポーズへ (11/4 社長「抜く 前に サンライズアニメの ロボットの ような 決めポーズ」)
+  let sndR=false; g.userData.reset=()=>{ pk=0; glT=-1; sndR=false; if(fb && fb.userData.reset) fb.userData.reset(); };   // sndR = 決めポーズの 音を 鳴らした
+  g.userData.tick=(dt, a, r)=>{ if(!sndR && r && (r.paceT>0 || r.passed)){ sndR=true; sfx3('robot'); }   /* 決めポーズに 入る 瞬間の 音 (11/5 社長「ロボット合体3」) */ if(fb){ fb.userData.tick(dt, a, r); return; } tt+=dt; const want= r && (r.paceT>0 || r.passed) ? 1 : 0; pk+=(want-pk)*(1-Math.exp(-5*dt)); const e=pk*pk*(3-2*pk);   // 並んだら (おばけが 追いついたら) 決めポーズへ (11/4 社長「抜く 前に サンライズアニメの ロボットの ような 決めポーズ」)
     body.quaternion.slerpQuaternions(qFly, qPose, e); body.position.copy(cOff.set(0, HC*S, 0).applyQuaternion(body.quaternion)).negate(); body.position.y+=0.6*Math.sin(tt*1.6)*(1-e);   // 体の まん中を 原点に 保つ
     if(legL) legL.rotation.set(-0.35*e, 0, 0.32*e); if(legR) legR.rotation.set(0.45*e, 0, -0.32*e);   // 決めポーズで 足を 開く (左足は 前へ・右足は 後ろへ、両方 外へ。11/4 社長「足を 広げる、お手本の ポーズ」。模型の 右 = −X)
     /* 腕は 動かさない: 模型の 形 (右の こぶしを 天へ 突き上げる) が そのまま 決めポーズ、飛ぶ 間は 前へ 突き出す こぶし (肩の 位置を 推して 腕を 回したら ポーズが ダサかった、11/4 社長) */
@@ -1903,7 +1909,7 @@ function updateRivals3(ds, dt){   // ds = この コマで おばけが 進ん�
     else r.s-=Math.min(Math.max(0, r.s-s), Math.min(L.drift, vm*0.8)*dt);   // 下がって 真上を 越える (1 コマで 越えない)
     if(!r.passed && v>=ms && r.s<=s+0.01){ r.passed=true; riv3Pass(r.name); }   // 真上に 並んだ 瞬間
     if(r.passed && s-r.s>300){ r.active=false; r.mesh.visible=false; continue; }   // 後ろへ 離れたら 片づける
-    r.fade=Math.min(1, r.fade+dt/(L.fadeIn||1)); frameAt(Math.min(r.s, courseEnd-5), PF); r.mesh.position.copy(PF.p).addScaledVector(PF.u, L.up).addScaledVector(PF.r, L.side||0); r.mesh.quaternion.setFromRotationMatrix(basisAt(PF)); const tk=r.mesh.userData.tick; if(tk) tk(dt, r.fade, r); } riv3Fresh=false; }
+    r.fade=Math.min(1, r.fade+dt/(L.fadeIn||1)); frameAt(Math.min(r.s, courseEnd-5), PF); r.mesh.position.copy(PF.p).addScaledVector(PF.u, L.up).addScaledVector(PF.r, L.side||0); r.mesh.quaternion.setFromRotationMatrix(basisAt(PF)); r.gap=r.s-s; const tk=r.mesh.userData.tick; if(tk) tk(dt, r.fade, r); } riv3Fresh=false; }   /* gap = おばけとの 間 (m、音の きっかけに 使う) */
 function prepGal3(){ if(stage!==3 || nursery3Run) return; if(!gx3){ gx3=S3.W3.galaxy.mod.createBackdrop({mobile:IS_MOBILE, renderer}); scene.add(gx3.group); gx3.group.visible=false; } if(!movie3){ movie3=MV.createMovie3({renderer, mobile:IS_MOBILE, rev:CUT3.rev, white:CUT3.white}); try{ renderer.compile(movie3.scene, movie3.camera); }catch(e){ console.warn("映画の 下ごしらえ", e); } } }   /* 3 面: 銀河の 遠景と 最後の 映画を 走り出す 前 (白い 幕の 間) に 用意 (前は 銀河の 輪の 25 秒前 = インドの 亀の 鼻先で 止まった、10/29 社長「何かを 読み込んで いる」) */
 function gal3Loading(){ return (gx3 && gx3.loading ? gx3.loading() : 0)+(movie3 && movie3.loading ? movie3.loading() : 0); }   // まだ 届いて いない 画像の 数
 function top3(){ if(stage!==3) return 0; const g0=gal03(); if(g0==null) return 0; const k=Math.min(1, Math.max(0, (stageT-g0)/TOP3.sec)); return k*k*(3-2*k); }   // 0 = いつもの 後ろからの カメラ、1 = 見下ろし (銀河の 輪から なめらかに、最後まで そのまま)
@@ -1911,7 +1917,7 @@ function top3(){ if(stage!==3) return 0; const g0=gal03(); if(g0==null) return 0
    カメラが 走る おばけに 寄って パッと 光り、立ち絵の おばけの 映画 (movie3.js、HD-2D の ように 立体の 宇宙と 惑星) へ。当たりは 日本に 着いて 最後の 和音で 真っ白 → 結果発表 / はずれは 太陽と 地球が 遠ざかり → 結果発表 (神様が 慰める) */
 let cut3=null, movie3=null;   // {ok: 当たり, v: 決めた 速さ} / 映画 (movie3.js)
 const CUT3=(()=>{ const g=S3.MUSIC3.gates, c=S3.MUSIC3.cut, g0=g[g.length-1]; return {rev:c.rev-g0, white:c.white-g0, near:0.9}; })();   // 最後の 輪からの 秒 (曲が 無い 時も 同じ 間) / カメラが おばけに 寄る 量 (見下ろしの 距離の 割合)
-function cutStart3(){ cut3={ok:v*3.6>=GOAL3_KMH, v}; pass3=cut3.ok; lane=1; for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; if(!b.hit){ hidePlate(b.idx); freeIdx.push(b.idx); plates.splice(i,1); } } markDirty();   /* 残って いる 加速の 輪は 片づける (操作 なしの 映画で 踏んで 加速 しない、Codex 指摘 10/28) */ document.body.classList.add('hud-calm'); if(ERRLOG) logSend({cut3: cut3.ok ? 'win' : 'lose', kmh:Math.round(v*3.6)}); }   // 最後の 輪の 加速 (世界が 変わる 輪も 加速の 輪) を 入れた 速さで 決める。おばけは まん中の レーンへ、速さ などの 表示は ふわっと 消す
+function cutStart3(){ sfx3Stop('ship'); cut3={ok:v*3.6>=GOAL3_KMH, v};   /* 最後の 演出が 始まったら 宇宙戦艦の 音は 止める (11/5 社長) */ pass3=cut3.ok; lane=1; for(let i=plates.length-1;i>=0;i--){ const b=plates[i]; if(!b.hit){ hidePlate(b.idx); freeIdx.push(b.idx); plates.splice(i,1); } } markDirty();   /* 残って いる 加速の 輪は 片づける (操作 なしの 映画で 踏んで 加速 しない、Codex 指摘 10/28) */ document.body.classList.add('hud-calm'); if(ERRLOG) logSend({cut3: cut3.ok ? 'win' : 'lose', kmh:Math.round(v*3.6)}); }   // 最後の 輪の 加速 (世界が 変わる 輪も 加速の 輪) を 入れた 速さで 決める。おばけは まん中の レーンへ、速さ などの 表示は ふわっと 消す
 function cutInfo3(){ const c=plan3.find(o=>o.def.key==='catchup'); if(!cut3 || !c) return null; return {t:stageT-c.t0, ok:cut3.ok}; }
 function movieOn3(){ const i=cutInfo3(); return !!(i && movie3 && i.t>=MV.T_SIDE); }   // 立ち絵の 映画を 描く 間
 function cutNear3(){ const i=cutInfo3(); if(!i) return 0; const k=Math.min(1, Math.max(0, i.t/MV.T_SIDE)); return k*k*(3-2*k); }   // カメラが 走る おばけに 寄る (0 → 1)
@@ -1967,7 +1973,14 @@ function say(id, pr){
     const src=actx.createBufferSource(), g=actx.createGain(); g.gain.value=OV_VOL; src.buffer=buf; src.connect(g).connect(audioOut(actx)); src.start(); ovSrc=src; ovPr=pr; ovEnd=t0+buf.duration;
     if(ERRLOG) logSend({ov:id, pr}); });
 }
-function ovStop(){ ovTok++; if(ovSrc){ try{ ovSrc.stop(); }catch(_){} ovSrc=null; } ovEnd=0; ovPr=0; ovN=0; }   // もういちど・タイトルへ
+const SFX3={ robot:{url:'assets/sfx/robot-pose.mp3', vol:0.7}, ship:{url:'assets/sfx/ship-motor.mp3', vol:0.35} }, sfx3Live={}, sfx3Tok={};   // 3 面の ライバルの 音 (11/5 社長・効果音ラボ: ロボットの 決めポーズ「ロボット合体3」・宇宙戦艦に 近寄ったら こっそり「巨大モーター起動」) / 鳴って いる 音 / 読み込み中の 音を 取り消す 番号
+const sfxAll=new Set();   // 鳴って いる 効果音 (ライバル・結果発表。消えて いる 途中も 含む) = もういちど・タイトルへで 全部 止める (Codex 指摘 11/5)
+function sfxPlay(buf, vol){ const src=actx.createBufferSource(), g=actx.createGain(); g.gain.value=vol; src.buffer=buf; src.connect(g).connect(audioOut(actx)); src.start(); const o={src, g}; sfxAll.add(o); src.onended=()=>{ sfxAll.delete(o); src.disconnect(); g.disconnect(); if(o.done) o.done(); }; return o; }
+function sfx3(k){ const o=SFX3[k]; if(!o || !actx || actx.state!=='running' || state!=='run') return; const tk=ovTok, kt=sfx3Tok[k]=(sfx3Tok[k]||0)+1;
+  loadSound(actx, o.url).then(buf=>{ if(!buf || tk!==ovTok || kt!==sfx3Tok[k] || state!=='run') return; const old=sfx3Live[k]; if(old){ try{ old.src.stop(); }catch(_){} }
+    const p=sfxPlay(buf, o.vol); sfx3Live[k]=p; p.done=()=>{ if(sfx3Live[k]===p) sfx3Live[k]=null; }; }); }
+function sfx3Stop(k, fade=0.3){ sfx3Tok[k]=(sfx3Tok[k]||0)+1; const o=sfx3Live[k]; if(!o) return; sfx3Live[k]=null; const t=actx.currentTime; o.g.gain.setTargetAtTime(0, t, fade/3); try{ o.src.stop(t+fade); }catch(_){} }   // 途中で 止める (0.3 秒で スッと 消す)
+function ovStop(){ ovTok++; if(ovSrc){ try{ ovSrc.stop(); }catch(_){} ovSrc=null; } ovEnd=0; ovPr=0; ovN=0; for(const o of sfxAll){ try{ o.src.stop(); }catch(_){} } sfxAll.clear(); for(const k in sfx3Live) sfx3Live[k]=null; }   // もういちど・タイトルへ (ライバル・結果発表の 音も 止める)
 function ovStart(){ const tk=ovTok; setTimeout(()=>{ if(tk===ovTok && state==='run') say(ovPick(['rc-01', 'rc-02']), 4); }, 600); }   // 行くぞー！ / しゅっぱーつ！ (曲が 始まって 少し 後)
 function ovCombo(c){ const id=OV_COMBO[c] || (c>=70 && c<=100 ? 'rc-09' : null); if(id) say(id, 2); }
 function ovSeen(name){ if((OV_BIG[stage] || []).includes(name)) say(ovPick(['rc-10', 'rc-11']), 3); }   // あっ、いた！ / 待て待てー！
@@ -2251,7 +2264,7 @@ function startRun(){
   s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; fcMiss=false; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
   for(const r of rivals){ r.active=false; r.passed=false; r.met=false; r.loopT=null; resetShuttle(r); r.mesh.visible=false; resetFan(r); } resetPuffs(); announced.length=0; layerAnn.strato=layerAnn.ozone=layerAnn.plasma=false; $('ozone').style.opacity=0;
   resetCourse(); resetPlates(); if(stage===3) prepGal3();   /* やり直し・確かめ用の 入口で 待たずに 始まる 時も ここで 用意 (走り出しの 1 コマ目) */
-  $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; hudRunT0=performance.now(); hudNextKey=null; updateLadderHUD();   /* 模型は 走り 始めに 作り直す (タイトルの 間に 動き付きの 動物が 読めて 姿が 変わって いる 時の ため) */
+  $('title').hidden=true; $('tap').hidden=true; $('finish').hidden=true; hudRunT0=performance.now(); hudNextKey=null; updateLadderHUD(); if(stage===3 && actx) for(const k in SFX3) loadSound(actx, SFX3[k].url);   /* 3 面の ライバルの 音は 走り 始めに 先読み */   /* 模型は 走り 始めに 作り直す (タイトルの 間に 動き付きの 動物が 読めて 姿が 変わって いる 時の ため) */
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
   if(stage===3) stageT= nursery3Run ? 0 : plan3[0].t0;   /* 3 面: 途中の世界から始める時 (?world=N) は 時計も曲も その世界の始まりから (設計書 3.2)。子ども部屋の 回は 霧の 道から (0) */
   if(stage===3 && nursery3Run) document.body.classList.add('hud-calm');   /* 子ども部屋の 回: 速さ などの 表示なし (字幕・スタッフロールは 出る) */
@@ -2259,7 +2272,7 @@ function startRun(){
   if(stage===1){ { frameAt(START_S+12,F); for(const dx of [-3,0,3]) confettiBurst(F.p.x+F.r.x*dx, F.p.y+6.2, F.p.z+F.r.z*dx, F.t, 0); }   // スタートの合図で ゲートの上から紙吹雪 (9/12 ゴージャス化)
     hotAirUp=0; }   // 熱気球も 同じ合図で 浮かび始める (9/30)
 }
-function finishRun(){ ovStop(); for(const r of rivals3){ r.active=false; r.mesh.visible=false; }   /* ゴールで ライバルを 片づける (抜いた 記録は 残す、Codex 指摘 11/4) */   // 曲の終わり 5 秒前: 結果を用意し、時速を右中央へ、レールを宇宙へ立ち上げ、カメラはその場に残って見守る。曲は最後まで鳴り、終わった瞬間 (ジャン) に ピカーン + おばけが飛び去る
+function finishRun(){ ovStop(); if(actx) for(const o of YAY_SND) loadSound(actx, o.url);   /* 結果発表の 声と 拍手を 先読み */ for(const r of rivals3){ r.active=false; r.mesh.visible=false; }   /* ゴールで ライバルを 片づける (抜いた 記録は 残す、Codex 指摘 11/4) */   // 曲の終わり 5 秒前: 結果を用意し、時速を右中央へ、レールを宇宙へ立ち上げ、カメラはその場に残って見守る。曲は最後まで鳴り、終わった瞬間 (ジャン) に ピカーン + おばけが飛び去る
   state='finish'; finishT=0;
   finalV= cut3 ? cut3.v : v; flashed=false;   /* 3 面: 最後の 輪で 決めた 速さ (結果発表の 当たり / はずれと 同じ) */
   $('fin2').textContent= stage===3 ? 'じそく '+fmtKmh(v)+' km まで かそく！' : stage===2 ? (rung>=0 ? '「'+S2.LADDER2[rung].name+'」まで ぬいた！' : 'じそく '+fmtKmh(v)+' km まで かそく！') : v>=V_ESCAPE ? 'ちきゅうを とびだす はやさ！ (だいに うちゅうそくど)' : v>=V_ORBIT ? 'じんこうえいせいの はやさ！ (だいいち うちゅうそくど)' : v>=V_GOAL ? 'ちきゅうの じてんに おいついた！' : 'もうすこし！ あと じそく '+fmtKmh(V_GOAL-v)+' km';
@@ -2294,8 +2307,11 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
   resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:!!(sc && sc.best), god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons: soloStage ? soloButtons : buttons, confetti:ok,
     onButton:id=>{ if(ERRLOG) logSend({button:id}); if(id==='retry') retry(false); else if(id==='booster') retry(true); else if(id==='next') goNext(); else if(id==='nursery') goNursery3(); else goTitle(); } });
+  if(ok) playYay();   /* 合格: 紙吹雪と 一緒に 子どもたちの「イェーイ！」 */
   if(ERRLOG) logSend({result: ok ? 'ok' : 'ng', kmh, stage, fail:failCount[stage], fc:!fcMiss && combo>0, combo});
 }
+const YAY_SND=[{url:'assets/sfx/result-yay.mp3', vol:0.5}, {url:'assets/sfx/result-clap.mp3', vol:0.6}];   // 合格の 結果発表 (11/5 社長): 子どもたちの「イェーイ！」(Pixabay「Children saying Yay」約 2 秒。0.8 は 大きい →「少し 抑えて」) + 拍手 (効果音ラボ「大勢で拍手パチパチ」約 3 秒)。どちらも 表記 不要
+function playYay(){ if(!actx || actx.state!=='running') return; const tk=ovTok; for(const o of YAY_SND) loadSound(actx, o.url).then(buf=>{ if(!buf || tk!==ovTok || !resultShown) return; sfxPlay(buf, o.vol); }); }   /* もういちど (resetRun → ovStop) で 止まる・読み込み中も 取り消す */
 function goNursery3(){ whiteSwap(()=>{ setBooster(false); resetRun(); nursery3Run=true; setStage(3); pendingT=0; $('hud').style.visibility=''; pendingStart=true; if(ERRLOG) logSend({nursery3:'start'}); }); }   // 3 面の 当たりの つぎへ: 白 → 子ども部屋 & エンディング (きらきら星が 読めたら 始まる。白は 始まったら 晴れる)
 function retry(booster){ setBooster(booster); restart(); }   // もういちど: すぐ 同じ面 (天国には寄らない)
 let introStage=0, curtain=null;   // 天国の会話中の 面 (0 = 導入)・白い幕で 場面を切り替える途中 { t, fn, wc, called }
@@ -2367,6 +2383,7 @@ cv.addEventListener('pointerdown', e=>{
   if(laneLock3 || cut3) return;   // 3 面の 分かれ道で レールが 広がっている 間 (10/27 社長)・太陽に 追いつけ (操作 なし、10/28 社長) は レーンを 動かせない
   const l0=lane; if(x<1/3) lane=Math.max(0,lane-1); else if(x>2/3) lane=Math.min(LANES-1,lane+1);
   if(lane!==l0 && state==='run') sfxLane(actx, lane-l0);   // ひゅっ (11/4)
+  if(state==='run' && (x<1/3 || x>2/3)){ const el=$(x<1/3 ? 'edgeL' : 'edgeR'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }   /* タップした 側の 縁が 光る (端の レーンで 動けない 時も 光る = タップは 届いた 合図) */
 });
 for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audioResume(), {passive:true});   /* iPhone は 指を離した時 (pointerup / touchend) しか 音を出す許可にならない。導入の会話の間も 曲・声が鳴るように いつでも 許可を取る (10/23 社長: iPhone で 1 面の前の 天国の曲が 鳴らない。前は 面の曲が要る時だけ) */
 window.addEventListener('keydown', e=>{
