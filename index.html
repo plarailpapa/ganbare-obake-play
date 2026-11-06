@@ -138,7 +138,7 @@
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div class="edge" id="edgeL"></div><div class="edge" id="edgeR"></div>
 <div id="hud">
-  <div id="trip"><div class="road"></div><div class="done"></div><div class="clock" id="tripClock"></div><div id="tripRow"><span id="tripNote">時間が なくなるまでに <ruby>目標<rt>もくひょう</rt></ruby>を こえよう</span><span id="tripGoal"></span></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
+  <div id="trip"><div class="road"></div><div class="done"></div><div class="clock" id="tripClock"></div><div id="tripRow"><span id="tripNote">おばけが 時計に つくまでに <ruby>目標<rt>もくひょう</rt></ruby>を こえよう</span><span id="tripGoal"></span></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
   <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
@@ -182,6 +182,7 @@ import * as OP from './opening.js';   // 導入 (天国の会話と 自転の説
 import * as RS from './result.js';   // 結果発表の画面 (10/20)
 import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
 import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会話と 3D の説明、10/20)
+import { createHowto } from './howto.js';   // 走り出す 前の 説明画面 (11/6)
 import { createHud3d } from './hud3d.js';   // 表示の 中の 小さな 3D (がんばる表示の 地球、11/5)
 import * as MV from './movie3.js';   // 3 面の 最後「太陽に 追いつけ！」の 映画 (立ち絵の おばけ、10/28)
 
@@ -312,6 +313,7 @@ if(CANVAS_CLEAN) for(const C of [window.WebGL2RenderingContext, window.WebGLRend
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.has('px') ? +Q.get('px') : 1.5));
 const EARTH_MAP=new THREE.TextureLoader().load('planets/2k_earth_daymap.jpg'); EARTH_MAP.colorSpace=THREE.SRGBColorSpace;   // 地球の 地図は 1 面の ミニ地球と がんばる表示で 1 枚を 共有 (Codex 指摘 11/5)
+const howto=createHowto({ anchors:()=>({ rival:(()=>{ const rr=e=>{ const r=document.createRange(); r.selectNodeContents(e); return r; }; return [rr(document.querySelector('#target .l')), document.getElementById('nxSlot'), rr(document.getElementById('nxName')), rr(document.getElementById('nxKmh'))]; })(), rivalName:(()=>{ const r=document.createRange(); r.selectNodeContents(document.getElementById('nxName')); return r; })(), time:[document.getElementById('tripGh'), document.querySelector('#trip .road'), document.getElementById('tripClock')], speed:document.getElementById('speed'), gain:document.getElementById('gainBox') }) });   /* 説明画面 (吹き出しが 指す HUD の 要素) */
 const hud3d=createHud3d(renderer); const tripClock=hud3d.clock(document.getElementById('tripClock'));   /* がんばる表示の 右端 = 目覚まし時計 (11/7 社長、前は 地球) */ hud3d.slot(document.getElementById('nxSlot'), document.getElementById('nxFlash'));
 const IS_MOBILE=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && Math.min(screen.width, screen.height)<900);
 const SHADOWS= Q.get('shadow')!=='0';   // 影 = 足元の丸影 (実質ゼロ負荷、スマホでも既定で あり)。本物の影の地図 (60 → 45 fps) と 形の押しつぶし影 (45 → 30 fps) は 社長の PC で不採用 (9/14〜15)
@@ -2113,6 +2115,7 @@ function renderWorlds3(dt){   // 毎コマ (描く直前、カメラが決まっ
 
 /* ==================== BGM (Web Audio: iPhone でも音量を扱えるように 音の通り道を自分で作る) ==================== */
 let actx=null, bgmSegs=[], bgmReady=false, bgmMissing=0, bgmSrcs=[], bgmGain=null, bgmT0=0, bgmPosBase=0, bgmOn=false, bgmEnded=false, bgmFail=false, bgmWanted=false, stageT=0;
+const BGM_SLOW_Q=Q.has('bgmslow');   // 確かめ用: 曲の 読み込みを 8 秒 遅らせる (3 面の 仮の 星空を 見る、11/7)
 let bgmTracks=BGM_TRACKS, bgmLoadId=0; const bgmBufCache=new Map();   // いまの面の曲 / 読み直しの番号 (古い読み込みの結果を捨てる) / 読んだ曲の置き場 (同じ曲を 2 度読まない)
 const AUDIOLOG=Q.has('audiolog'); let alogEl=null;   /* 確かめ用 ?audiolog=1: 音の様子を 画面の左上に 文字で (iPhone で 調べる、10/23) */
 function alog(m){ if(!AUDIOLOG) return; if(!alogEl){ alogEl=document.createElement('pre'); alogEl.style.cssText='position:fixed;left:4px;top:60px;z-index:99;max-width:92vw;max-height:55vh;overflow:hidden;font:11px/1.35 monospace;color:#fff;background:rgba(0,0,0,.7);padding:4px 6px;margin:0;pointer-events:none;white-space:pre-wrap'; document.body.appendChild(alogEl); } alogEl.textContent+=(performance.now()/1000).toFixed(1)+' '+m+'\n'; }
@@ -2129,7 +2132,7 @@ function bgmPrepare(){   // 音の出口と タブ切り替えの見張り (1 �
 function bgmLoad(tracks){   // 面の曲を読む (面を切り替えるたび)。読めるまでは bgmReady=false (時計は実時間で進み、読めたら追いつく)
   const id=++bgmLoadId; bgmTracks=tracks; bgmReady=false; bgmMissing=0; bgmSegs=[]; bgmFail= !actx || !tracks.length; showCredit();
   if(bgmFail) return;
-  const load=t=>bgmBuf(t.src).catch(err=>{ console.error('BGM', t.src, err); if(id===bgmLoadId) bgmMissing++; return null; });
+  const load=t=>bgmBuf(t.src).then(b=> BGM_SLOW_Q ? new Promise(r=>setTimeout(()=>r(b), 8000)) : b).catch(err=>{ console.error('BGM', t.src, err); if(id===bgmLoadId) bgmMissing++; return null; });
   Promise.all(tracks.map(load)).then(bufs=>{
     if(id!==bgmLoadId) return;
     if(bgmMissing>=tracks.length){ bgmFail=true; showCredit(); return; }
@@ -2208,7 +2211,7 @@ function songRemaining(){ return bgmEnded ? 0 : Math.max(0, stageLen()-stageT); 
 function lastTrackStarted(){ if(!bgmReady || !bgmSegs.length) return false; const l=bgmSegs[bgmSegs.length-1]; return stageT>=(l.spurt!=null ? l.spurt : bgmSegs.length>1 ? l.at : Infinity); }   // 最後の曲の頭 (1 曲だけの面は 曲の中の spurt 秒) から ラストスパート
 function tickStage(dt){   // dt = 実時間
   if(bgmRunning()){ const pos=bgmPosBase+(actx.currentTime-bgmT0); if(pos+0.3<stageT) bgmSeek(); else if(pos>=stageT) stageT=pos; else stageT+=dt; }
-  else if(state==='run' || (state==='finish' && !blast)) stageT+=dt;   // 曲なし (2 面の曲の便の前・読めない時) でも FINISH から飛び去りまで時計を進める (Codex 指摘 10/1: 止まると飛び去りが 1.5 秒遅れる)
+  else if((state==='run' && !howtoHold) || (state==='finish' && !blast)) stageT+=dt;   // 曲なし (2 面の曲の便の前・読めない時) でも FINISH から飛び去りまで時計を進める (Codex 指摘 10/1: 止まると飛び去りが 1.5 秒遅れる)
 }
 function creditLines(){   // クレジット (11/5 社長「いちばん 小さい 字で 1 行」): 今 鳴って いる 曲の 分だけ。1 行に 入らない 表記は 何行かに 分けて (lines) 6 秒ごとに 切り替える
   let L;
@@ -2278,7 +2281,7 @@ function layoutHUD(){   // 字の 大きさを 画面の 大きさで 決める 
   R.setProperty('--sp-h', (sp.offsetHeight+6)+'px');   /* 連続と 加速は 時速の すぐ 下 (高さは 拡大・移動の 影響を 受けない) */
   const box=$('pops'), d=document.createElement('div'); d.className='pop'; d.style.cssText='visibility:hidden;animation:none'; box.appendChild(d); let pf=Math.round(22*s);
   for(const n of [...LADDER, ...S2.LADDER2, ...S3.LADDER3].map(o=>o.name)){ d.innerHTML='<span>「'+nameHtml(n)+'」を ぬいた！</span>'; const w=d.firstChild; d.style.fontSize=pf+'px'; while(w.offsetWidth*1.12+6>box.clientWidth && pf>12){ pf--; d.style.fontSize=pf+'px'; } }   /* 文字の 実際の 幅で 判定。飛び出す 時の 1.12 倍と 縁取りの 分も 見込む (Codex 指摘 11/5) */
-  d.remove(); R.setProperty('--pop-fs', pf+'px'); hud3d.relayout(); fitTripNote(); }   /* 「ぬいた！」: いちばん 長い 名前でも 1 行に 入る 大きさで 固定 */
+  d.remove(); R.setProperty('--pop-fs', pf+'px'); hud3d.relayout(); fitTripNote(); howto.relayout(); }   /* 「ぬいた！」: いちばん 長い 名前でも 1 行に 入る 大きさで 固定 */
 function pop(html, small){ const d=document.createElement('div'); d.className='pop'+(small?' small':''); d.innerHTML=html; $('pops').appendChild(d); setTimeout(()=>d.remove(), 1900); }
 function spurtPop(){ const d=document.createElement('div'); d.className='spurtpop'; d.textContent='ラストスパート！'; $('hud').appendChild(d); setTimeout(()=>d.remove(), 2500); }   // ラストスパートの 大きな 文字 (11/7)
 function showGain(add, cb=0){ const g=$('gain'); g.innerHTML='＋'+fmtKmh(add-cb/3.6)+' km'+(cb ? '<span class="cb">＋'+cb+' ボーナス</span>' : '');   /* コンボ ボーナスは 別に 小さく黄色で */ g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
@@ -2289,7 +2292,7 @@ function beginOpening(from){   // 導入: 天国の場面と 会話の画面を�
   state='opening'; $('hud').style.visibility='hidden'; audioResume();
   if(!op) op=OP.createOpening({renderer, getKit:()=>KIT, actx});
   if(opTitle) opTitle.hide(); op.setMode('talk');   /* タイトルの文字は消え、うろうろの おばけは 会話の画面の おばけに 代わる */
-  talk=createTalk({ root:$('talk'), faces:OP.FACES, actx, voiceDir:'assets/voice/', onCue:(n,l)=>op.cue(n,l), onEnd:endOpening, log: ERRLOG ? m=>logSend({talk:m}) : null });
+  talk=createTalk({ root:$('talk'), faces:OP.FACES, actx, voiceDir:'assets/voice/', onCue:(n,l)=>op.cue(n,l), onEnd:endOpening, autoEnd:0.8, canEnd:()=>!op || op.departReady(), log: ERRLOG ? m=>logSend({talk:m}) : null });
   talk.start(OP.OPENING_LINES, from); heavenPlay();
 }
 let diving=null;   // 飛び込みの途中: { t, sec, wc }。時間は frame の dt で進める (タブを隠すと止まる。見ていない間に 1 面と曲が始まらない、Codex 指摘 10/19)
@@ -2302,13 +2305,13 @@ function endOpening(){   // 導入の終わり (最後のタップ・とばす):
 function diveStep(dt){
   const d=diving; d.t+=dt;
   if(d.t>=d.sec-0.6) d.wc.style.opacity='1';   /* 飛び込みの 最後の 0.6 秒で 白く */
-  if(d.t>=d.sec && !canStart()){ d.wait=(d.wait||0)+dt; if(d.wait>10){ bgmLoadId++; bgmFail=true; if(ERRLOG) logSend({err:'bgm timeout, start without music', stage}); } }   /* 10 秒 待っても 曲が読めなければ 曲なしで始める (白いまま 止まらない。遅れて届いた読み込みは 番号で捨てる、Codex 指摘 10/20) */
+  if(d.t>=d.sec && !canStart()){ if(howtoWanted() && !howto.isOpen()) howtoOpen(true); d.wait=(d.wait||0)+dt; if(d.wait>10){ bgmLoadId++; bgmFail=true; if(ERRLOG) logSend({err:'bgm timeout, start without music', stage}); } }   /* 10 秒 待っても 曲が読めなければ 曲なしで始める (白いまま 止まらない。遅れて届いた読み込みは 番号で捨てる、Codex 指摘 10/20) */
   if(d.t<d.sec || !canStart()) return;   /* 次の面の 曲・部品が まだ読めていなければ 白いまま待つ (3 面は 曲の長さで 世界の長さが決まる、10/20) */
   diving=null; talk.dispose(); op.dispose(); op=talk=null; openingSeen=true; if(opTitle){ opTitle.dispose(); opTitle=null; }
-  $('hud').style.visibility=''; state='title'; startRun();
+  $('hud').style.visibility=''; state='title'; howtoWait= d.intro ? 1.0 : 2.4; startRun();   /* 説明画面は 1 面 = 雲が 晴れて から (2.4 秒)・2 面 3 面 = 白が 晴れて から */
   introStage=0;
-  if(d.intro){ const go=()=>{ d.wc.style.transition='opacity 1s ease'; d.wc.style.opacity='0'; setTimeout(()=>d.wc.remove(), 1100); }; if(stage===3) ready3Then(go); else go(); }   /* 2 面・3 面: 宇宙なので 白が晴れるだけ (プレビューで調整) */
-  else { OP.cloudReveal(); d.wc.remove(); }   /* 1 面: 白い幕を 雲が晴れていく 演出に入れ替える (10/19 社長) */
+  if(d.intro){ const go=()=>{ d.wc.style.transition='opacity 1s ease'; d.wc.style.opacity='0'; setTimeout(()=>d.wc.remove(), 1100); howto.reveal(); }; if(stage===3) ready3Then(go); else go(); }   /* 2 面・3 面: 宇宙なので 白が晴れるだけ (プレビューで調整) */
+  else { OP.cloudReveal(); d.wc.remove(); howto.reveal(); }   /* 1 面: 白い幕を 雲が晴れていく 演出に入れ替える (10/19 社長) */
 }
 function startRun(){
   s=START_S; v= stage===3 ? (KMH2_Q ? KMH2_Q/3.6 : S3.V3_START) : stage===2 ? (KMH2_Q ? KMH2_Q/3.6 : PLANET_Q>=0 ? S2.PLANETS2[PLANET_Q].ms*0.9 : S2.V2_START) : V0;   /* ?planet=N&kmh=M = N 番目の惑星を待ちながら 時速 M から (10/6 小物の確かめ) */ dispV=0; lane=1; laneX=0; rung=-1; lastSpurt=false; bob=0; camKick=0; hits=0; combo=0; fcMiss=false; $('combo').textContent=''; $('gain').classList.remove('on'); camSm.init=false;
@@ -2318,10 +2321,19 @@ function startRun(){
   if(stage===1) lineUpStartRivals(); blast=false; ghost.visible=true;
   if(stage===3) stageT= nursery3Run ? 0 : plan3[0].t0;   /* 3 面: 途中の世界から始める時 (?world=N) は 時計も曲も その世界の始まりから (設計書 3.2)。子ども部屋の 回は 霧の 道から (0) */
   if(stage===3 && nursery3Run) document.body.classList.add('hud-calm');   /* 子ども部屋の 回: 速さ などの 表示なし (字幕・スタッフロールは 出る) */
-  state='run'; bgmPlay(); ovPreload(); preloadSfx(actx); if(!nursery3Run){ ovStart(); showHowto(); }   /* 子ども部屋 (エンディング) では 言わない */   // 「よーい… ドン！」の文字は 9/14 社長指示で撤去
+  state='run'; ovPreload(); preloadSfx(actx); howtoHold=howtoWanted(); howtoOpenAt=performance.now()+howtoWait*1000; howtoWait=0; if(!howtoHold) goRun();   /* 説明画面 (11/6 社長): 止めた スタート画面で 待つ (時計・曲・声は 出発の タップで goRun) */
+}
+function goRun(){ howtoHold=false; bgmPlay(); if(!nursery3Run) ovStart();   /* 子ども部屋 (エンディング) では 言わない */   // 「よーい… ドン！」の文字は 9/14 社長指示で撤去。走り 始めの 説明の 文字 (showHowto) は 説明画面に 置き換え (11/6)
   if(stage===1){ { frameAt(START_S+12,F); for(const dx of [-3,0,3]) confettiBurst(F.p.x+F.r.x*dx, F.p.y+6.2, F.p.z+F.r.z*dx, F.t, 0); }   // スタートの合図で ゲートの上から紙吹雪 (9/12 ゴージャス化)
     hotAirUp=0; }   // 熱気球も 同じ合図で 浮かび始める (9/30)
 }
+const HOWTO_Q=Q.get('howto')!=='0', HOWTO_MIN=0.6;   // ?howto=0 = 説明画面を 飛ばす (試走用) / 説明画面を 最低 何秒 見せるか (前の タップが そのまま 出発に ならない ように)
+let howtoHold=false, howtoT0=0, howtoOpenAt=0, howtoWait=0;   // 説明画面で 止めて いる (state は run の まま、時計は 進めない) / 説明画面を 出した 時刻 / 出す 時刻 / 次の startRun で 出すまで 待つ 秒 (1 面の 雲が 晴れる・2 面 3 面の 白が 晴れる 間)
+function howtoWanted(){ return HOWTO_Q && !nursery3Run && !ENDING_Q; }   // 子ども部屋の 回・エンディングの 確かめでは 出さない
+function howtoReady(){ if(!howto.isOpen() || performance.now()-howtoT0<HOWTO_MIN*1000 || !canStart()) return false; if(stage!==3) return true; const w=views3.get(pi3), W=w && w.warm; return !W || W.ready; }   // 出発 できるか (曲・部品・3 面の 今の 世界の 描き方の 準備)
+function howtoTap(){ if(howtoHold && state==='run' && howtoReady()){ howto.peel(); goRun(); } }   // 説明と 額縁が ペロンと はがれる のと 同時に 出発 (指を 離した 時 = iPhone で 曲を 鳴らせる)
+function howtoOpen(ph){ howto.open(stage, { goalKmh:goalKmh(), touch:IS_MOBILE || matchMedia('(pointer: coarse)').matches, placeholder:ph }); howtoT0=performance.now(); }   // 説明画面を 出す (ph = 景色が まだ 作れない 間の 仮の 星空)
+function howtoStep(){ if(!howtoHold) return; if(!howto.isOpen() && performance.now()>=howtoOpenAt) howtoOpen(false); howto.setReady(howtoReady()); }   // 毎コマ: 出す 時刻に なったら 出し、準備が できたら ボタンを「タップで しゅっぱつ！」に
 function finishRun(){ ovStop(); if(actx) for(const o of YAY_SND) loadSound(actx, o.url);   /* 結果発表の 声と 拍手を 先読み */ for(const r of rivals3){ r.active=false; r.mesh.visible=false; }   /* ゴールで ライバルを 片づける (抜いた 記録は 残す、Codex 指摘 11/4) */   // 曲の終わり 5 秒前: 結果を用意し、時速を右中央へ、レールを宇宙へ立ち上げ、カメラはその場に残って見守る。曲は最後まで鳴り、終わった瞬間 (ジャン) に ピカーン + おばけが飛び去る
   state='finish'; finishT=0;
   finalV= cut3 ? cut3.v : v; flashed=false;   /* 3 面: 最後の 輪で 決めた 速さ (結果発表の 当たり / はずれと 同じ) */
@@ -2333,7 +2345,7 @@ function finishRun(){ ovStop(); if(actx) for(const o of YAY_SND) loadSound(actx,
   spaceDark0=parseFloat($('space').style.opacity)||0; launchS=s; ghostGlow.visible=true; shadow.visible=false;   // 空の暗さは ここから 6 秒で 1 へ (update で)
 }
 let spaceDark0=0, launchS=0;   // FINISH 時の空の暗さ と 打ち上げ開始位置 (見守るカメラの基準)
-function resetRun(){ ovStop(); clearGalaxy3(); rivals3Reset(); if(movie3){ movie3.dispose(); movie3=null; } laneLock3=null; camRef3=0; $('tilt3').hidden=true; nursery3Run=false; ending3Over=false;bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; for(const id of ['speed', 'trip', 'target', 'gainBox']) $(id).style.visibility=''; tripF=0; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
+function resetRun(){ howto.close(); howtoHold=false; ovStop(); clearGalaxy3(); rivals3Reset(); if(movie3){ movie3.dispose(); movie3=null; } laneLock3=null; camRef3=0; $('tilt3').hidden=true; nursery3Run=false; ending3Over=false;bgmStop(); mom3Reset(); roll3Reset(); goal3T=-1; white3Full=false; if(ending3){ ending3.dispose(); ending3=null; } $('white3').style.opacity=0; ghostBody3(true); railFade3(1); scene.visible=true; ov2Trail.visible=false; trailGeo.setDrawRange(0, 0); ov2Trail.material.opacity=1; /* 子ども部屋の 光の筋も 消す (2 面の endOv2 は 特別カメラが無いと 何もしない、Codex 指摘 10/27) */ $('space').style.opacity= stage>=2 ? 1 : 0; $('speed').classList.remove('result','flash'); $('flash').classList.remove('on'); ghostGlow.visible=false; if(ghostBodyMat) ghostBodyMat.emissiveIntensity=0.25; shadow.visible= stage===1 && SHADOWS; if(stage===1){ scene.fog.near=150; scene.fog.far=900; } resultShown=false; for(const id of ['speed', 'trip', 'target', 'gainBox']) $(id).style.visibility=''; tripF=0; if(resultUI) resultUI.hide(); }   // やり直し・次の面の前の 片づけ (10/20: restart から 始める所を 外した)
 function restart(){ resetRun(); startRun(); }
 const RIVALS = {   // ハイスコアの 表に 最初から 並ぶ ライバル (10/27 社長「1 面なら スペースシャトル、2 面なら 金星などを ランクインさせて」)。名前と 速さは ゲームの 中の 相手と 同じ
   1: ['スペースシャトル', 'ミサイル', 'SR-71', 'ヴァルキリー', 'せんとうき', 'Tu-144', 'コンコルド', 'ちきゅうの じてん', 'おとの はやさ', 'ひこうき'].map(n=>LADDER.find(o=>o.name===n)),
@@ -2378,7 +2390,7 @@ function beginIntro(n, from=0){   // 2 面・3 面のはじめ: 天国の会話�
   setBooster(false); resetRun(); setStage(n); introStage=n;
   state='opening'; $('hud').style.visibility='hidden'; audioResume();
   if(op) op.dispose(); op=OP.createOpening({renderer, getKit:()=>KIT, actx, title:false, extra:IN.introExtra(n)});
-  if(talk) talk.dispose(); talk=createTalk({ root:$('talk'), faces:OP.FACES, actx, voiceDir:'assets/voice/', onCue:(nm,l)=>op.cue(nm,l), onEnd:endOpening, log: ERRLOG ? m=>logSend({talk:m}) : null });
+  if(talk) talk.dispose(); talk=createTalk({ root:$('talk'), faces:OP.FACES, actx, voiceDir:'assets/voice/', onCue:(nm,l)=>op.cue(nm,l), onEnd:endOpening, autoEnd:0.8, canEnd:()=>!op || op.departReady(), log: ERRLOG ? m=>logSend({talk:m}) : null });
   talk.start(n===2 ? IN.S2_LINES : IN.S3_LINES, from, {enter:'up'}); heavenPlay();
   if(ERRLOG) logSend({intro:n, from});
 }
@@ -2429,14 +2441,17 @@ cv.addEventListener('pointerdown', e=>{
   if(state==='title'){ if(canStart() && !pendingStart){ if(!opTitle) beginRun(); else if(!opTitle.menuOpen) openTitleMenu(); } return; }   /* 天国の タイトルは 最初の タップで ボタンを 出す (始めるのは ボタンで、10/27 社長)。試しの 入口の ふつうの タイトルは 今まで どおり */
   if(state==='opening') return;
   if(state==='finish') return;   // FINISH の後は 結果発表の ボタンで (画面のタップでは 何も起きない、10/20)
+  if(howtoHold) return;   // 説明画面の 間は 動かない (出発は 指を 離した 時 = howtoTap)
   const x=e.clientX/window.innerWidth;
   if(laneLock3 || cut3) return;   // 3 面の 分かれ道で レールが 広がっている 間 (10/27 社長)・太陽に 追いつけ (操作 なし、10/28 社長) は レーンを 動かせない
   const l0=lane; if(x<0.5) lane=Math.max(0,lane-1); else lane=Math.min(LANES-1,lane+1);   /* 左半分 / 右半分 (11/5 社長: 真ん中の 3 分の 1 は 何も しない 所だった) */
   if(lane!==l0 && state==='run') sfxLane(actx, lane-l0);   // ひゅっ (11/4)
   if(state==='run'){ const el=$(x<0.5 ? 'edgeL' : 'edgeR'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }   /* タップした 側の 縁が 光る (端の レーンで 動けない 時も 光る = タップは 届いた 合図) */
 });
-for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audioResume(), {passive:true});   /* iPhone は 指を離した時 (pointerup / touchend) しか 音を出す許可にならない。導入の会話の間も 曲・声が鳴るように いつでも 許可を取る (10/23 社長: iPhone で 1 面の前の 天国の曲が 鳴らない。前は 面の曲が要る時だけ) */
+for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audioResume(), {passive:true});
+window.addEventListener('pointerup', ()=>howtoTap(), {passive:true});   // 説明画面の 出発 (音の 許可の 後、11/6)   /* iPhone は 指を離した時 (pointerup / touchend) しか 音を出す許可にならない。導入の会話の間も 曲・声が鳴るように いつでも 許可を取る (10/23 社長: iPhone で 1 面の前の 天国の曲が 鳴らない。前は 面の曲が要る時だけ) */
 window.addEventListener('keydown', e=>{
+  if(howtoHold){ if((e.key===' ' || e.key==='Enter') && !e.repeat) howtoTap(); return; }   // 説明画面: Enter・スペースで 出発、矢印は 効かない
   if(e.key==='ArrowLeft' || e.key==='ArrowRight'){ const l0=lane; if(!laneLock3 && !cut3) lane= e.key==='ArrowLeft' ? Math.max(0,lane-1) : Math.min(LANES-1,lane+1); if(lane!==l0 && state==='run') sfxLane(actx, lane-l0); }
   else if(e.key===' '||e.key==='Enter'){ if(e.repeat || (e.target instanceof Element && e.target.closest('button'))) return;   /* ボタンに 合わせた Enter・Space は ボタンに 任せる (オプションで Enter → 始まって しまった)・長押しの くり返しは 受けない (Codex 指摘 10/27) */
     if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !panelUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
@@ -2445,6 +2460,7 @@ window.addEventListener('keydown', e=>{
 
 /* ==================== 毎コマ ==================== */
 function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)、dtReal = 実時間 (時計と走る量)
+  howtoStep();   // 説明画面 (11/6)
   if(ROOM_Q && stage===3 && state==='run') return;   /* ?room=1: 子ども部屋を 止めて見る (時計・走り・終わりを 進めない。カメラは 描く前に 真上へ、Codex 指摘 10/26) */
   const st0=stageT; tickStage(dtReal);
   const dtMove= state==='run' ? Math.min(2, Math.max(0, stageT-st0)) : 0;
@@ -2657,9 +2673,9 @@ function songClock(){ const g=bgmSegs.find(o=>stageT>=o.at && stageT<o.at+o.len)
 function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   if(pendingStart && stage===3) prepGal3();   /* 3 面: 白い 幕の 間に 銀河の 遠景と 最後の 映画を 用意して 画像が 届くまで 待つ (最大 6 秒。待つ 間は 「よみこみちゅう」、10/29 社長) */
   const ready3= !pendingStart || stage!==3 || nursery3Run || gal3Loading()===0 || pendingT>6;
-  if(pendingStart && (!canStart() || !ready3)){ pendingT+=raw; if(pendingT>10 && !canStart()){ bgmLoadId++; bgmFail=true; if(ERRLOG) logSend({err:'bgm timeout, solo start without music', stage}); } }   /* 10 秒 待っても 曲が 読めなければ 曲なしで 始める (止まったまま に しない。導入の 後と 同じ) */
-  if(pendingStart && canStart() && ready3){ pendingStart=false; startRun(); }   /* 次の面: 曲・部品が 読めたら 始める (10/20) */
-  $("load3").hidden= !(pendingStart && pendingT>0.5);   /* 読み込みを 待って いる 間 (0.5 秒より 長い 時だけ) */
+  if(pendingStart && (!canStart() || !ready3)){ pendingT+=raw; if(pendingT>0.5 && howtoWanted() && !howto.isOpen()) howtoOpen(true);   /* 白で 待たず 仮の 星空の 説明画面で 待つ (11/7 社長) */ if(pendingT>10 && !canStart()){ bgmLoadId++; bgmFail=true; if(ERRLOG) logSend({err:'bgm timeout, solo start without music', stage}); } }   /* 10 秒 待っても 曲が 読めなければ 曲なしで 始める (止まったまま に しない。導入の 後と 同じ) */
+  if(pendingStart && canStart() && ready3){ pendingStart=false; startRun(); howto.reveal(); }   /* 次の面: 曲・部品が 読めたら 始める (10/20) */
+  $("load3").hidden= !(pendingStart && pendingT>0.5) || howto.isOpen();   /* 読み込みを 待って いる 間 (0.5 秒より 長い 時だけ) */
   if(curtain) curtainStep(Math.min(0.05,raw));
   if(pendingTalk){ const n=pendingTalk; pendingTalk=0; beginIntro(n); }   /* 試しの入口 ?talk=N */
   if(stage===2 && (state==='title' || state==='opening' || (state==='finish' && resultShown))) prep2Step();   /* 2 面の前の タイトル・会話の間に 惑星と小物の下ごしらえ (結果画面の間も = 「もういちど」で すぐ走る時のため、Codex 指摘。1 コマ 1 つずつ。走っている間・ゴールの飛び去りの間は しない) */

@@ -418,7 +418,8 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
     return DIVE_SEC;
   }
   function resize(w, h){ camera.aspect = w / h; camera.updateProjectionMatrix(); }
-  function depart(){ return ext ? ext.depart() : dive(); }   // 出発: 導入は 雲へ飛び込む、2 面・3 面のはじめは 説明の 3D の中へ
+  function depart(){ return ext ? ext.depart() : dive(); }
+  function departReady(){ return ext && ext.departReady ? ext.departReady() : true; }   // 出発して よいか (3 面 = 銀河の 全体まで 引き切ったか)   // 出発: 導入は 雲へ飛び込む、2 面・3 面のはじめは 説明の 3D の中へ
   function dispose(){   // 形・材質・絵を 1 つずつ 1 回だけ捨てる。Sprite の形は ゲーム本体と共用なので 捨てない (Codex 指摘 10/19)。部品集の家 (keep) も 捨てない
     if(ext) ext.dispose();
     const res = new Set(owned);
@@ -429,5 +430,5 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
   let spaceK = 0, spaceTo = 0;
   const ext = extra ? extra({ scene, camera, glow, ghostTex, speedEl, sparkle:() => sparkle(actx), loader, earthFit, space:on => { spaceTo = on ? 1 : 0; }, credit }) : null;
   resize(window.innerWidth, window.innerHeight);
-  return { scene, camera, update, setMode, setDream(on){ dream = on; }, cue, dive, depart, resize, dispose, musicCredit:s => { creditMusic = s || ''; showCredit(); }, get mode(){ return mode; } };
+  return { scene, camera, update, setMode, setDream(on){ dream = on; }, cue, dive, depart, departReady, resize, dispose, musicCredit:s => { creditMusic = s || ''; showCredit(); }, get mode(){ return mode; } };
 }

@@ -52,7 +52,10 @@ export function createHud3d(renderer){
     const d=new THREE.DirectionalLight(0xffffff, 2.0); d.position.set(3, 4, 5); mScene.add(new THREE.HemisphereLight(0xffffff, 0x445066, 2.2), d); relayout(); }
   function wrap(model){   // 大きさを そろえて 真ん中へ (いちばん 長い 辺 = 2)。少し 上から 見下ろし、横向きから 回り 始める
     model.position.set(0, 0, 0); model.quaternion.identity(); model.updateMatrixWorld(true);
-    const b=new THREE.Box3().setFromObject(model), c=b.getCenter(new THREE.Vector3()), z=b.getSize(new THREE.Vector3()), r=Math.max(z.x, z.y, z.z)/2;
+    const b=new THREE.Box3(), t=new THREE.Box3(), shown=o=>{ for(let v=o; v && v!==model; v=v.parent) if(!v.visible) return false; return true; };   /* 大きさは 見える 部品だけで 測る (透明で 見えない 部品 = ロボットの 決めポーズの 後光・光の 翼 などを 数えると 本体が 小さく なった、11/6 社長) */
+    model.traverse(o=>{ if(!(o.isMesh || o.isSprite || o.isPoints) || !o.geometry || !shown(o)) return; if([].concat(o.material).every(m=>(m.transparent && m.opacity===0) || (m.uniforms && m.uniforms.uA && m.uniforms.uA.value===0))) return;
+      if(o.isInstancedMesh){ if(!o.boundingBox) o.computeBoundingBox(); t.copy(o.boundingBox); } else { if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); t.copy(o.geometry.boundingBox); } b.union(t.applyMatrix4(o.matrixWorld)); });
+    if(b.isEmpty()) b.setFromObject(model); const c=b.getCenter(new THREE.Vector3()), z=b.getSize(new THREE.Vector3()), r=Math.max(z.x, z.y, z.z)/2;
     model.position.sub(c); const spin=new THREE.Group(); spin.add(model); spin.scale.setScalar(r>0 ? 1/r : 1); spin.rotation.y=Math.PI/2;
     const root=new THREE.Group(); root.rotation.x=0.3; root.add(spin); root.visible=false; mScene.add(root); return { root, spin, model, t:0, fog:!!model.userData.hudFog }; }
   const FOG=new THREE.Fog(0x000000, 1e8, 2e8);   // 霧の ある 場所の 相手 (1・3 面) は 霧 (届かない 遠さ) を 付けて 描く = ゲームと 同じ 描き方を 使い回す (無いと 相手が 初めて 出る たびに 描き方の 準備を し直して スマホで 一瞬 止まった、11/5 社長「1 面で カクカク 2 か所」)

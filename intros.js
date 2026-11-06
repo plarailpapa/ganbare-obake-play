@@ -315,6 +315,7 @@ function galaxyExtra(ctx){
       const camD = camera.position.distanceTo(sysW);
       mark.position.copy(sysW); mark.scale.setScalar(camD * 0.015); markM.opacity = t >= T4H ? Math.min(1, (t - T4H)) * (0.75 + 0.25 * Math.sin(now * 6)) : 0; mark.visible = markM.opacity > 0.01;   // 太陽系の場所の 小さな光の印 (画面の上で いつも同じ大きさ。太陽系そのものは 1 ドットほど)
     },
+    departReady(){ return st.t < 0 || st.depart >= 0 || st.t >= T5; },   // 銀河の 全体まで 引き切ったか (会話の 最後が 自動で 進んでも 引き切って から 飛び込む、11/7 社長「銀河に 突入する シーンだった はず」)
     depart(){ if(st.depart < 0){ show(true); space(true); st.depart = 0; st.from.copy(camera.position); speedEl.classList.remove('on'); st.count = -1; } return GAL_DEPART_SEC; },
     dispose(){ dead = true; for(const o of all) scene.remove(o); for(const r of new Set(own)) r.dispose(); }
   };

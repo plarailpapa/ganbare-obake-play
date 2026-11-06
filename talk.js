@@ -139,7 +139,7 @@ export function playSound(actx, url, vol = 1, valid = () => true){   // 1 回 �
 }
 const LATE_VOICE = 1.0;   // 行が出てから この秒数までに 声が届けば 遅れて鳴らす (それより遅いと 文字の時間のまま)
 
-export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, endPrompt = 'タップで しゅっぱつ！', skip = true }){   // skip = false: 右上の「とばす」を 出さない (エンディング、11/4 社長)
+export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, endPrompt = 'タップで しゅっぱつ！', skip = true, autoEnd = null, canEnd = null }){   // autoEnd = 最後の セリフの 後 この 秒で ひとりでに 終わる (「タップで しゅっぱつ！」を 出さない、11/6 社長: 会話の 後は 自動で 映像へ → 説明画面)   // skip = false: 右上の「とばす」を 出さない (エンディング、11/4 社長)
   if(!document.getElementById('talk-css')){ const st = document.createElement('style'); st.id = 'talk-css'; st.textContent = CSS; document.head.appendChild(st); }
   root.className = 'tk-root';
   root.innerHTML = '<div class="tk-ch tk-kami tk-hide"><div class="tk-fr"><img alt=""></div></div><div class="tk-ch tk-obake tk-hide"><div class="tk-fr"><img alt=""></div></div>'
@@ -202,7 +202,7 @@ export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, end
   function next(){
     stopVoice();
     if(idx + 1 < lines.length) show(idx + 1);
-    else { revealAll(); phase = 'end'; endT = 0; root.classList.add('tk-end'); }   /* 「タップで しゅっぱつ！」は 画面の真ん中 (10/19 社長) */
+    else { revealAll(); phase = 'end'; endT = 0; if(autoEnd == null) root.classList.add('tk-end'); }   /* 「タップで しゅっぱつ！」は 画面の真ん中 (10/19 社長) */
   }
   function finish(){
     if(phase === 'done') return;
@@ -214,7 +214,7 @@ export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, end
   function tap(){
     if(actx && actx.state === 'suspended') actx.resume().catch(() => {});
     if(phase === 'line'){ if(t < TAP_GAP) return; if(rev && !rev.done){ revealAll(); tapT = t; } else if(t - tapT >= TAP_GAP) next(); }   /* 文字が 出て いる 途中で 押したら 全部 出す (声は そのまま)、もう 一度 押したら 次の 行 (11/4) */
-    else if(phase === 'end'){ if(endT >= END_GAP) finish(); }
+    else if(phase === 'end'){ if(endT >= END_GAP && (autoEnd == null || !canEnd || canEnd() || endT >= autoEnd + 12)) finish(); }   /* 自動で 終わる 会話の 最後の タップも 映像の 区切りまで 待つ (タップで 早送り しても 銀河を 引き切って から、Codex 指摘 11/7) */
   }
   const onDown = e => { e.preventDefault(); tap(); };
   const onSkip = e => { e.preventDefault(); e.stopPropagation(); finish(); };
@@ -235,7 +235,7 @@ export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, end
     update(dt){
       if(phase === 'enter'){ t += dt; if(t >= 0.8){ phase = 'line'; root.classList.remove('tk-entering'); show(enterIdx); } }
       else if(phase === 'line'){ t += dt; stepReveal(); if(t >= wait) next(); }
-      else if(phase === 'end') endT += dt;
+      else if(phase === 'end'){ endT += dt; if(autoEnd != null && endT >= autoEnd && (!canEnd || canEnd() || endT >= autoEnd + 12)) finish(); }   /* canEnd = 映像の 区切りまで 待つ (最大 12 秒)。とばす は 待たない */
     },
     tap,
     skip: finish,
