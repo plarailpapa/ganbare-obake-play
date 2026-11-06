@@ -249,7 +249,7 @@ function skyMat(top, hor, bot){   // 場面ごとの 空 (カメラを 包む �
       }` });
 }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const mob = !!opts.mobile, branch = opts.nextBranch !== false, path = coursePath3(P, branch);
   let seed = 20261104; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), m4 = new THREE.Matrix4(), s3 = new THREE.Vector3(), e = new THREE.Euler(), fw = new THREE.Vector3();
@@ -259,6 +259,7 @@ export function build(scene, root, P, opts, out){
       const k = Math.min(1, Math.max(0, s3.subVectors(p, A).dot(ab) / l2)), d = s3.copy(A).addScaledVector(ab, k).distanceToSquared(p); if(d < best){ best = d; s = path.S[a] + k * (path.S[b] - path.S[a]); } }
     return s; };
 
+  yield;
   // ① 本物の ダリア (写真を 地面に、コースが 写真を 突き抜ける 所 = 飛び込む 花びら)
   const z0 = new THREE.Group(); root.add(z0);
   const photo = new THREE.TextureLoader().load('photos/dahlia.jpg'); photo.colorSpace = THREE.SRGBColorSpace; photo.anisotropy = 8;
@@ -266,6 +267,7 @@ export function build(scene, root, P, opts, out){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), photoMat(photo)); m.position.copy(v); m.quaternion.setFromRotationMatrix(m4.makeBasis(X, Y, n)); m.frustumCulled = false; z0.add(m); }
   const sky0 = new THREE.Mesh(new THREE.SphereGeometry(15000, 16, 8), skyMat("0.0045, 0.0085, 0.0075", "0.0045, 0.0085, 0.0075", "0.0045, 0.0085, 0.0075")); sky0.renderOrder = -5; sky0.frustumCulled = false; z0.add(sky0);   // 写真の まわりも 写真の 背景と 同じ 暗い 色 (地平線や 写真の 端を 見せない)
 
+  yield;
   // ② 花びらの 表面: 丸い 粒の 細胞が びっしり (六角に 並べる)・朝露・気孔 (コースが 飛び込む 所)
   const z1 = new THREE.Group(); z1.visible = false; root.add(z1);
   path.frame(FL[1], v, q); const SC = v.clone(), YB = v.y; fw.set(0, 0, 1).applyQuaternion(q); fw.y = 0; fw.normalize();   // 気孔の 真ん中 = 地面の 高さ
@@ -288,6 +290,7 @@ export function build(scene, root, P, opts, out){
     for(const [s, lat, r] of DR){ path.frame(s, v, q); const X = new THREE.Vector3(1, 0, 0).applyQuaternion(q); X.y = 0; X.normalize();
       const g = new THREE.SphereGeometry(r, 48, 32).translate(v.x + X.x * lat, YB + DOME_H * 0.8 + r * 0.85, v.z + X.z * lat), m = new THREE.Mesh(g, dm); m.frustumCulled = false; z1.add(m); } }
 
+  yield;
   // ③ 細胞の 中 (蛍光顕微鏡の ような 色): すき通った 膜の 部屋に ミトコンドリア (橙・ひだ)・色素体 (緑・積み重なった 円盤)・小さな 袋 (泡)・骨組みの 光る 糸・ただよう 粒、奥に 細胞の 核 (紫) と 入口 (コースが 飛び込む 所)
   const z2 = new THREE.Group(); z2.visible = false; root.add(z2);
   path.frame(FL[2], v, q); const C2 = v.clone(), D2 = new THREE.Vector3(0, 0, 1).applyQuaternion(q), NR = 350, NC = C2.clone().addScaledVector(D2, NR), yaw2 = Math.atan2(D2.x, D2.z);   // 核の 中心 = 入口 (コースが 当たる 所) から 進む 向きへ 半径 分
@@ -316,6 +319,7 @@ export function build(scene, root, P, opts, out){
     pores.setMatrixAt(n, m4.compose(C2.clone().addScaledVector(D2, -3), q.setFromUnitVectors(zA, D2), s3.set(2.4, 2.4, 2.4))); pores.frustumCulled = false; z2.add(pores); }   // 入口 = 半径 53 m の 輪
   const sky1 = new THREE.Mesh(new THREE.SphereGeometry(15000, 32, 16), skyMat('0.86, 0.84, 1.0', HAZE1, '0.7, 0.36, 0.52')); sky1.renderOrder = -5; sky1.frustumCulled = false; z1.add(sky1);
 
+  yield;
   // ④ DNA の 二重らせん (核の 中): らせんの 軸 = コース (17〜23 秒は まっすぐ、途中 4 秒で 体ごと 1 回転)。右巻き・1 段 HRISE m・10 段で 1 回り。2 本の 背骨は 140 度 ずらす (段は 軸から 約 31 m 離れた 所を 横切る = コースの まわりに すき間)。段の 色 = A 赤・T 黄・G 緑・C 青 (A–T・G–C が 組)
   const z3 = new THREE.Group(); z3.visible = false; root.add(z3);
   const HR = 90, HRISE = 30, OFF = 140 * Math.PI / 180;
@@ -349,6 +353,7 @@ export function build(scene, root, P, opts, out){
   const dc = document.createElement('canvas'); dc.width = dc.height = 64; { const x = dc.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,0.4)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); }
   const dotT = new THREE.CanvasTexture(dc), halo = (c, op, sc) => { const h = new THREE.Sprite(new THREE.SpriteMaterial({ map:dotT, color:c, transparent:true, opacity:op, blending:THREE.AdditiveBlending, depthWrite:false, fog:false })); h.scale.setScalar(sc); return h; };   // ぼんやり 光る 玉 (電子・門の 光・電子の 雲)
 
+  yield;
   // ⑤ 分子: 水 (赤い 酸素に 白い 水素 2 つ = ミッキーの 顔の 形)・二酸化炭素 (灰色の 炭素の 両側に 酸素、まっすぐ)・酸素 (酸素 2 つ) が ゆらゆら 回りながら 漂う 中を S 字で 縫い、正面の 1 つの 水の 酸素へ 飛び込む (29 秒)。花が 水と 二酸化炭素から 酸素を 作る (光合成) 3 つ (11/3 社長「水分子 以外も あと 2 種類」)
   const z4 = new THREE.Group(); z4.visible = false; root.add(z4);
   const am = baseMat(HAZE4), WO = 45, HA = 52.25 * Math.PI / 180, RED = [1.0, 0.2, 0.18], WHT = [0.95, 0.95, 1.0], GRY = [0.32, 0.33, 0.36];   // 水の 酸素の 半径 / 水素の 開き (104.5 度の 半分) / 原子の 色 (本物の 色分け: 酸素 赤・水素 白・炭素 黒 → 暗い 所で 見える 灰)
@@ -366,6 +371,7 @@ export function build(scene, root, P, opts, out){
   { const p = new THREE.Points(rg, rbm3); p.frustumCulled = false; z4.add(p); }
   const sky3 = new THREE.Mesh(new THREE.SphereGeometry(15000, 32, 16), skyMat('0.03, 0.09, 0.22', HAZE4, '0.005, 0.02, 0.06')); sky3.renderOrder = -5; sky3.frustumCulled = false; z4.add(sky3);
 
+  yield;
   // ⑥ 酸素の 原子: 電子 8 個が 光の 尾を 引いて 回る (外の 3 本の 楕円に 2 個ずつ = おなじみの 原子の マーク + 内の 輪に 2 個) 中を 真ん中へ。原子核 (赤い 陽子 8・青い 中性子 8) の 手前に 次の 世界への 3 つの 門 (11/3 社長「ア」)
   // 原子の マークの 面 = コースの 終わりの 向きに 直角 (正面から マークが 見える)。座標: EO = まん中の 門 (輪の 中心 = コースの 終わり + 上 2.2 m = index.html の RING3_UP)、X5 = 左・Y5 = 上・D5 = 進む 向き。レーン k の 門 = EO + (1 − k) × ex.w 左・−(k − 1) × ex.h 上
   const z5 = new THREE.Group(); z5.visible = false; root.add(z5);
@@ -396,6 +402,7 @@ export function build(scene, root, P, opts, out){
   { const p = new THREE.Points(rg, rbm3); p.frustumCulled = false; z5.add(p); }
   const sky4 = new THREE.Mesh(new THREE.SphereGeometry(15000, 32, 16), skyMat('0.02, 0.03, 0.09', HAZE5, '0.0, 0.0, 0.015')); sky4.renderOrder = -5; sky4.frustumCulled = false; z5.add(sky4);
 
+  yield;
   // 場面の 切り替わりの 白い 光 (カメラを 包む 小さな 球、いちばん 手前に)
   const fm = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, side:THREE.BackSide, depthTest:false, depthWrite:false, fog:false });
   const flash = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 12), fm); flash.renderOrder = 999; flash.frustumCulled = false; flash.visible = false; root.add(flash);

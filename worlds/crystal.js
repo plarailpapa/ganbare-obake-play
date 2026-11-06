@@ -108,7 +108,7 @@ function fallTex(){ const c = document.createElement('canvas'); c.width = 64; c.
     for(const o of [-256, 0, 256]){ const lg = g.createLinearGradient(0, y + o, 0, y + o + h); lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(0.5, `rgba(255,255,255,${a})`); lg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = lg; g.fillRect(x, y + o, w, h); } }
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const branch = opts.nextBranch !== false, path = coursePath3(P, branch), L = Math.max(600, path.len), mob = !!opts.mobile;   /* branch = 次の 段が 分かれ道 / L = 入口から 出口の 輪までの 長さ (最初の 段は P.len より ctrlLen3 短い) */ let seed = 20261028; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const zone = (z, o, deep) => { const f = Math.min(0.999, Math.max(0, z / L)) * 4, i = Math.floor(f), j = Math.min(3, i + 1), k = sm((f - i - 0.75) / 0.25); return o.copy(ZONES[i][deep ? 1 : 0]).lerp(ZONES[j][deep ? 1 : 0], k); };   // 区間の 終わり 4 分の 1 で 次の 色へ
   const H1 = L * 0.375, H2 = L * 0.625;   // 広間 1・広間 2 の まん中 (大広間は 最後の 2 割)
@@ -121,6 +121,7 @@ export function build(scene, root, P, opts, out){
   const lift = s => branch ? exitLift3(P.def, P.move, path.len - s) : 0;   // 出口で レールが 上がる 高さ (洞窟は 上げない = レールが 城壁の 門へ のぼって いくのが 見える)
   const bend = o => { path.frame(o.z, _fp, _fq); return o.set(o.x, o.y - lift(o.z), 0).applyQuaternion(_fq).add(_fp); };   // まっすぐの 座標 (x 横・y 上 (洞窟の 高さ、レールは y = lift)・z 道のり) → コースに 沿った 座標
 
+  yield;
   // 洞窟の 殻 (天井と 左右の 壁、下は 開いた 谷 = もやに 沈む)
   { const nr = mob ? 37 : 54, step = 30, nz = Math.ceil((Z1 - Z0) / step), A0 = -0.38 * Math.PI, A1 = 1.38 * Math.PI, pos = new Float32Array(((nz + 1) * (nr + 1) + 1) * 3), c = new Float32Array(pos.length), idx = [];   // 下は 水面の 下まで (いちばん 下の ふちは 水の 中)、+1 = 奥の ふたの まん中
     for(let iz = 0; iz <= nz; iz++){ const z = Z0 + iz * step, H = ceil(z), S = side(z), lz = lift(z); zone(z, col, true); path.frame(z, _fp, _fq);   // 輪切り 1 枚ずつ コースの 向きに 立てる
@@ -132,6 +133,7 @@ export function build(scene, root, P, opts, out){
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); g.setIndex(idx);
     root.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.DoubleSide }))); }
 
+  yield;
   // 結晶 (天井から 下向き・壁から 内向き・岩の 上から 上向き・アーチ)。clear = レールの まわりの 空きに 入らないよう 長さを 縮める
   const cr = [];   // cr = {p 根元, d 向き, len, w, c 色} (まっすぐの 座標。描く 時に コースに 沿わせる)
   const wideA = RECONV3_SEC * P.move + 150, wideB = L - SPREAD3_SEC * P.move - 150;   // 入口の 戻り・出口の 手前の 広がる 所 (z)
@@ -144,6 +146,7 @@ export function build(scene, root, P, opts, out){
     for(let i = 0; i < nC; i++){ const z = Z0 + rnd() * (Z1 - Z0), top = rnd() < 0.62, a = top ? (0.2 + rnd() * 0.6) * Math.PI : (rnd() < 0.5 ? (-0.2 + rnd() * 0.4) : (0.8 + rnd() * 0.4)) * Math.PI;
       shellPt(a, z, p); const inward = new THREE.Vector3(-p.x, -p.y, 0).normalize(), cn = 3 + (rnd() * 6 | 0), base = 10 + rnd() * 16, giant = rnd() < 0.12; zone(z, col, rnd() < 0.3);
       for(let k = 0; k < cn; k++){ const d = jitter(inward.clone(), 0.9), len = (giant ? 30 + rnd() * 40 : base * (0.6 + rnd() * 0.8)) , w = len * (0.22 + rnd() * 0.14); addCr(p.clone().add(v.set(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(base * 1.2)), d, len, w, col); } } }
+  yield;
   // 岩 (谷から 立つ 柱 と 宙に 浮く 島。上に 結晶の 群れ、横腹にも 結晶、島の ふちから ときどき 滝)
   const rocks = [], falls = [];
   const surf = (o, an, s, k, out) => { const rr = rockR(o.g, an + o.ry, s) * o.r * k; return out.set(o.x + Math.cos(an) * rr, o.y - s * o.h, o.z + Math.sin(an) * rr); };   // 岩の 表面の 点 (an = 向きの 角度、s = 上からの 深さ 0〜1、k = 1 より 小さいと 少し 埋める)
@@ -159,11 +162,13 @@ export function build(scene, root, P, opts, out){
         const d = jitter(new THREE.Vector3(Math.cos(an), 0.3 + rnd() * 0.6, Math.sin(an)).normalize(), 0.5), len = isl ? 4 + rnd() * r : 8 + rnd() * 20; addCr(p, d, len, len * (0.24 + rnd() * 0.12), col); }
       if(isl && !under && rnd() < (mob ? 0.3 : 0.45)){ const an = x > 0 ? Math.PI : 0; let rr = 0; for(let s = 0; s <= 0.3; s += 0.02) rr = Math.max(rr, rockR(g, an + o.ry, s));   // 滝は 島の レール側の ふちから (島は 下が 細いので 水が 岩に めり込まない)
         falls.push({ x:x - Math.sign(x) * (rr * r + 0.4), y:topY - ROCKS[g].cap * o.h, z, w:4 + rnd() * 6 }); } } }
+  yield;
   // 巨大な 結晶の アーチ (広間 1・2 の 頭上を またぐ。半径 46 m の 半円に 沿って 結晶が 外向き・接線向きに)
   for(const [zc, zi] of [[H1, 1], [H2, 2]]){ const R = 46, cA = ZONES[zi][0], cB = ZONES[zi][1], n = mob ? 110 : 180;
     for(let i = 0; i < n; i++){ const th = (0.03 + 0.94 * rnd()) * Math.PI, zz = zc + (rnd() - 0.5) * 26, rr = R + (rnd() - 0.5) * 10, p = new THREE.Vector3(Math.cos(th) * rr, -8 + Math.sin(th) * (rr + 8), zz);
       const out = new THREE.Vector3(Math.cos(th), Math.sin(th), 0), tan = new THREE.Vector3(-Math.sin(th), Math.cos(th), 0).multiplyScalar(rnd() < 0.5 ? 1 : -1), d = jitter(out.lerp(tan, rnd() * 0.8), 0.5), len = 12 + rnd() * 24;
       addCr(p, d, len, len * (0.2 + rnd() * 0.12), col.copy(cA).lerp(cB, rnd() * 0.6)); } }
+  yield;
   // 出口 = 光る 城壁と 3 つの 門 (10/29 社長「コンセプトアートの ような 光る 城壁に 門が ある 出口」。次の 分かれ道の 3 本の レールが 扇形に 広がりながら 上がって 1 本ずつ くぐる)
   const DC = [ZONES[0][0], ZONES[1][0], ZONES[3][0]];   // 門の 光の 色 (左 紫・まん中 青・右 金 = 絵の とおり)
   const doors = [-1, 0, 1].map(k => branch ? { x:-k * ex.w, y:-k * ex.h + RING_UP, hw:7, lo:12, hi:8, c:DC[k + 1], hole:true }   // 分かれ道: 3 本の レールが 1 つずつ くぐる。下 12 m・上は とがった アーチ (輪の 半径 4.2 m + カメラ)
@@ -200,6 +205,7 @@ export function build(scene, root, P, opts, out){
     const amb = new THREE.Sprite(new THREE.SpriteMaterial({ map:glow, color:0xffcf80, transparent:true, opacity:0.2, blending:add, depthWrite:false, fog:false })); amb.position.set(0, 10, zf - 12); amb.scale.set(W * 1.6, 150, 1); fac.add(amb); mirror(amb, 0.4);   // 城壁 全体を 包む 金色の 光
     path.frame(L, _fp, _fq); out.exitP = _fp.clone(); fac.quaternion.copy(_fq); fac.position.copy(v.set(0, 0, -L).applyQuaternion(_fq).add(_fp)); root.add(fac); }   // まっすぐの 座標の z = L を コースの 終わり (上がった レールの 高さ) へ
 
+  yield;
   // まとめて 描く
   const crMat = crystalMat();
   const tipPos = new Float32Array(cr.length * 3), tipCol = new Float32Array(tipPos.length);   // 結晶の 先の 光

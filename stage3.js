@@ -374,7 +374,7 @@ function serpentHead(T, tex, L){   // 大蛇の頭 (模型の単位): 首の先�
   const mat=new THREE.MeshBasicMaterial({map:tex, vertexColors:true}); for(const gg of [head, snout]) grp.add(new THREE.Mesh(bakeLight(gg, L.clone().applyQuaternion(grp.quaternion.clone().invert())), mat));
   for(const s of [-1, 1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.03, 16, 8), new THREE.MeshBasicMaterial({color:0x2a3a30})); e.position.set(s*0.13, 0.04, 0.10); grp.add(e); }   // 目
   return grp; }
-function indiaWorld(scene, root, P, opts, out){   // 置き物を root に足す。out.focus = カメラが向く所 (塔の真ん中)
+function* indiaWorld(scene, root, P, opts, out){   // 置き物を root に足す (yield の 所で 次の コマへ、11/6)。out.focus = カメラが向く所 (塔の真ん中)
   const H=P.def.path, T=serpentPath(H), K=P.def.cosmos, S=T.S, g=new THREE.Group(), Lm=INDIA_SUN.clone().applyAxisAngle(AXY, T.yaw);   // Lm = 模型の向きで見た 日差し
   g.position.copy(T.gpos); g.rotation.y=-T.yaw; g.scale.setScalar(S); root.add(g);   // 塔と大蛇 (模型の単位 → m)。コースの始まり = 世界の入口 に合わせて 回して置く
   loadGLB(K.glb).then(sc=>{ if(!sc) return;
@@ -391,23 +391,24 @@ function indiaWorld(scene, root, P, opts, out){   // 置き物を root に足す
     else if(su && su.isMesh){ const sg=su.geometry.clone(); sg.computeBoundingSphere(); g.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xffd27a})));   // 太陽 (金色に光る)
       const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex(), color:0xffc860, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false})); glow.position.copy(sg.boundingSphere.center); glow.scale.setScalar(1.1); g.add(glow); }
   });
-  const tex=scaleTex(); g.add(serpentMesh(T, tex, Lm), serpentHead(T, tex, Lm));
+  yield; const tex=scaleTex(); yield; g.add(serpentMesh(T, tex, Lm), serpentHead(T, tex, Lm)); yield;
   const R=seeded(1013), ctex=cloudTex(["#ffffff", "#f2f7ff"]), C=T.gpos;   // 白い雲 (塔の大きさに合わせる): 塔の下の 雲の海 (30) と 遠くの空の雲 (14)
   for(let i=0;i<44;i++){ const low=i<30, a=R()*Math.PI*2, d=((low ? 2.8 : 3)+R()*(low ? 3.6 : 4))*S,   /* 雲の 海は 塔の 真下を 空ける (とぐろの 外 2.5 より 外、10/29) */ sz=((low ? 1.2 : 1)+R()*1.6)*S, sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ctex, transparent:true, opacity:0.95, depthWrite:false}));
     sp.position.set(C.x+Math.sin(a)*d, C.y+(low ? -2.7-R()*0.6 : 0.5+R()*3.5)*S, C.z+Math.cos(a)*d);   /* 雲の 海は とぐろ・しっぽ (高さ −1.6 まで) より 下へ (前は −0.7〜−1.2 で 大蛇と 亀の 下に かかって 白く 見えた、10/29 社長) */ sp.scale.set(sz*1.7, sz*(low ? 0.6 : 1), 1); root.add(sp); }
-  scene.fog=new THREE.Fog(0xd8ecff, 6*S, 30*S);   /* 昼の もや = 遠くが 白く かすむ (塔は くっきり) */
+  yield; scene.fog=new THREE.Fog(0xd8ecff, 6*S, 30*S);   /* 昼の もや = 遠くが 白く かすむ (塔は くっきり) */
   const F=new THREE.Vector3(0, 1.7*S, 0).applyAxisAngle(AXY, -T.yaw).add(C); if(!T.helix) out.focus=(sl, o)=>o.copy(F); else if(T.lookLen) out.focus=(sl, o)=>sl<T.lookLen ? o.copy(F) : null;   // 塔の真ん中 (社長の 道すじ 10/29: 最初の 見上げる 間だけ、その 後は なし = カメラは コースの 先を 見る、縦持ちで 先が 見える ように)
   return []; }
-export function buildWorld(P, opts){   // P = planWorlds の 1 行、opts = {mobile, neb, gal} (neb/gal = false で 星雲・眼下の銀河を出さない: 重さの見比べ用 ?neb=0・?gal=0)
+export function buildWorld(P, opts){ const g=buildWorldGen(P, opts); let r; do r=g.next(); while(!r.done); return r.value; }   // その場で 全部 作る (始まりの 白い 幕の 間・輪を くぐった 先が まだ 無い 時)
+export function* buildWorldGen(P, opts){   // 少しずつ 作る (yield の 所で 次の コマへ 回せる = 分かれ道で 一度に 作って 0.1 秒 止まって いた、11/6 社長)。P = planWorlds の 1 行、opts = {mobile, neb, gal} (neb/gal = false で 星雲・眼下の銀河を出さない: 重さの見比べ用 ?neb=0・?gal=0)
   const def=P.def, scene=new THREE.Scene(), bg=new THREE.Group(), root=new THREE.Group(), ticks=[], out={focus:null};   // out.focus = カメラが向く所 (② だけ: 道のり → root の座標の点)
   const dome=new THREE.Mesh(new THREE.SphereGeometry(90000, 64, 32), new THREE.MeshBasicMaterial({map:skyTex(def.sky), side:THREE.BackSide, depthWrite:false, fog:def.look==='nursery'})); dome.renderOrder=-10;   /* 子ども部屋は 霧の 中から 晴れる (空も 霧の 色に、10/28 社長) */
-  bg.add(dome); if(!def.sky.day && def.sky.stars!==false) bg.add(starField(opts.mobile ? 1500 : 3000)); if(def.sky.band>0) bg.add(bandStars(Math.round(def.sky.band*(opts.mobile ? 5000 : 10000)))); scene.add(bg, root);   // 昼の空 (② の青空) は 星なし
+  yield; bg.add(dome); if(!def.sky.day && def.sky.stars!==false) bg.add(starField(opts.mobile ? 1500 : 3000)); if(def.sky.band>0){ yield; bg.add(bandStars(Math.round(def.sky.band*(opts.mobile ? 5000 : 10000)))); } scene.add(bg, root); yield;   // 昼の空 (② の青空) は 星なし
   if(def.sky.sun){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex(), color:0xfff6d8, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, fog:false})); s.position.set(...def.sky.sun).normalize().multiplyScalar(70000); s.scale.setScalar(9000); s.renderOrder=-8; bg.add(s); }   // 太陽 (空の向き [x, y, z])
-  if(def.look==='milkyway'){ ticks.push(...milkyWay(root, P.len, opts)); farGalaxies(bg); }   // ① 天の川の置き物 と 空の ほかの銀河
+  if(def.look==='milkyway'){ ticks.push(...milkyWay(root, P.len, opts)); yield; farGalaxies(bg); }   // ① 天の川の置き物 と 空の ほかの銀河
   if(def.look==='castle') ticks.push(...castleWorld(scene, root, P, opts, out));   // ② 城の大広間 と 3 体の像 (10/12)
-  if(def.look==='india') ticks.push(...indiaWorld(scene, root, P, opts, out));   // ③ 亀と象の塔 と 大蛇 (10/13)
+  if(def.look==='india') ticks.push(...(yield* indiaWorld(scene, root, P, opts, out)));   // ③ 亀と象の塔 と 大蛇 (10/13)
   if(def.look==='nursery') ticks.push(...nurseryWorld(scene, root, P, opts, out));   // ⑤ 子ども部屋 (10/22。天井なしの 部屋の中、夜)
-  if(def.mod) ticks.push(...def.mod.build(scene, root, P, opts, out)); else if(!def.look) ticks.push(...buildDraft(scene, root, P, opts, out));   // 分かれ道の 新しい 世界 (worlds/<key>.js、10/27) / まだ 無い 世界は 仮の 世界 (確かめ用)
+  if(def.mod){ let r=def.mod.build(scene, root, P, opts, out); if(r && typeof r.next==='function') r=yield* r; ticks.push(...r); } else if(!def.look) ticks.push(...buildDraft(scene, root, P, opts, out));   // 分かれ道の 新しい 世界 (worlds/<key>.js、10/27) / まだ 無い 世界は 仮の 世界 (確かめ用)
   return {P, scene, bg, root, placed:false, focus:out.focus, nursery:out.nursery, frame:out.frame, cine:out.cine, exitP:out.exitP,
     tick(cam, dt, portal){ bg.position.copy(cam.position); for(const f of ticks) f(cam, dt, portal); },   // portal = 輪の 窓の 中に 描いて いる (次の 世界)
     dispose(){ out.dead=true; scene.traverse(o=>{ if(o.isInstancedMesh) o.dispose(); if(o.geometry && !o.isSprite) o.geometry.dispose(); for(const m of (o.material ? [].concat(o.material) : [])){ if(m.map && !m.userData.keepMap) m.map.dispose(); if(m.alphaMap) m.alphaMap.dispose(); if(m.envMap) m.envMap.dispose(); if(m.uniforms) for(const k in m.uniforms){ const x=m.uniforms[k] && m.uniforms[k].value; if(x && x.isTexture && !x.userData.shared) x.dispose(); } for(const x of [m.userData.stone, m.userData.tex2, m.userData.tex3]) if(x) x.dispose(); m.dispose(); } }); } };   /* 光の板 (Sprite) の形は three.js 全体の共用なので 捨てない。alphaMap も 片づける (銀河の 窓の 円い ぼかし、Codex 指摘 10/29) */

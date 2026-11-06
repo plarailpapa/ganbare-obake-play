@@ -293,7 +293,7 @@ function galaxyExtra(ctx){
       }
       if(st.left){ gh.visible = true; ghPos.copy(ghLeft); ghM.map = ghostTex.odoroki[0]; }   // 太陽系が 進み始めると その場に 取り残される (早送りで 出る前に ここへ来ても 映す、Codex 指摘 10/21)
       gh.position.copy(ghPos);
-      if(st.count >= 0){ st.count += dt; speedEl.innerHTML = speedHtml(KMH3 * ease(st.count / 2)); if(st.count > 3.5){ speedEl.classList.remove('on'); st.count = -1; } }
+      if(st.count >= 0){ st.count += dt; speedEl.innerHTML = speedHtml(KMH3 * ease(st.count / 2)); if(st.count > 7){ speedEl.classList.remove('on'); st.count = -1; } }
       base.copy(camera.position); camera.getWorldDirection(baseLook).multiplyScalar(400).add(base);   // 天国のカメラ (ふだんの位置) を 基準に
       keys(t);
       if(st.depart < 0){

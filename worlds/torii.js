@@ -212,7 +212,7 @@ function puffTex(rnd){ const N = 128, c = document.createElement('canvas'); c.wi
   for(let i = 0; i < 12; i++){ const x = 64 + (rnd() - 0.5) * 50, y = 64 + (rnd() - 0.5) * 50, r = 22 + rnd() * 26, rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, 'rgba(255,255,255,0.7)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const mob = !!opts.mobile, branch = opts.nextBranch !== false, path = coursePath3(P, branch), L = path.len, TE = 7 * P.move;   // 谷の 町は 7 秒 (その 先 野原 4 秒 → 機首上げ → 螺旋)
   let seed = 20261103; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   scene.fog = new THREE.Fog('#b9714f', 700, mob ? 10000 : 12000);   // 夕暮れの 温かい 霞 (遠くまで: 天を 衝く 巨木が 町から 見える)
@@ -220,9 +220,11 @@ export function build(scene, root, P, opts, out){
   root.add(new THREE.HemisphereLight('#ffb27a', '#3a2830', 0.9)); const sun = new THREE.DirectionalLight('#ffa860', 1.3); sun.position.set(...(P.def.sky.sun || [0, 0.1, 1])).normalize().multiplyScalar(1000); root.add(sun, sun.target);   // 正面の 低い 夕日 (建物の 輪郭が 光る)
   { const fill = new THREE.DirectionalLight('#ffc8a0', 1.0); fill.position.set(0.3, 0.5, -1).normalize().multiplyScalar(1000); root.add(fill, fill.target); }   // こちら側からの 柔らかい 照り返し (夕日は 巨木の 向こう = 幹の こちら側が 完全な 逆光で 真っ黒な 影の 壁に なり、形が 無い ように 見えた、11/2 社長の 写真)
 
+  yield;
   // コースの 点 (20 m ごと): 位置・高さ・左向き (水平)
   const pts = []; for(let s = -400; s <= L + 400; s += 20){ path.frame(s, v, q); X.set(1, 0, 0).applyQuaternion(q); X.y = 0; X.normalize(); pts.push({ s, x:v.x, y:v.y, z:v.z, lx:X.x, lz:X.z }); }
   const town = pts.filter(p => p.s <= TE + 300), hillPts = pts.filter(p => p.s >= TE - 300);
+  yield;
   // 巨木の 中心 = 螺旋の 中心 (コースの 螺旋の 3 点を 水平に 見た 円の 中心、11/2 社長「螺旋に 上る、左カーブ」) と 幹の 太さ (螺旋との 間 約 180 m、上は 細く、根元は 少し 広がる)
   const S1 = 12.5 * P.move, S2 = 23.84 * P.move, TTOP = 8600, ss = THREE.MathUtils.smoothstep;   // 螺旋の 始め / 終わり (legs の 12.5 秒・23.84 秒 = 出口の まっすぐ (4 秒) の 始まり。入口の まっすぐは calmIn:false で 省く = 試し用と 本番で 同じ)
   const TC = (() => { const P3 = [S1 + 600, S1 + 1800, S1 + 3000].map(s => { path.frame(s, v, q); return [v.x, v.z]; }), [[ax, az], [bx, bz], [cx, cz]] = P3, d = 2 * (ax * (bz - cz) + bx * (cz - az) + cx * (az - bz));
@@ -232,6 +234,7 @@ export function build(scene, root, P, opts, out){
   path.frame(S1, v, q); const dirC = new THREE.Vector3(v.x - TC.x, 0, v.z - TC.z).normalize(); path.frame(0, v, q); const dTown0 = new THREE.Vector3(v.x - TC.x, 0, v.z - TC.z).normalize();   // 幹から 螺旋の 始め / 町への 向き (根を 這わせない 側)
   const groundAt = d => { const a = Math.abs(d); return a < BANK ? WATER_Y - 2 : a < BANK + 2 ? WATER_Y - 2 + 3.5 * (a - BANK) : a < DOTE ? WATER_Y + 5 + (DOTE_Y - WATER_Y - 5) * (a - BANK - 2) / (DOTE - BANK - 2) : a < PROM ? DOTE_Y : DOTE_Y + (a - PROM) * SLOPE; };   // 谷の 横の 断面 (川 → 水ぎわの 石垣 (高さ 7 m) → 草の 土手 → 川沿いの 石畳の 道 → 斜面)
 
+  yield;
   // 谷の 地面 (左右の 帯、頂点の 色で 石の 護岸・草の 土手・石畳の 道・斜面の 土)
   const wm = waterMat(new THREE.Vector3(...(P.def.sky.sun || [0, 0.1, 1])).normalize());   // 夕日の 向き = 空の 太陽と 同じ
   { const pos = [], idx = []; pts.filter(p => p.s <= TE + 750).forEach((p, i) => { pos.push(p.x + p.lx * BANK, WATER_Y, p.z + p.lz * BANK, p.x - p.lx * BANK, WATER_Y, p.z - p.lz * BANK); if(i){ const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } });   /* 川は 巨木の 根元の 泉まで (根を 登り 始める 所 = TE + 750、11/2 社長「川から 木を 登り始めるまでが 寂しい」) */
@@ -244,6 +247,7 @@ export function build(scene, root, P, opts, out){
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3)); g.setAttribute('kind', new THREE.Float32BufferAttribute(kd, 1)); g.setIndex(idx); g.computeVertexNormals();
     const m = new THREE.Mesh(g, gmat); m.frustumCulled = false; root.add(m); }
 
+  yield;
   // 湯屋 (谷の 斜面に 段々に ぎっしり): 胴 (壁の 絵) + 縁側 + 反りの ある 屋根。斜面の 下ほど 段が 多い。正面は 川の 方
   const bodies = [], roofs = [], decks = [], lan = [], lcol = [], LC = ['#ff4a2a', '#ff7a3a', '#ffb050', '#ff3a3a'].map(c => new THREE.Color(c));
   const HC = 50, hash = new Map(), hk = (x, z) => Math.floor(x / HC) * 100003 + Math.floor(z / HC);
@@ -259,6 +263,7 @@ export function build(scene, root, P, opts, out){
       if(Math.hypot(x - TC.x, z - TC.z) < rT(0) + 150 || !free(x, z, w0 * 0.62)) continue; const near = 1 - (lat - PROM) / (LMAX - PROM);
       tower(x, groundAt(lat) - 4, z, Math.atan2(-p.lx * sg, -p.lz * sg) + (rnd() - 0.5) * 0.25, w0, 2 + ((rnd() * (2 + near * 3)) | 0)); } }   /* 斜面の 高さに 建てる = 奥ほど 高い 所 = 谷の 壁の ように 積み重なる */
 
+  yield;
   // 太鼓橋 (土手の 上から レールの 上を またぐ 赤い アーチ、その 下を おばけが くぐる)・川を わたる 提灯の 列 (レールの 上)・土手の 灯籠
   const bridgeM = new THREE.MeshLambertMaterial({ color:'#c8321e', emissive:'#3a0a04' }), deckM = new THREE.MeshLambertMaterial({ color:'#5a3a2a', side:THREE.DoubleSide }), BR = PROM - 6, BK = 26 / BR;   // 橋の 半分の 長さ / アーチの 高さの 割合 (まん中が 土手より 26 m 上 = レールの 38 m 上)
   for(let i = 14; i < town.length - 12; i += 30){ const p = town[i]; if(p.s > TE - 300) break; const g = new THREE.Group(); g.position.set(p.x, DOTE_Y, p.z); g.rotation.y = Math.atan2(-p.lz, p.lx); root.add(g);
@@ -270,6 +275,7 @@ export function build(scene, root, P, opts, out){
     if(i % 20 === 6 && i % 30 !== 14) for(let k = 0; k <= 14; k++){ const u = k / 14 * 2 - 1, d = u * PROM, yy = DOTE_Y + 10 - 6 * (1 - u * u), cc = LC[(rnd() * LC.length) | 0]; lan.push(p.x + p.lx * d, yy, p.z + p.lz * d); lcol.push(cc.r, cc.g, cc.b); } }   // 川を わたる 提灯の 列 (まん中で レールの 16 m 上)
 
 
+  yield;
   // 天を 衝く 巨大な 桜の 木 (2 回目、11/2 社長「めちゃくちゃ でかい 桜の 木を 登りたい」→「天を 衝く 巨木、世界樹の 迷宮の 扉絵くらい」): 谷の 町の 先の 野原に 立つ ご神木。幹 = 直径 約 1.3 km (根元は 広がる)・高さ 約 9 km、てっぺんの 花は 雲の 上。
   // コースは 町の 先の 野原を 抜け、幹を 左に 見ながら 板根の 尾根を 左カーブの 螺旋で 上り (35 度・約 150 度 回る、幹の 壁は 約 170 m 左)、幹から 張り出す 大枝へ 乗り移って 花の トンネルへ。板根と 大枝は コースの 真下に 沿わせる (めり込まない)。幹の まわりに 雲の 層 (1.5 km・4 km・6.5 km)、桜吹雪
   const TDBG = typeof location !== 'undefined' && /[?&]tdbg=1/.test(location.search), TDBG2 = typeof location !== 'undefined' && /[?&]tdbg=2/.test(location.search);   // tdbg=2: 花びらを 全部 消す (町の 終わりの 星空 調べ)   // 確かめ用 &tdbg=1: 巨木の 幹を マゼンタ・花を 水色に 光らせ、霞の 影響なし、雲の 層を 消す (11/2 町から 木が 見えない 調べ)
@@ -313,6 +319,7 @@ export function build(scene, root, P, opts, out){
   for(const [y0, n, r0, r1] of [[1500, 260, 60, 6500], [4100, 200, 700, 7000], [6600, 140, 500, 6000]]) for(let i = 0; i < n * K; i++){ const a = rnd() * Math.PI * 2, r = r0 + Math.sqrt(rnd()) * (r1 - r0);   // 幹を 巻く 雲の 層 (コースは 下の 層を 突き抜ける)
     const cx = TC.x + Math.cos(a) * (rT(y0) + r), cz = TC.z + Math.sin(a) * (rT(y0) + r); path.frame(Math.min(TE, Math.max(0, cz - 0)), v, q); if(y0 < 3000 && Math.abs(cx - v.x) < 2600 && cz < TE + 1200) continue;   /* 町の 上空には 雲を 置かない (木が 町から 見える ように) */
     clouds.push([TC.x + Math.cos(a) * (rT(y0) + r), y0 + (rnd() - 0.5) * 260, TC.z + Math.sin(a) * (rT(y0) + r), 500 + rnd() * 900, 0.5 + rnd() * 0.5, (rnd() - 0.5) * 0.4]); }
+  yield;
   // 木の まわりの 野原 と 遠くの 山並み・野原の 木
   { const mp = pts.filter(p => p.s >= TE + 300 && p.s <= S1), e0 = mp[mp.length - 1]; for(let k = 1; k <= 200; k++) mp.push({ s:S1 + k * 50, x:e0.x - e0.lz * k * 50, z:e0.z + e0.lx * k * 50, lx:e0.lx, lz:e0.lz });   /* 町の 終わり (谷の 地面と 同じ 列) から。螺旋の 始めまでは コースに 沿い、その 先は まっすぐ 延ばす (螺旋に 沿わせると 地面の 帯が 扇の ように 回って 折り重なり 巨木を 隠した、11/2) */
     const RIV = TE + 750, half = [[BANK - 2, 0], [BANK, 0], [BANK + 2, 0], [BANK + 2, 1], [(BANK + DOTE) / 2 + 1, 1], [DOTE, 1], [DOTE, 2], [PROM, 2], [PROM, 3], [PROM + 1, 3], [170, 3], [400, 3], [1000, 3], [2000, 3], [3000, 3], [4000, 3], [6000, 3], [9000, 3]];   // 横の 点 [距離, 種類] (川の 断面 = 谷の 町と 同じ 石垣・草の 土手・石畳、その 外は 野原)
@@ -325,6 +332,7 @@ export function build(scene, root, P, opts, out){
     if(i) for(let k = 0; k < KK; k++){ const a = (i - 1) * (KK + 1) + k, b = a + KK + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); } });
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3)); g.setAttribute('kind', new THREE.Float32BufferAttribute(kd, 1)); g.setIndex(idx); g.computeVertexNormals(); const m = new THREE.Mesh(g, gmat); m.frustumCulled = false; root.add(m); }
   { const o = (() => { path.frame(TE + 650, v, q); X.set(1, 0, 0).applyQuaternion(q); X.y = 0; X.normalize(); return { x:v.x, z:v.z, ry:Math.atan2(-X.z, X.x) }; })(); toriiBig.push({ ...o, y:DOTE_Y, w:2 * (PROM + 2) / 0.84, h:190 }); }   // 川を またぐ 朱の 大鳥居 (柱は 両岸の 石畳の 上、幅 約 200 m・高さ 約 200 m = 正方形に 近い 形 (社長「横長より 高さを」)、根を 登り 始める 直前 = ご神木の 入口)
+  yield;
   // 部品を 描く
   const [wt, we] = wallTex(rnd), wmat = wallMat(wt, we);
   const inst = (geo, mat, list, colr) => { if(!list.length) return null; const mesh = new THREE.InstancedMesh(geo, mat, list.length);
@@ -352,12 +360,14 @@ export function build(scene, root, P, opts, out){
   { const n = clouds.length, aP = new Float32Array(n * 4), aS = new Float32Array(n * 2); clouds.forEach((p, i) => { aP.set(p.slice(0, 4), i * 4); aS.set(p.slice(4, 6), i * 2); });   // 幹を 巻く 雲の 層
     const base = new THREE.PlaneGeometry(1, 1), ig = new THREE.InstancedBufferGeometry(); ig.index = base.index; ig.setAttribute('position', base.attributes.position); ig.setAttribute('uv', base.attributes.uv);
     ig.setAttribute('aP', new THREE.InstancedBufferAttribute(aP, 4)); ig.setAttribute('aS', new THREE.InstancedBufferAttribute(aS, 2)); ig.instanceCount = n; const m = new THREE.Mesh(ig, cloudMat(puffTex(rnd))); m.frustumCulled = false; m.renderOrder = -1; m.visible = !TDBG; root.add(m); }
+  yield;
   // 桜吹雪 (カメラの まわり + 木の まわりの 遠くからも 見える 花びらの 渦)
   const pBox = petalMat(300), pFar = petalMat(0);
   { const n = mob ? 700 : 1200, pos = new Float32Array(n * 3), r = new Float32Array(n); for(let i = 0; i < n; i++){ pos.set([rnd() * 300, rnd() * 300, rnd() * 300], i * 3); r[i] = rnd(); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aR', new THREE.BufferAttribute(r, 1)); const p = new THREE.Points(g, pBox); p.frustumCulled = false; root.add(p); }
   { const n = mob ? 1200 : 2500, pos = new Float32Array(n * 3), r = new Float32Array(n); for(let i = 0; i < n; i++){ const b = blossoms[(rnd() * blossoms.length) | 0] || { x:0, y:0, z:0 }; pos.set([b.x + (rnd() - 0.5) * 250, b.y - rnd() * 300, b.z + (rnd() - 0.5) * 250], i * 3); r[i] = rnd(); }   /* 花の 雲の すぐ まわりだけ (広く 散らすと 野原から 見上げた 空に 1 画素の 点が びっしり = 星空に 見えた、11/2 社長) */
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aR', new THREE.BufferAttribute(r, 1)); const p = new THREE.Points(g, pFar); p.frustumCulled = false; root.add(p); }
+  yield;
   // 湯けむり (川面・湯屋の 屋根から ゆっくり 昇る)
   const stm = steamMat(puffTex(rnd));
   { const list = [];

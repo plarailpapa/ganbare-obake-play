@@ -157,7 +157,7 @@ function archGeo(){   // アーチの 柱間 1 つ (幅 1・高さ 1・奥行き
   return new THREE.ExtrudeGeometry(s, { depth:1, bevelEnabled:false, curveSegments:10 }).translate(0, 0, -0.5);
 }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const mob = !!opts.mobile, path = coursePath3(P, opts.nextBranch !== false), L = path.len;
   let seed = 20261102; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   scene.fog = new THREE.Fog('#cfe4f6', 4000, mob ? 18000 : 24000);   // 澄んだ 水色の 霞 (前の 黄土色の 霞 = 曇り空に 見えた、11/2 社長「もっと 晴れ渡って」)
@@ -167,6 +167,7 @@ export function build(scene, root, P, opts, out){
   const env = envTex(P.def.sky.sun, rnd);   // 金の 部品 (本物の 金属) だけに 空と 朝日を 映す (scene.environment に すると 大理石 (Lambert) まで 空の 明るさを 受けて 街 全体が 白く なった、11/2 社長)。向きは 毎コマ root に 合わせる (下の tick)
   const gold = new THREE.MeshStandardMaterial({ color:'#f3c65e', metalness:1, roughness:0.3, envMap:env, envMapIntensity:1.2 });
 
+  yield;
   // コースの 高さと 奥行き (25 m ごと)。層の ふちの 半径 R・床の 高さ F (中心 = 中央神殿)
   const N = Math.ceil(L / 25), CY = new Float32Array(N + 1), CZ = new Float32Array(N + 1);
   for(let i = 0; i <= N; i++){ path.frame(i * L / N, v, q); CY[i] = v.y; CZ[i] = v.z; }
@@ -183,6 +184,7 @@ export function build(scene, root, P, opts, out){
   const onRing = (r, th, y) => [r * Math.sin(th), y, zc - r * Math.cos(th)];   // 中心から 半径 r・角度 th (0 = 南 = 手前、+ = 左) の 点
   const spire = (x, y, z, r, h) => { put(cone, x, y, z, r * 2, h, r * 2); put(ball, x, y + h, z, r * 0.7, r * 0.7, r * 0.7, 0, WHITE); };   // 尖塔 + 金の 玉
 
+  yield;
   // 段の 壁 (円弧、外向き): 前面に アーチの 列、少し 奥に 影の 壁、上に 小さな 尖塔。大通りの 所は 開ける
   const backs = [];
   const wall = (r, y0, y1, gap, flow) => {
@@ -197,11 +199,13 @@ export function build(scene, root, P, opts, out){
   wall(R[0], F[0], F[0] + 120, AVE + 60, false);   // 外郭の 壁 (第 5 層の ふち。門は 下)
   for(let k = 0; k < 4; k++) wall(R[k + 1], F[k], F[k + 1], AVE + 14, true);   // 第 5〜2 層の 内側の 段 (上の 層の 縁から 滝)
 
+  yield;
   // 層の 床 (円の 一部、平ら)
   const floors = [];
   for(let k = 0; k < 5; k++){ const rIn = k < 4 ? R[k + 1] - 14 : 0, rOut = R[k], a = Math.asin(Math.min(1, XM / rOut));
     floors.push(new THREE.RingGeometry(rIn, rOut, Math.max(16, Math.ceil(a * rOut / 80)), 1, Math.PI / 2 - a, 2 * a).rotateX(-Math.PI / 2).translate(0, F[k], zc)); }
 
+  yield;
   // 大通り: 広場 (平ら) と 大階段。両側の 手すり と 青い 炎の 灯
   const floorAt = s => { if(s < S[0]) return F[0]; for(let k = 4; k >= 0; k--) if(s >= S[k]){ if(k === 4 || s <= PE[k]) return F[k]; return F[k] + (F[k + 1] - F[k]) * (s - PE[k]) / (S[k + 1] - PE[k]); } return F[0]; };
   for(let k = 0; k < 5; k++){ const z0 = cz(S[k]), z1 = cz(k < 4 ? PE[k] : L) + (k < 4 ? 0 : 200);
@@ -215,6 +219,7 @@ export function build(scene, root, P, opts, out){
     { const zm = (z0 + z1) / 2, fl = new THREE.Mesh(new THREE.CircleGeometry(48, 48).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color:'#7fc4ee', emissive:'#1a4a70' })); fl.position.set(0, F[k] + 1.4, zm); root.add(fl);   // 広場の まん中の 泉 (金の 輪で ふち取り)
       const rim = new THREE.Mesh(new THREE.TorusGeometry(52, 3, 8, 64).rotateX(Math.PI / 2), gold); rim.position.set(0, F[k] + 2.3, zm); root.add(rim); } }
 
+  yield;
   // 外郭の 門 (第 5 層の ふち): 左右の 門の 塔 + 大きな アーチ (レールが くぐる)
   { const z = cz(S[0]) - 4;
     put(arch, 0, F[0], z, 2 * AVE + 40, 210, 34, 0); put(box, 0, F[0] + 210, z, 2 * AVE + 60, 18, 40);
@@ -222,6 +227,7 @@ export function build(scene, root, P, opts, out){
       for(const dx of [-24, 24]) spire(x + dx, F[0] + 240, z - 24, 5, 60);
       statue(x, F[0], z - 62, 80, Math.PI, 30); banners.push({ x, y:F[0] + 170, z:z - 33.5, w:22, h:100, ry:Math.PI }); }   /* 門の 塔の 前の 大きな 像 と 旗 */
     spire(0, F[0] + 228, z, 7, 90); }
+  yield;
   // 門の 金の 扉 2 枚 (11/2 社長「大きな 門が ゆっくり 開いて 出迎えて。遠くでは 閉まって いて、近づくと 開く」): アーチの 開口 (幅 108・まっすぐ 115.5 m + 楕円の 上 63 m) を ふさぐ 形、アーチの 奥の 面に 蝶番、内側 (街の 側) へ 開く
   const doors = [], gz = cz(S[0]) - 4, camL = new THREE.Vector3(), doorM = new THREE.MeshLambertMaterial({ color:"#3a5fc4", emissive:"#101e48" });   // 扉は お城の 丸屋根と 同じ 青 (11/2 社長)、飾りは 金
   { const W = 54, H0 = 115.5, RY = 63, zb = gz - 17;   // 蝶番は アーチの 手前の 面 (手前へ 開く、11/2 社長)
@@ -233,6 +239,7 @@ export function build(scene, root, P, opts, out){
       const ring = new THREE.Mesh(new THREE.TorusGeometry(15, 1.6, 8, 40), gold), boss = new THREE.Mesh(new THREE.SphereGeometry(4, 12, 8), gold); ring.position.set(-sg * 27, 92, -0.8); boss.position.set(-sg * 27, 92, -1); pv.add(ring, boss);   // 丸い 紋章
       doors.push({ pv, sg }); } }
 
+  yield;
   // 南の 橋 (原点の 手前から 門まで): 床・手すり・灯・雲へ 落ちる 柱
   { const z0 = -500, z1 = cz(S[0]) - 20, Fb = F[0];
     put(box, 0, Fb - 22, (z0 + z1) / 2, 2 * AVE + 16, 22, z1 - z0);
@@ -241,6 +248,7 @@ export function build(scene, root, P, opts, out){
     for(let z = z0 + 80; z < z1; z += 170){ for(const sg of [1, -1]) put(box, sg * (AVE - 6), -1100, z, 28, Fb - 22 + 1100, 36);
       put(arch, AVE + 8, Fb - 22 - 150, z + 85, 170, 150, 10, Math.PI / 2); put(arch, -AVE - 8, Fb - 22 - 150, z + 85, 170, 150, 10, -Math.PI / 2); } }
 
+  yield;
   // 層の 上の 建物 (大通りから 離れるほど まばら・低く)。重ならない ように 間を あける
   const lots = [], free = (x, z, r) => { for(const o of lots) if((o.x - x) ** 2 + (o.z - z) ** 2 < (o.r + r) ** 2) return false; lots.push({ x, z, r }); return true; };
   const building = (x, y, z, ry, near, k) => {
@@ -260,6 +268,7 @@ export function build(scene, root, P, opts, out){
   for(let k = 0; k < 4; k++) for(let i = 0; i < (mob ? 10 : 18); i++){ const sg = rnd() < 0.5 ? 1 : -1, lat = AVE + 120 + rnd() * 900, rr = R[k + 1] + 60 + rnd() * (R[k] - R[k + 1] - 120); if(lat >= rr) continue;   // 大きな 尖塔 (無数の 尖塔の 背の 高い もの)
     const th = sg * Math.asin(lat / rr), [x, , z] = onRing(rr, th, 0), h = 140 + rnd() * 120; if(!free(x, z, 22)) continue; put(cyl, x, F[k], z, 22, h, 22); spire(x, F[k] + h, z, 12, 160 + rnd() * 160); }
 
+  yield;
   // 中央神殿 (第 1 層の まん中): 台座 → 本殿 (金の 大きな 門) → 太鼓 → 金の 大丸屋根 → 尖塔。まわりに 背の 高い 尖塔の 輪
   { const y = F[4];
     put(box, 0, y, zc, 620, 60, 470); put(box, 0, y + 60, zc + 20, 480, 150, 360); put(box, 0, y + 210, zc + 20, 420, 10, 300);
@@ -271,6 +280,7 @@ export function build(scene, root, P, opts, out){
     for(const [x, z] of [[-200, zc - 120], [200, zc - 120], [-200, zc + 170], [200, zc + 170]]){ put(cyl, x, y + 60, z, 56, 230, 56); put(cyl, x, y + 290, z, 64, 10, 64); put(bdome, x, y + 300, z, 60, 64, 60, 0, WHITE); spire(x, y + 362, z, 6, 90); }
     for(let i = 0; i < 26; i++){ const t = i / 26, side = Math.floor(t * 4), u = (t * 4) % 1, hw = 230, hd = 170, px = [-hw + 2 * hw * u, hw, hw - 2 * hw * u, -hw][side], pz = [-hd, -hd + 2 * hd * u, hd, hd - 2 * hd * u][side]; spire(px, y + 210, zc + 20 + pz, 5, 40 + rnd() * 40); } }
 
+  yield;
   // 浮島の 岩 (街の 下、雲へ 細く なって 消える)
   { const r0 = R[0] + 80, pts = [[60, F[0] - 2300], [r0 * 0.35, F[0] - 1700], [r0 * 0.75, F[0] - 950], [r0 - 160, F[0] - 380], [r0 - 20, F[0] - 90], [r0, F[0] - 4]].map(([r, y]) => new THREE.Vector2(r, y));
     const g = new THREE.LatheGeometry(pts, 72), p = g.attributes.position, cl = new Float32Array(p.count * 3), c = new THREE.Color();
@@ -279,12 +289,14 @@ export function build(scene, root, P, opts, out){
     g.setAttribute('color', new THREE.BufferAttribute(cl, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors:true })); m.position.z = zc; m.frustumCulled = false; root.add(m);
     for(let i = 0; i < 9; i++){ const a = (rnd() - 0.5) * 1.6, [x, , z] = onRing(R[0] + 4, a, 0); if(Math.abs(x) < AVE + 200) continue; falls.push({ x, y:F[0] - 900, z, w:50 + rnd() * 50, h:1800, ry:Math.PI - a }); } }   // 島の ふちから 雲へ 落ちる 滝
 
+  yield;
   // 遠くの 浮島の 城 (左右の 空、形が 分かる 程度)
   for(let i = 0; i < 6; i++){ const sg = i % 2 ? 1 : -1, x = sg * (3200 + rnd() * 3500), z = 1500 + i * 2300 + rnd() * 1200, y = -200 + rnd() * 900, r = 260 + rnd() * 260;
     put(cone, x, y, z, r * 2, r * 2.2, r * 2, 0, new THREE.Color('#b3a289'), Math.PI);   // 逆さの 円すい = 岩 (上の 面が y)
     for(let j = 0; j < 7; j++){ const dx = (rnd() - 0.5) * r, dz = (rnd() - 0.5) * r, h = r * (0.3 + rnd() * 0.9); put(cyl, x + dx, y, z + dz, r * 0.16, h, r * 0.16); spire(x + dx, y + h, z + dz, r * 0.1, r * (0.4 + rnd() * 0.5)); }
     put(bdome, x, y + r * 0.5, z, r * 0.5, r * 0.4, r * 0.5, 0, WHITE); }
 
+  yield;
   // 部品を 描く (InstancedMesh)
   const stone = stoneTex(rnd), marble = stoneMat(stone, '#ffffff'), smooth = new THREE.MeshLambertMaterial({ color:'#ffffff' }), blue = new THREE.MeshLambertMaterial({ color:'#3a5fc4', emissive:'#101e48' }), green = new THREE.MeshLambertMaterial({ color:'#ffffff' });
   const inst = (geo, mat, list) => { if(!list.length) return null; const mesh = new THREE.InstancedMesh(geo, mat, list.length);
@@ -320,6 +332,7 @@ export function build(scene, root, P, opts, out){
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aRun', new THREE.BufferAttribute(run, 4));
     const p = new THREE.Points(g, spm); p.frustumCulled = false; root.add(p); }
 
+  yield;
   // 雲 (11/2 社長「晴れ渡って いるけど 雲が めっちゃ カッコいい」): 眼下の 雲の 海・遠くに そびえる 入道雲の 柱・中央神殿の 奥の 大きな 雲・島の そばを 流れる 小さな 雲。全部 1 回で 描く
   { const puffs = [], K = mob ? 0.65 : 1;
     const tower = (cx, cy, cz, w, h) => { const n = Math.round((18 + h / 110) * K); for(let j = 0; j < n; j++){ const u = Math.pow(rnd(), 0.8), rr = w * 0.5 * (1 - u * 0.6) * Math.sqrt(rnd()), a = rnd() * Math.PI * 2;   // 入道雲: 下ほど 太く、上ほど 細く 明るい
@@ -335,6 +348,7 @@ export function build(scene, root, P, opts, out){
     ig.setAttribute('aP', new THREE.InstancedBufferAttribute(aP, 4)); ig.setAttribute('aS', new THREE.InstancedBufferAttribute(aS, 2)); ig.instanceCount = n;
     const cm = new THREE.Mesh(ig, puffMat(puffTex(rnd))); cm.frustumCulled = false; cm.renderOrder = -1; root.add(cm); }
 
+  yield;
   // 金の 光の 輪 (= ワープの 輪、コースの 終わり)。輪の 面は コースの 終わりの 向き (2.2 = index.html の RING3_UP)
   path.frame(L, v, q); const E = v.clone().add(new THREE.Vector3(0, 2.2, 0).applyQuaternion(q)), halo = new THREE.Group(); halo.position.copy(E); halo.quaternion.copy(q); root.add(halo);
   const hm = new THREE.MeshStandardMaterial({ color:'#ffd56a', metalness:1, roughness:0.2, emissive:'#c8901e', emissiveIntensity:0.9, envMap:env, envMapIntensity:1.2, fog:false });   // 光の 輪も 金属 (映り込み) + 自分で 光る (遠くからの 目印)

@@ -175,7 +175,7 @@ function whaleMat(tt){   // クジラ: 後ろ半分が ゆったり 上下に �
   return m;
 }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const mob = !!opts.mobile, branch = opts.nextBranch !== false, path = coursePath3(P, branch), L = path.len;
   let seed = 20261102; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const SURF = -6;   // 海面の 高さ (入口の 6 m 下。はじめの 0.5 秒 まっすぐ 走って すぐ 潜る)
@@ -185,6 +185,7 @@ export function build(scene, root, P, opts, out){
   const lamp = new THREE.PointLight('#9fe6ff', 0, 1600, 1), spot = new THREE.SpotLight('#d8f4ff', 0, 2600, 0.6, 0.6, 1); root.add(lamp, spot, spot.target);   // おばけの 灯り (11/2 社長「海溝が 真っ暗で 崖の 形も 見えない、明るさか レールの 光で 見える 演出を」): まわりを 照らす 灯り + 進む 方向を 照らす 光の 筋。深いほど 強く (下の tick)
   const env = envTex();
 
+  yield;
   // 海面 と 海の 上の 空 (海の 中では 隠す)
   let sky = null, sun = null;
   const srf = surfaceMat(new THREE.Vector3(0.3, 0.45, 1).normalize());   // 太陽の 向き = 空の 太陽 (下の 光の 玉) と 同じ
@@ -193,6 +194,7 @@ export function build(scene, root, P, opts, out){
     const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), rg = x.createRadialGradient(32, 32, 0, 32, 32, 32); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.2, 'rgba(255,248,220,0.8)'); rg.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = rg; x.fillRect(0, 0, 64, 64);
     sun = new THREE.Sprite(new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(c), transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, fog:false })); sun.position.set(0.3, 0.45, 1).normalize().multiplyScalar(20000).setY(9000 + SURF); sun.scale.setScalar(4000); sun.renderOrder = -4; root.add(sun); }
 
+  yield;
   // コースの 点 (40 m ごと) と いちばん 低い 所
   let minY = 0; for(let s = 0; s <= L; s += 40){ path.frame(s, v, q); minY = Math.min(minY, v.y); }
   let sIn = 0; for(let s = 0; s <= L; s += 10){ path.frame(s, v, q); if(v.y < SURF - 15){ sIn = s; break; } }   // 海に 入った 所 (海面の 15 m 下)
@@ -201,6 +203,7 @@ export function build(scene, root, P, opts, out){
   const hw = y => y >= PL ? Infinity : HB + (HT - HB) * (y - BOT) / (PL - BOT);   // 高さ y での 海溝の 半分の 幅
   const at = (s, lat, up) => { path.frame(s, v, q); X.set(1, 0, 0).applyQuaternion(q); Y.set(0, 1, 0).applyQuaternion(q); return v.clone().addScaledVector(X, lat).addScaledVector(Y, up); };   // 道のり s から 横 lat (+ = 左)・上 up
 
+  yield;
   // 光の 筋 (海面から 下へ 1.5〜2.6 km、潜り始めの まわり。十字の 2 枚で どこから 見ても 帯)
   const shafts = [];
   for(let i = 0; i < (mob ? 26 : 44); i++){ const x = (rnd() - 0.5) * 3000, z = 1200 + rnd() * 3600, w = 40 + rnd() * 100, h = 1500 + rnd() * 1100, ry = rnd() * Math.PI;
@@ -209,10 +212,12 @@ export function build(scene, root, P, opts, out){
   { const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), sm, shafts.length);
     shafts.forEach((o, i) => mesh.setMatrixAt(i, m4.compose(v.set(o.x, o.y, o.z), q.setFromEuler(e.set(0.12, o.ry, 0)), s3.set(o.w, o.h, 1)))); mesh.frustumCulled = false; root.add(mesh); }
 
+  yield;
   // マリンスノー
   const BOX = 260, sn = snowMat(BOX);
   { const n = mob ? 2200 : 4000, pos = new Float32Array(n * 3); for(let i = 0; i < n * 3; i++) pos[i] = rnd() * BOX; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const p = new THREE.Points(g, sn); p.frustumCulled = false; root.add(p); }
 
+  yield;
   // 光る クラゲの 大群 (11/2 社長「クラゲは 正面に いた ほうが 存在感」): 海に 入って すぐ 〜 クジラの 1.2 km 手前。進む 先の 正面 (横 14〜160 m・上下 −60〜90 m) に 集め、カメラの 通り道 (14 m + 傘の 大きさ) は あける。海面の 30 m 下より 上には 置かない (前は 海の 上の 空中に 出て いた)
   const jel = [];
   for(let i = 0, tries = 0; i < (mob ? 110 : 260) && tries < 5000; tries++){ const big = rnd() < 0.07, sj = sIn + 200 + rnd() * Math.max(100, SW - 1200 - sIn), s = big ? 40 + rnd() * 35 : 7 + rnd() * 18;
@@ -236,6 +241,7 @@ export function build(scene, root, P, opts, out){
     pm.onBeforeCompile = s => { s.fragmentShader = s.fragmentShader.replace('#include <fog_fragment>', ADD_FADE); };
     const p = new THREE.Points(g, pm); p.frustumCulled = false; root.add(p); }
 
+  yield;
   // 海底の 平原 と 海溝 (11/2 社長「海溝に 向かって 進んで 入って いる ように」): 平原 = 深さ PL、コースに 沿った 割れ目 (上の 幅 2 × HT・底の 幅 2 × HB) の 中へ 潜り、底 BOT まで。崖は 岩の でこぼこ
   const cl = [];   // 海溝の 中心線 (水平、35 m ごと): x・z・中心線に 沿った 長さ a と 左 向き (lx, lz)
   for(let s = -3000; s <= L + 2500; s += 10){ path.frame(s, v, q); X.set(0, 0, 1).applyQuaternion(q); X.y = 0; if(X.lengthSq() < 1e-6) X.set(0, 0, 1); X.normalize();
@@ -257,7 +263,7 @@ export function build(scene, root, P, opts, out){
     for(let i = 0; i < cl.length - 1; i++) for(let k = 0; k < K - 1; k++){ const a = i * K + k, b = a + K; if(sg > 0) idx.push(a, b, a + 1, b, b + 1, a + 1); else idx.push(a, a + 1, b, b, a + 1, b + 1); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
     for(let i0 = 0; i0 < cl.length - 1; i0 += 40){ const i1 = Math.min(cl.length - 1, i0 + 40), cg = new THREE.BufferGeometry(); for(const a of ["position", "normal", "color"]) cg.setAttribute(a, g.attributes[a]); cg.setIndex(idx.slice(i0 * (K - 1) * 6, i1 * (K - 1) * 6));   /* 頂点は 共有 (継ぎ目の 陰も なめらか)、三角形だけ 区画ごと */
-      const m = new THREE.Mesh(cg, rockM); m.frustumCulled = false; root.add(m); walls.push({ m, z0:Math.min(cl[i0].z, cl[i1].z), z1:Math.max(cl[i0].z, cl[i1].z) }); } }
+      const m = new THREE.Mesh(cg, rockM); m.frustumCulled = false; root.add(m); walls.push({ m, z0:Math.min(cl[i0].z, cl[i1].z), z1:Math.max(cl[i0].z, cl[i1].z) }); } yield; }
   { const g = new THREE.IcosahedronGeometry(1, 1), p = g.attributes.position;   // 岩の かたまり (でこぼこの 多面体。同じ 点は 同じだけ ずらす = 割れ目なし)
     for(let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 1 + 0.28 * Math.sin(x * 5.1 + y * 3.7) * Math.cos(z * 4.3 - x * 2.2); p.setXYZ(i, x * k, y * k * 0.8, z * k); }
     g.computeVertexNormals(); const mesh = new THREE.InstancedMesh(g, rockMat(rockT, false, mob), Math.max(1, rocks.length)), e2 = new THREE.Euler(), cc = new THREE.Color();
@@ -269,10 +275,12 @@ export function build(scene, root, P, opts, out){
     pm.onBeforeCompile = s => { s.fragmentShader = s.fragmentShader.replace('#include <fog_fragment>', ADD_FADE); };
     const p = new THREE.Points(g, pm); p.frustumCulled = false; root.add(p); }
 
+  yield;
   // クジラ (11/2 社長「進行方向に 向かって 正面が クジラの 顔。クラゲが 途切れた タイミングで 真正面に いて ゆったり ひれを 動かして いる。おなかの 下を すり抜ける」): 全長 WL m、コースの SW の 所に こちらを 向いて 浮かぶ (おなかが レールの 約 35 m 上)
   const WL = 420, wt = { value:0 }, whale = new THREE.Mesh(whaleGeo(), whaleMat(wt)); whale.scale.setScalar(WL); whale.frustumCulled = false; root.add(whale);
   { path.frame(SW, v, q); Y.set(0, 1, 0).applyQuaternion(q); whale.position.copy(v).addScaledVector(Y, 72); whale.quaternion.copy(q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI)); }   // 頭を こちらへ (向きを 180 度)
 
+  yield;
   // 出口 = 海溝の 底の 崖に 彫られた 古代の 神殿の 門 (11/2 社長「イ: 沈んだ 古代の 神殿の 門」): 3 本の レールの 先に 3 つの 門 (中に ワープの 輪)。柱 (いくつか 折れて いる)・梁・三角屋根・段・崩れた 石・倒れた 柱・青く 光る 古代文字。行き先の ない 門は 石の 扉で ふさぐ
   // 座標 sg: 原点 = まん中の 輪の 中心 (コースの 終わり + 上 2.2 m = index.html の RING3_UP)、向き = コースの 終わりの 向き (+X = 左・+Y = 上・+Z = 進む 向き)。レーン k の 輪 = ((1 − k) × ex.w, −(k − 1) × ex.h)
   let runeM = null;
@@ -308,9 +316,11 @@ export function build(scene, root, P, opts, out){
       const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; runeM = new THREE.MeshBasicMaterial({ map:t, color:'#5fe6ff', transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, fog:false });
       const rp = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, YT - YB), runeM); rp.position.set(0, (YT + YB) / 2, -2.3); rp.rotation.y = Math.PI; rp.scale.x = -1; sg.add(rp); } }
 
+  yield;
   // 水の 中の 濁り: カメラを 包む 球 = いまの もやの 色 (背景の 空の 球の 色と もやの 色が 違うと、遠くの 海面・海底が 天井と 床、背景が 壁に 見えて 箱の 中に 見えた、11/2 社長)
   const murk = new THREE.Mesh(new THREE.SphereGeometry(4000, 24, 12), new THREE.MeshBasicMaterial({ color:'#1f7fab', side:THREE.BackSide, fog:false, depthWrite:false })); murk.renderOrder = -6; murk.frustumCulled = false; root.add(murk);
 
+  yield;
   // 潜った 跡の 泡 (潜り始めの 600 m の まわりを ゆらゆら 昇り、海面で 消える)
   const bm = new THREE.ShaderMaterial({ fog:true, clipping:true, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
     uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime:{ value:0 }, uSurf:{ value:SURF } }]),

@@ -113,7 +113,7 @@ function ejectaMat(){   // 噴き上がりで 宇宙へ 飛び散る 炎の か�
       }` });
 }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const mob = !!opts.mobile, branch = opts.nextBranch !== false, path = coursePath3(P, branch), L = path.len;
   let seed = 20261103; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), m4 = new THREE.Matrix4(), s3 = new THREE.Vector3(), X = new THREE.Vector3(), e = new THREE.Euler();
@@ -124,6 +124,7 @@ export function build(scene, root, P, opts, out){
   const sm = sunMat(sunT);
   { const g = new THREE.SphereGeometry(RS, mob ? 192 : 320, mob ? 96 : 160).translate(C0.x, C0.y, C0.z), m = new THREE.Mesh(g, sm); m.frustumCulled = false; root.add(m); }   // 球の 形を 太陽の 中心へ 動かして 作る (模様・霞を root の 位置で 描く)
 
+  yield;
   // 炎の 柱 (スピキュール): コースの まわり ±2.5 km の 表面に
   const jets = [], jm = jetMat();
   for(let i = 0; i < (mob ? 350 : 700); i++){ const s = rnd() * (L + 1500) - 500; path.frame(s, v, q); X.set(1, 0, 0).applyQuaternion(q); X.y = 0; X.normalize(); const lat = (rnd() - 0.5) * 5000; if(Math.abs(lat) < (s > 5700 && s < 7800 ? 300 : 40)) continue;   // 一回転の あたり (道のり 5850〜7650 m は ほぼ 同じ 場所で 回る) は 柱を コースから 300 m 離す
@@ -131,10 +132,12 @@ export function build(scene, root, P, opts, out){
   { const mesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.15, 1, 1, 6, 4, true).translate(0, 0.5, 0), jm, jets.length);
     jets.forEach((o, i) => mesh.setMatrixAt(i, m4.compose(v.set(o.x, o.y, o.z), q.setFromEuler(e.set(0, o.ry, 0)), s3.set(o.r, o.h, o.r)))); mesh.frustumCulled = false; root.add(mesh); }
 
+  yield;
   // 炎の アーチ (プロミネンス): 両足を 表面に つけた 光る ガスの 輪 (足は 縦に 立ち上がる 半楕円、筋 6 本が ねじれ ながら 束に なる)。[道のり s, 横 (m、+ = 左), 足の 間隔, 高さ, 足を 結ぶ 線の 向き (コースの 向きから 度、+ = 左回り), 輪の 傾き (度、+ = 上が 手前へ), 筋の 数 (省くと 6)]。
   // ジェットコースターの 見せ場に 合わせる (11/3): ツイストの 輪 (頭上 約 80 m の 低い 輪) / 一回転の 輪 (入口で くぐり、上下 さかさまで 輪の 中を 通り、また くぐる) / 最後の 右カーブの 輪。左奥の 大きな 輪 (降りる 間・一回転の てっぺんから 見える) と 横の 輪 2 つ。輪と コースの 間合いは Blender で 計算済み (一回転は 道のり 1800 m で ほぼ 同じ 場所に 戻るので、その 後の 輪は 道のりより 近く なる 点に 注意)
   const ARCH = [[5100, 0, 700, 150, 90, 0], [5850, 0, 1300, 850, 90, 0], [8250, 0, 760, 240, 85, 0], [8850, 3200, 4200, 2600, 30, 15], [3900, -1400, 1500, 800, 20, -20], [9600, -3200, 2600, 1500, 50, -10],
     [9300, 0, 1000, 650, 90, 24, 9]];   // 出口の 炎の 輪: 急上昇 (24 度) する コースに 正面を 向ける ため 上を 手前へ 24 度 倒し、筋 9 本で 太く。輪の 真ん中 (てっぺん・両足から 約 290〜500 m) を 抜け、2 秒 後に ワープの 輪
+  yield;
   // 噴き上がる プロミネンス (噴出型、11/3 社長「宇宙空間に 飛び出て いく タイプは？」): 出口の 先 左の ねじれた 輪。おばけが 最後の カーブに 入る (道のり s0) と dur 秒で ふくらみ ながら 高さ 8 倍 (約 4 km) へ 伸び、てっぺんが 裂けて 炎の かたまりが 宇宙へ 飛び散る (出口の 炎の 輪を くぐる 頃に いちばん 大きく)
   const ER = { s:11000, lat:600, span:1200, H:500, yaw:20, s0:7800, dur:6 };
   const am = archMat(false), gm = archMat(true), erM = archMat(false, ER.H), erG = archMat(true, ER.H), ejM = ejectaMat();
@@ -152,12 +155,12 @@ export function build(scene, root, P, opts, out){
       const cv = new THREE.CatmullRomCurve3(pts); glow.push(tag(new THREE.TubeGeometry(cv, TS, R0 * 2.2, 10, false), [seedA, amp, cv.getLength(), 0])); };
     const place = (s, lat, yaw) => { path.frame(s, v, q); X.set(1, 0, 0).applyQuaternion(q); X.y = 0; X.normalize(); fw.set(0, 0, 1).applyQuaternion(q); fw.y = 0; fw.normalize();
       const cx = v.x + X.x * lat, cz = v.z + X.z * lat; up.set(cx - C0.x, surfY(cx, cz) - C0.y, cz - C0.z).normalize(); d.copy(fw).applyAxisAngle(AY, yaw * Math.PI / 180); return [cx, cz]; };   // 輪の 足元の 真ん中 (cx, cz) と 上 up・足を 結ぶ 向き d
-    ARCH.forEach(([s, lat, span, H, yaw, tilt, ns = 6]) => {
+    for(const [s, lat, span, H, yaw, tilt, ns = 6] of ARCH){
       const [cx, cz] = place(s, lat, yaw);
       sd.crossVectors(up, d).normalize(); hv.copy(up).multiplyScalar(Math.cos(tilt * Math.PI / 180)).addScaledVector(sd, Math.sin(tilt * Math.PI / 180)); nP.crossVectors(d, hv).normalize();
       bundle((u, o) => { const th = Math.PI * Math.min(1, Math.max(0, u)), k = 0.5 - 0.5 * Math.cos(th), x = cx + d.x * span * (k - 0.5), z = cz + d.z * span * (k - 0.5); return o.set(x, surfY(x, z) - 40, z).addScaledVector(hv, (H + 40) * Math.sin(th)); }, nP, H, ns, core, glow);   // 足は 表面の 40 m 下から
-    });
-    for(const [gs, mt] of [[core, am], [glow, gm]]){ const g = mergeGeometries(gs); gs.forEach(x => x.dispose()); const m = new THREE.Mesh(g, mt); m.frustumCulled = false; root.add(m); }
+    yield; }
+    for(const [gs, mt] of [[core, am], [glow, gm]]){ const g = mergeGeometries(gs); gs.forEach(x => x.dispose()); const m = new THREE.Mesh(g, mt); m.frustumCulled = false; root.add(m); yield; }
     // 噴き上がる 輪: 足元の 真ん中を 原点に x = 足を 結ぶ 向き・y = 上・z = 輪の 面に 垂直 の 置き方で 作り、ふくらみ・伸びは archMat の uE で
     { const [cx, cz] = place(ER.s, ER.lat, ER.yaw), grp = new THREE.Group(), ec = [], eg = [];
       d.addScaledVector(up, -d.dot(up)).normalize(); grp.position.set(cx, surfY(cx, cz), cz); grp.quaternion.setFromRotationMatrix(m4.makeBasis(d, up, nP.crossVectors(d, up))); root.add(grp);
@@ -168,6 +171,7 @@ export function build(scene, root, P, opts, out){
         pos.set([(rnd() - 0.5) * ER.span * (0.4 + 2 * gg), ER.H * (1 + 7 * gg) * (0.75 + 0.3 * rnd()), (rnd() - 0.5) * 200], i * 3); vel.set([(rnd() - 0.5) * 500, 350 + rnd() * 700, (rnd() - 0.5) * 300], i * 3); }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aV', new THREE.BufferAttribute(vel, 3)); g.setAttribute('aD', new THREE.BufferAttribute(dl, 1)); const p = new THREE.Points(g, ejM); p.frustumCulled = false; grp.add(p); } }
 
+  yield;
   // 火の粉
   const BOX = 320, em = emberMat(BOX);
   { const n = mob ? 1200 : 2500, pos = new Float32Array(n * 3), r = new Float32Array(n); for(let i = 0; i < n; i++){ pos.set([rnd() * BOX, rnd() * BOX, rnd() * BOX], i * 3); r[i] = rnd(); }

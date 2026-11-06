@@ -161,7 +161,7 @@ function skyMat(){   // 空 (カメラを 包む 球): 真上は 濃い 青 → 
       }` });
 }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const mob = !!opts.mobile, branch = opts.nextBranch !== false, path = coursePath3(P, branch);
   let seed = 20261103; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[(rnd() * a.length) | 0];
   scene.fog = new THREE.Fog('#b4d6f4', 350, mob ? 2400 : 3200);
@@ -171,6 +171,7 @@ export function build(scene, root, P, opts, out){
   const hw = (s, y) => Math.max(s < 650 ? 70 : 0, 85 + 20 * Math.sin(s / 430) + 10 * Math.sin(s / 170 + 1)) - 30 * sm(150, 1200, y) - 15 * sm(-150, -700, y);   // 谷の 半分の 幅 (コースから 家の 面まで、y = コースからの 高さ)。コースの 高さで 55〜115 m、入口 (3 本の レールが 戻る 間) は 70 m 以上、上ほど・下ほど せまく (空は 細い 隙間)
   const L = { house:[], roof:[], awn:[], tank:[], pipe:[], post:[], line:[], cloth:[], truss:[] }, put = (list, x, y, z, yaw, sx, sy, sz, c, rz = 0) => list.push({ x, y, z, yaw, sx, sy, sz, c, rz, r:y - cy0 });   // r = コースからの 高さ (かすみ・深い 所の 暗さ。コースが 上っても 同じ 見え方)
 
+  yield;
   // 家の 壁: コースの 左右に 列を 並べ、列ごとに 下から 上へ 家を 積む。家の 面 (d) は 谷の 幅 + 引っ込み (ときどき 大きく 引っ込んで 段に なる → 屋根・水タンクが 見える、上の 家が せり出す 所は 支え柱)
   const YLO = mob ? -450 : -700, YHI = mob ? 1000 : 1500;
   for(const sg of [1, -1]) for(let s = -250; s < CANYON_END; ){ const w = 30 + rnd() * 25, sc = s + w / 2, yaw = at(sc), lx = f.z * sg, lz = -f.x * sg, fx = f.x, fz = f.z, cx = v.x, cy = v.y, cz = v.z, colm = [];
@@ -185,20 +186,24 @@ export function build(scene, root, P, opts, out){
       if(near && rnd() < 0.13) put(L.awn, ...P3(o.d - 3.5, o.y + o.h * 0.42), yaw, 9, 0.8, w * (0.4 + rnd() * 0.3), pick(PAL.awn), sg * 0.35); });   // 日よけ (谷へ 下がる)
     s += w; }
 
+  yield;
   // 渡り廊下 (谷を 横切る 窓の ある 細長い 家、屋根つき)。コースの 高さ ± 60 m 以内には 置かない、2 本だけ コースの すぐ 上 (くぐる)
   const bridge = (s, y) => { const yaw = at(s), len = 2 * hw(s, y + 8) + 50; put(L.house, v.x, v.y + y, v.z, yaw, len, 16, 22, pick(PAL.wall)); put(L.roof, v.x, v.y + y + 16.6, v.z, yaw, len, 2, 26, pick(PAL.roof)); };
   for(let s = 150; s < CANYON_END - 100; s += 160 + rnd() * 180) bridge(s, rnd() < 0.3 ? -(90 + rnd() * 700) : 70 + Math.pow(rnd(), 1.5) * 1000);
   bridge(1300, 34); bridge(2650, 40);   // 下の 面が コースの 34・40 m 上
 
+  yield;
   // 洗濯物 (谷を 横切る ロープに 色とりどりの 布)。いちばん 低い ロープは コースの 48 m 上 (布の 下の 端で 37 m 上)
   for(let s = 60; s < CANYON_END; s += 50 + rnd() * 60){ const yaw = at(s), y = rnd() < 0.75 ? 48 + Math.pow(rnd(), 1.6) * 850 : -(60 + rnd() * 500), half = hw(s, y) + 4;
     put(L.line, v.x, v.y + y, v.z, yaw, 2 * half, 0.5, 0.5, '#4a4038');
     for(let x = -half + 6; x < half - 6; x += 7 + rnd() * 6){ if(rnd() < 0.35) continue; put(L.cloth, v.x + f.z * x, v.y + y, v.z - f.x * x, yaw, 5 + rnd() * 3, 6 + rnd() * 5, 1, pick(PAL.cloth)); } }
 
+  yield;
   // 配管 (壁を 縦に 走る、上の 細い 所に 合わせて 少し 壁に 埋める)
   for(let i = 0; i < (mob ? 50 : 90); i++){ const s = rnd() * CANYON_END, sg = rnd() < 0.5 ? 1 : -1, y0 = -500 + rnd() * 900, len = 120 + rnd() * 380, d = Math.min(hw(s, y0), hw(s, y0 + len)) + rnd() * 4, r = 1.6 + rnd() * 1.4; at(s);
     put(L.pipe, v.x + f.z * sg * d, v.y + y0, v.z - f.x * sg * d, 0, r, len, r, '#7d848c'); }
 
+  yield;
   // 空 (13 秒〜): 建物を 抜けると 青空。はるか 下 (SEA_DROP) に 雲の 海、正面に 巨大な 入道雲、遠くに 同じ ような 超建築の 塔 (家を 輪に 積んだ 上ほど 細い 塔)。座標 = 抜けた 所 (B) から 前へ fw・左へ lt
   at(CANYON_END); const byB = v.y, BX = v.x, BZ = v.z, fB = f.clone(), SEA = byB - SEA_DROP, W2 = (fw, lt) => [BX + fB.x * fw + fB.z * lt, BZ + fB.z * fw - fB.x * lt];
   const tower = (tx, tz, r0, y1, skip) => { const k = 1.6, y0 = SEA - 300; cy0 = byB - 1200;   // 塔の 家は 遠いので 1.6 倍 (太く した 分 数が 増えすぎない)。かすみ・暗さの 基準は 雲の 海の 少し 上。skip(x, y, z) = 置かない 所 (出口の 門の 前)
@@ -210,6 +215,7 @@ export function build(scene, root, P, opts, out){
       y += h; } };
   for(const [fw, lt, top, r0] of TOWERS.slice(0, mob ? 4 : 5)){ const [tx, tz] = W2(fw, lt); tower(tx, tz, r0, byB + top); }
 
+  yield;
   // 出口 = 超建築の 塔の 門 (11/3 社長「イ」): コースの 終わりの 正面に 太い 塔、手前の 壁に 3 つの 入り口 (中は トンネル)。門ごとに 鉄の 枠・レーンの 色の 看板・赤い 提灯、行き先の ない 門は トタンの シャッター
   // 座標: EO = まん中の 門 (輪の 中心 = コースの 終わり + 上 2.2 m = index.html の RING3_UP)、X5 = 左・Y5 = 上・D5 = 進む 向き。レーン k の 門 = EO + (1 − k) × ex.w 左・−(k − 1) × ex.h 上 (deepsea.js と 同じ 決まり)。家は 門の 面より 奥だけ (門を くぐると この 世界は 描かれなく なる)
   const gateMeshes = [], exitTW = [];   // exitTW = 出口の 塔の 根もと [x, z, 半径] (出口の 道の 脚を めり込ませない、Codex 指摘 11/4)
@@ -234,6 +240,7 @@ export function build(scene, root, P, opts, out){
       sm2(new THREE.BoxGeometry(2 * OW + 8, 12, 0.8), frM, gx, gy + OH + 10, -1.6); sm2(new THREE.BoxGeometry(2 * OW + 4, 9, 1), new THREE.MeshBasicMaterial({ color:LC[k] }), gx, gy + OH + 10, -2.4);   // レーンの 色の 看板
       for(let i = 0; i < 7; i++) sm2(new THREE.SphereGeometry(1.5, 12, 8), lanM, gx + (i - 3) * (2 * OW / 7), gy + OH - 2.5, -3); } }   // 赤い 提灯
 
+  yield;
   // 鉄骨の 橋: レールの 下の 土台 (上の 面が レールの 1.2 m 下 = 加速の 輪の 下の 端より 下) と 骨組みの 脚 (谷間は 谷底まで、空は 雲の 海の 下まで)。入口の 3 本が 戻る 間・出口の 3 本に 広がる 間は 置かない
   const S1 = path.len - 1300;
   const EXK = exit3(P.def), spK = SPREAD3_SEC * P.move, X0 = new THREE.Vector3(), Y0 = new THREE.Vector3(), hasK = k => k === 1 || !opts.nextChoices || !!opts.nextChoices[k];   // 出口の 3 本の 道 (11/4 社長「分かれ道を 選んだら 道路が なくなって いた」): 行き先の ない レーンは 道なし

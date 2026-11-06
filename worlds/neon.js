@@ -200,12 +200,13 @@ function redTower(){   // 光の 塔 B (東京タワー風、高さ 400 m): 4 �
   return g;
 }
 
-export function build(scene, root, P, opts, out){
+export function* build(scene, root, P, opts, out){
   const mob = !!opts.mobile, branch = opts.nextBranch !== false, path = coursePath3(P, branch), L = path.len, ex = exit3(P.def);
   let seed = 20261029; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   scene.fog = new THREE.Fog('#170b2c', 260, mob ? 2000 : 2600);
   const col = new THREE.Color(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), s3 = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
 
+  yield;
   // コースの 点 (20 m ごと) と まわりの 空き (横 cl m 以内に かかる ビルは コースの 高さ − 16 m まで 低く する)
   const pts = [], back = P.pi === 0 ? 0 : RECONV3_SEC * P.move + 150, endZ = L - SPREAD3_SEC * P.move - 150, endCl = ex.w + 14;   // 入口の 輪の 後 (3 本が 戻る 間) と 出口の 手前 (広がる 間) は 広く
   for(let s = -300; s <= L + 300; s += 20){ path.frame(s, v, q); pts.push({ x:v.x, y:v.y, z:v.z, cl: s < back ? 38 : s > endZ ? endCl : 15 }); }
@@ -216,6 +217,7 @@ export function build(scene, root, P, opts, out){
       for(const p of a){ const dx = Math.max(x0 - p.x, 0, p.x - x1), dz = Math.max(z0 - p.z, 0, p.z - z1); if(dx * dx + dz * dz < p.cl * p.cl) t = Math.min(t, p.y - 16); } }
     return t; };
 
+  yield;
   // 目印の 塔 (東京タワー風、コースの 左 遠く)・名所 4 つ (コースの すぐ 脇、ぶつからない ぎりぎりを 探す)・出口の スカイツリー風の 塔。まわりの ふつうの ビルは 建てない (marks)
   const box = [], cyl = [], spires = [], signs = [], marks = [], f = new THREE.Vector3(), scr = [];
   const fwd = s => { path.frame(s, v, q); f.set(0, 0, 1).applyQuaternion(q); f.y = 0; return f.normalize(); };   // 道のり s の 点 (v) と 水平な 進む 向き (f)。左 = (f.z, 0, −f.x)
@@ -241,6 +243,7 @@ export function build(scene, root, P, opts, out){
       const gl = new THREE.Mesh(new THREE.BoxGeometry(2 * ex.w + SW + 6, 0.5, 0.5), glowM('#c8f0ff')); gl.position.set(0, y, 1.3); sg.add(gl); } }
   else { fwd(L * 0.42); const x = v.x + f.z * 1300, z = v.z - f.x * 1300, tw = skyTower(1); tw.position.set(x, GROUND, z); root.add(tw); marks.push({ x, z, r:150 }); }   // 次が 分かれ道で ない 時は 遠くの 目印
 
+  yield;
   // 街区 (コースから R m 以内) → 敷地を 1〜4 つに 分けて ビル
   const R = mob ? 1000 : 1500, blocks = new Map(), rr = Math.ceil(R / BP);
   for(let k = 0; k < pts.length; k += 5){ const p = pts[k], bi = Math.floor(p.x / BP), bj = Math.floor(p.z / BP);
@@ -277,10 +280,12 @@ export function build(scene, root, P, opts, out){
   { const mesh = inst(new THREE.PlaneGeometry(1, 1), sign, signs.map(o => ({ ...o, y:o.y, d:1 })));   // 看板 (面の 向きは 下で)
     if(mesh) signs.forEach((o, i) => mesh.setMatrixAt(i, m4.compose(v.set(o.x, o.y, o.z), q.setFromAxisAngle(up, o.ry), s3.set(o.w, o.h, 1)))); }
 
+  yield;
   // 地面 (街の 広さ + まわり)
   const gm = groundMat();
   { const w = bx1 - bx0 + 3000, d = bz1 - bz0 + 3000, g = new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).translate((bx0 + bx1) / 2, GROUND, (bz0 + bz1) / 2), mesh = new THREE.Mesh(g, gm); mesh.frustumCulled = false; root.add(mesh); }
 
+  yield;
   // 空の 車 (道路の 上空を 行き来する 光の 点)
   const cm = carMat();
   { const n = mob ? 500 : 1000, pos = new Float32Array(n * 3), run = new Float32Array(n * 4), c = new Float32Array(n * 3), keys = [...blocks.values()].filter(b => b.d < 900);
