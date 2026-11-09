@@ -284,7 +284,6 @@ const ENDING_Q = Q.get('ending')==='1';   // 確かめ用: 子ども部屋に �
 const NURSERY_Q = Q.get('nursery')==='1';   // 確かめ用: ?stage=3&nursery=1 で 子ども部屋 & エンディング から (3 面の 当たりの「つぎへ」の 先、10/28)
 let nursery3Run = NURSERY_Q;   // 3 面を 子ども部屋だけで 走る (当たりの 結果発表の「つぎへ」、10/28 社長)。曲は きらきら星
 const CLEARED_Q = Q.get('cleared')==='1';   // 確かめ用: クリア済みの 夢の タイトル (記録は 書かない、10/27)
-const ZUKAN_Q = Q.has('zukan');   // ずかんの ボタンは ?zukan=1 の 時だけ (11/10 社長: 実機で 確かめてから 正式に 出す)
 const RKDEMO_Q = Q.has('rkdemo');   // 確かめ用: ランキングの 板に 見本の「あなた」(1 位 = フルコンボ・3 位 = ふつう) を 足して 出す (保存は しない、11/4)
 if(Q.get('save')==='reset') REC.resetRecords();   // 確かめ用: ?save=reset で 記録を 消してから 始める (10/27)
 const SCORE_Q = !['stage', 'world', 'w3', 'branch', 'draft', 'kmh', 'result', 'planet', 'ending', 'room', 'talk', 'op'].some(k=>Q.has(k));   // ハイスコアを 貯めるのは ふつうに 遊んだ 時だけ (試しの 入口で 出した 速さは 入れない)
@@ -2440,7 +2439,7 @@ function modeHtml(){ return '<div class="ot-mode"><div class="ot-mode-r"><button
 function setEasy(on){ easyOn=on; REC.setEasy(on); const r=document.querySelector('.ot-mode'); if(r){ r.querySelectorAll('button').forEach((b, i)=>b.classList.toggle('ot-sel', i===+on)); r.querySelector('.ot-mode-t').innerHTML=EASY_TXT[+on]; } }   // 次の 遊びから 効く・覚えて おく
 function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション。夢の タイトルは ステージ 1〜3・ぜんぶ あそぶ・オプション
   if(panelUI) return; if(needUnitAsk()){ panelUI=OPT.createUnitAsk({ onPick:()=>{ panelUI=null; $('kmhU').textContent=unitLabel(); openTitleMenu(); } }); return; }   // 日本語 以外で まだ 単位を 選んで いない 人に 最初の 1 回だけ 聞く (11/9 社長)
-  const dream=opTitle.dream, items= dream ? [{html:modeHtml()}, {id:'s1', label:tUi('ステージ 1')}, {id:'s2', label:tUi('ステージ 2')}, {id:'s3', label:tUi('ステージ 3')}, {id:'start', label:tUi('ぜんぶ あそぶ'), big:true}, ...(ZUKAN_Q ? [{id:'zukan', label:tUi('ずかん')}] : []), {id:'options', label:tUi('せってい'), small:true}] : [{html:modeHtml()}, {id:'start', label:tUi('はじめから はじめる'), big:true}, {id:'options', label:tUi('せってい')}];
+  const dream=opTitle.dream, items= dream ? [{html:modeHtml()}, {id:'s1', label:tUi('ステージ 1')}, {id:'s2', label:tUi('ステージ 2')}, {id:'s3', label:tUi('ステージ 3')}, {id:'start', label:tUi('ぜんぶ あそぶ'), big:true}, {id:'zukan', label:tUi('ずかん')}, {id:'options', label:tUi('せってい'), small:true}] : [{html:modeHtml()}, {id:'start', label:tUi('はじめから はじめる'), big:true}, {id:'options', label:tUi('せってい')}];
   opTitle.menu(items, id=>{
     if(state!=='title' || panelUI) return;
     if(id==='m0' || id==='m1'){ setEasy(id==='m1'); return; }
