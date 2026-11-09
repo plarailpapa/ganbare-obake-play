@@ -312,7 +312,7 @@ function cleanCanvas(cv){ const w=cv.width, h=cv.height; if(!w || !h || w*h>=2e6
 if(CANVAS_CLEAN) for(const C of [window.WebGL2RenderingContext, window.WebGLRenderingContext]){ if(!C) continue; const pr=C.prototype;
   for(const nm of ['texImage2D', 'texSubImage2D']){ const f=pr[nm]; pr[nm]=function(...a){ const last=a[a.length-1]; if(last instanceof HTMLCanvasElement){ const d=cleanCanvas(last); if(d) a[a.length-1]=d; } return f.apply(this, a); }; } }
 // 見た目の切替 (9/14): ?shadow=0 で影なし、?fps=1 で速度計、?px=1 で描画の細かさを画面ドット等倍に (既定は 1.5 倍まで)
-const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, stencil:true});   /* stencil = 1 面の 加速パネルを 地上の ライバルに だけ 透かして 見せる 印 (11/9) */
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.has('px') ? +Q.get('px') : 1.5));
 const EARTH_MAP=new THREE.TextureLoader().load('planets/2k_earth_daymap.jpg'); EARTH_MAP.colorSpace=THREE.SRGBColorSpace;   // 地球の 地図は 1 面の ミニ地球と がんばる表示で 1 枚を 共有 (Codex 指摘 11/5)
 const howto=createHowto({ anchors:()=>({ rival:(()=>{ const rr=e=>{ const r=document.createRange(); r.selectNodeContents(e); return r; }; return [rr(document.querySelector('#target .l')), document.getElementById('nxSlot'), rr(document.getElementById('nxName')), rr(document.getElementById('nxKmh'))]; })(), rivalName:(()=>{ const r=document.createRange(); r.selectNodeContents(document.getElementById('nxName')); return r; })(), time:[document.getElementById('tripGh'), document.querySelector('#trip .road'), document.getElementById('tripClock')], speed:document.getElementById('speed'), gain:document.getElementById('gainBox'), pause:document.getElementById('pzBtn') }) });   /* 説明画面 (吹き出しが 指す HUD の 要素) */
@@ -530,6 +530,7 @@ async function loadRivalModels(){
     const limbs=['legL','legR','armL','armR'].map(n=>sc.getObjectByName(n)); if(limbs.every(Boolean)) r.limbs=limbs;   // 脚・腕が別部品の形 (走る人) は 走った距離に合わせて振る (updateRivals)。読み込んだ形 (sc) の中から探す (r.mesh に足すのはこの後、Codex 指摘)
     r.mesh.add(r.post ? r.post(sc) : sc); snapOps(r.mesh); r.len=(box.max.z-box.min.z)*r.scale; r.bounce=r.bounce && !r.mixer;   // 長さは 本物の形から。動きのある形は 跳ねる演出を止める (動きのない生き物は 跳ねたまま)。post = 読み込んだ形から編隊などを組む
     if(r.name==='ミサイル') r.flames=[addFlame(sc, 0, 0.48, -3.0, 0.9, 3.2)]; else if(r.name==='スペースシャトル') setupShuttle(r, sc);   /* 噴射口の炎・シャトルの切り離し (10/26 社長)。ミサイルは 模型の中で 長さ 6 m (6 倍で見せる) のお尻から */
+    if(!r.fly) sc.traverse(o=>{ if(o.isMesh) for(const mt of [].concat(o.material)){ mt.stencilWrite=true; mt.stencilFunc=THREE.AlwaysStencilFunc; mt.stencilRef=1; mt.stencilZPass=THREE.ReplaceStencilOp; } });   // 地上の 相手の 形に 印を 付ける (向こうの 加速パネルだけを 重ねて 見せる、11/9 社長)
     if(!r.fly && (r.len>8 || (box.max.x-box.min.x)*r.scale>2.2)){ const set=new Set(); sc.traverse(o=>{ if(!o.isMesh) return; for(const mt of (Array.isArray(o.material) ? o.material : [o.material])){ mt.transparent=true; set.add(mt); } }); r.fadeMats=[...set]; }   // 大きい地上の相手 (電車・新幹線・リニア・車など) は 追い抜く時に半透明に (9/12 社長: カメラが中に入って レールが見えない)
   }));
   for(const x of results) if(x.status==='rejected') console.warn('相手の動物を読み込めず (手作りのまま)', x.reason);
@@ -1284,6 +1285,8 @@ const ringOrigin=new THREE.Vector3();   // 輪・柱・光の点の基準点 (10
 function rebaseRings(p){ ringOrigin.copy(p); for(const mm of [ringMesh, ringGlowMesh, ringBeamMesh, beaconPts]) mm.position.copy(ringOrigin); for(const b of plates) if(b.ring && !b.hit) placePlate(b, b.grow>0 ? Math.min(1, b.age/b.grow) : 1); if(plates.length) markDirty(); }   // 板がない時 (起動直後) は 色の置き場がまだないので触らない
 function setBeacon(idx, p, c){ if(p) beaconPos.set([p.x,p.y,p.z], idx*3); else beaconPos.set([0,-1e9,0], idx*3); if(c) beaconCol.set([c.r,c.g,c.b], idx*3); beaconGeo.attributes.position.needsUpdate=true; beaconGeo.attributes.color.needsUpdate=true; }   // p なし = 隠す (遠くへ)
 for(const mm of [plateGlowMesh, plateMesh, boxMesh, beamMesh, ringMesh, ringGlowMesh, ringBeamMesh]){ mm.frustumCulled=false; scene.add(mm); }
+const xrayOf=m=>{ const n=m.clone(); n.transparent=true; n.opacity=0.9; n.depthWrite=false; n.depthFunc=THREE.GreaterDepth; n.stencilWrite=true; n.stencilFunc=THREE.EqualStencilFunc; n.stencilRef=1; return n; }, xSide3=xrayOf(plateSideMat), xTop3=xrayOf(plateMat);   // 地上の ライバルの 向こうに ある 加速パネルだけを ライバルの 上に 重ねて 描く (ライバルは 不透明の まま、11/9 社長「パネルだけが 透けて ほしい」)
+const plateX=new THREE.InstancedMesh(plateGeo, [xSide3, xSide3, xTop3, xSide3, xSide3, xSide3], PLATE_POOL); plateX.instanceMatrix=plateMesh.instanceMatrix; plateX.frustumCulled=false; plateX.renderOrder=20; plateX.visible=false; scene.add(plateX);
 const ZERO_M=new THREE.Matrix4().makeScale(0,0,0);
 let plates=[], freeIdx=[], nextPlate=PLATE_FIRST;
 function hidePlate(idx){ plateMesh.setMatrixAt(idx, ZERO_M); plateGlowMesh.setMatrixAt(idx, ZERO_M); boxMesh.setMatrixAt(idx, ZERO_M); beamMesh.setMatrixAt(idx, ZERO_M); ringMesh.setMatrixAt(idx, ZERO_M); ringGlowMesh.setMatrixAt(idx, ZERO_M); ringBeamMesh.setMatrixAt(idx, ZERO_M); setBeacon(idx, null); }
@@ -1367,6 +1370,7 @@ function ensurePlates(s, v, dt){
     if(!(b.ring && b.hit) && b.age<b.grow+dt){ placePlate(b, b.grow>0 ? Math.min(1,b.age/b.grow) : 1); dirty=true; }   // 出てくる時に ふわっと大きくなる (くぐった輪は もう置かない)
     if(!b.box && !b.ring && plateT(b)>1 && b.sq!==0){ const D=Math.max(2, moveSpeed(v)*0.12), on=Math.abs(laneX-laneOff(b.lane, b.s))<laneWAt(b.s)*0.7, q= on ? Math.min(b.sq ?? 1, Math.max(0, Math.min(1, (b.s-1.6*b.sc-s)/D))) : (b.sq ?? 1); if(q!==(b.sq ?? 1)){ b.sq=q; placePlate(b, b.grow>0 ? Math.min(1,b.age/b.grow) : 1); dirty=true; } } }   /* 厚い 板は おばけが 乗る 直前に ぺたんと つぶれる (乗る レーンの 板だけ。おばけが 前の ふちの D m 手前に 来てから ふちに 着くまでで 厚み 1 倍へ、11/7) */
   if(dirty) markDirty();
+  plateX.instanceColor=plateMesh.instanceColor; plateX.visible= stage===1;   // ライバルに 重ねて 見せる パネルは 1 面だけ
   { let top=-1; for(const b of plates) if(b.ring && b.idx>top) top=b.idx; for(const mm of [ringMesh, ringGlowMesh, ringBeamMesh]){ mm.count=top+1; mm.visible=top>=0; } beaconPts.visible=top>=0; }   // 輪は 使っている番号までだけ描く (使っていない輪まで 描く手間をかけない)
   beaconPts.material.size=(stage===3 ? (vis3On ? 13*(VIS3===3 ? 1+0.3*Math.sin(RU.uRT.value*Math.PI*2.4) : 1) : S3.BEACON3) : 14)+10*Math.min(1, Math.max(0, G.b*2-1)); beaconHalo.visible=vis3On && beaconPts.visible; beaconHalo.material.size=beaconPts.material.size*HALO3;
   { const pr=renderer.getPixelRatio(), k= VIS3===3 ? 1+0.3*Math.sin(RU.uRT.value*Math.PI*2.4) : 1; PU3.uAtt.value=PH3.uAtt.value= vis3On ? 1 : 0; PU3.uWS.value=ORB3_D*k*pr; PU3.uMinP.value=ORB3_MIN*k*pr; PU3.uMaxP.value=ORB3_MAX*k*pr; PH3.uWS.value=PU3.uWS.value*HALO3; PH3.uMinP.value=PU3.uMinP.value*HALO3; PH3.uMaxP.value=PU3.uMaxP.value*HALO3; }   // 3 面の 光の玉は 近づくと 大きく (縁取りも 同じ 割合)   /* 明るい 世界 (?vis): 光の玉 13 画素 (3 = 1 秒に 1.2 回 脈打つ) + 2.2 倍の 暗い ぼかし */   // パイプの中では 光の柱がないので 光の点を大きく (14 → 24 画素)。3 面は 小さく (10/8 社長)
