@@ -2458,9 +2458,9 @@ cv.addEventListener('pointerdown', e=>{
   if(howtoHold || paused) return;   // 説明画面・一時停止の 間は 動かない (出発は 指を 離した 時 = howtoTap)
   const x=e.clientX/window.innerWidth;
   if(laneLock3 || cut3) return;   // 3 面の 分かれ道で レールが 広がっている 間 (10/27 社長)・太陽に 追いつけ (操作 なし、10/28 社長) は レーンを 動かせない
-  const l0=lane, goL= x<(lane===0 ? 1/3 : lane===LANES-1 ? 2/3 : 0.5); lane= goL ? Math.max(0,lane-1) : Math.min(LANES-1,lane+1);   /* 真ん中の レーンに いる 時 = 左半分 / 右半分 (11/5 社長)。端の レーンに いる 時は 内側へ 動ける 所を 画面の 3 分の 2 に 広げる (11/9 社長: 黄色の レーンを 押しても 反応しない) */
+  const l0=lane, goL= x<(lane===0 ? 1/3 : lane===LANES-1 ? 2/3 : 0.5), mid= lane===1 && x>=1/3 && x<=2/3; if(!mid) lane= goL ? Math.max(0,lane-1) : Math.min(LANES-1,lane+1);   /* 真ん中の レーンに いる 時に 真ん中の 3 分の 1 を 押しても 動かない (11/9 社長: 黄色に いて 黄色を 押すと 動くのは 違和感) */   /* 真ん中の レーンに いる 時 = 左半分 / 右半分 (11/5 社長)。端の レーンに いる 時は 内側へ 動ける 所を 画面の 3 分の 2 に 広げる (11/9 社長: 黄色の レーンを 押しても 反応しない) */
   if(lane!==l0 && state==='run') sfxLane(actx, lane-l0);   // ひゅっ (11/4)
-  if(state==='run'){ const el=$(goL ? 'edgeL' : 'edgeR'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }   /* タップした 側の 縁が 光る (端の レーンで 動けない 時も 光る = タップは 届いた 合図) */
+  if(state==='run' && !mid){ const el=$(goL ? 'edgeL' : 'edgeR'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }   /* タップした 側の 縁が 光る (端の レーンで 動けない 時も 光る = タップは 届いた 合図) */
 });
 for(const ev of ['pointerup', 'touchend']) window.addEventListener(ev, ()=>audioResume(), {passive:true});
 window.addEventListener('pointerup', ()=>howtoTap(), {passive:true});   // 説明画面の 出発 (音の 許可の 後、11/6)   /* iPhone は 指を離した時 (pointerup / touchend) しか 音を出す許可にならない。導入の会話の間も 曲・声が鳴るように いつでも 許可を取る (10/23 社長: iPhone で 1 面の前の 天国の曲が 鳴らない。前は 面の曲が要る時だけ) */
