@@ -1,5 +1,6 @@
 // 一時停止 (11/9 社長): 画面の 下の 真ん中の ボタン・止めた 時の 板 (つづける / やりなおす / タイトルへ)。ブラウザや アプリが 裏に 回った 時も 自動で 開く。文字は PAUSE_TEXT (ことば表)
-export const PAUSE_TEXT = { ja:{ title:'いちじ ていし', resume:'つづける', retry:'やりなおす', toTitle:'タイトルへ もどる' } };
+import { tUi } from './i18n.js';   // ことばの 切り替え (11/9)
+export const PAUSE_TEXT = { ja:{ title:tUi('いちじ ていし'), resume:tUi('つづける'), retry:tUi('やりなおす'), toTitle:tUi('タイトルへ もどる') } };
 
 const CSS = `
 #pzBtn{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;width:44px;height:44px;padding:0;border:2px solid rgba(255,255,255,.75);border-radius:50%;background:rgba(30,22,60,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -11,8 +12,8 @@ const CSS = `
 #pzRoot button.go{background:#f29a1f;border-color:#f29a1f;color:#fff;font-size:19px}
 `;
 
-export function createPause({ onPause, onResume, onRetry, onTitle, lang = 'ja' }){
-  const T = PAUSE_TEXT[lang] || PAUSE_TEXT.ja;
+export function createPause({ onPause, onResume, onRetry, onTitle }){
+  const T = PAUSE_TEXT.ja;
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const btn = document.createElement('button'); btn.id = 'pzBtn'; btn.type = 'button'; btn.setAttribute('aria-label', T.title); btn.innerHTML = '<i></i><i></i>'; document.body.appendChild(btn);
   btn.style.display = 'none';

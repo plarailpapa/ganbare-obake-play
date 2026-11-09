@@ -1,3 +1,4 @@
+import { tUi, fmtSpeed, unitLabel } from './i18n.js';   // ことばの 切り替え (11/9)
 // 走り出す 前の 説明画面 (11/6 社長、設計書 2026-11-06-ganbare-obake-howto-screen-design.md):
 // 止めた スタート画面の 上に 額縁・吹き出し・帯・ボタン。タップで ペロンと はがれて 出発。文字は 全部 HOWTO_TEXT (ことば表) から = 言語を 足す 時は 表を 足すだけ
 
@@ -5,18 +6,18 @@ import { LANE_CSS } from './colors.js';
 
 export const HOWTO_TEXT = {
   ja: {
-    rival: 'つぎの あいて', rivalSub: 'この <ruby>速<rt>はや</rt></ruby>さを こえると ぬける！', rivalHit: 'ぶつかっても すりぬけるから だいじょうぶ',   /* rivalHit = 1 面だけ (2 面・3 面の 相手は ぶつからない、11/7 社長) */
-    time: 'のこり時間', timeSub: 'おばけが 時計に つくまでに <ruby>目標<rt>もくひょう</rt></ruby>を こえよう',
-    goal: '<ruby>目標<rt>もくひょう</rt></ruby>の <ruby>速<rt>はや</rt></ruby>さ', goalSub: 'こえたら <ruby>合格<rt>ごうかく</rt></ruby>！',
-    speed: '今の <ruby>速<rt>はや</rt></ruby>さ',
-    boost1: '光る <ruby>板<rt>いた</rt></ruby>・<ruby>輪<rt>わ</rt></ruby>を ふむと <ruby>加速<rt>かそく</rt></ruby>！',
-    boost2: '光る <ruby>輪<rt>わ</rt></ruby>を くぐると <ruby>加速<rt>かそく</rt></ruby>！',
-    branch: '分かれ道は 3つの レーンの どれかを <ruby>選<rt>えら</rt></ruby>ぼう！',
-    left: '◀ 左を タップ', right: '右を タップ ▶', keys: 'パソコンは ← → キーで 左右に <ruby>動<rt>うご</rt></ruby>く',
-    banner: kmh => '<ruby>時速<rt>じそく</rt></ruby> ' + kmh + ' km を こえよう！',
-    pause: 'とめたい時や やりなおしたい時に おしてね',
-    wait: 'じゅんびちゅう…', go: 'タップで しゅっぱつ！',
-    num: n => n.toLocaleString('ja-JP'),
+    rival: tUi('つぎの あいて'), rivalSub: tUi('この <ruby>速<rt>はや</rt></ruby>さを こえると ぬける！'), rivalHit: tUi('ぶつかっても すりぬけるから だいじょうぶ'),   /* rivalHit = 1 面だけ (2 面・3 面の 相手は ぶつからない、11/7 社長) */
+    time: tUi('のこり時間'), timeSub: tUi('おばけが 時計に つくまでに <ruby>目標<rt>もくひょう</rt></ruby>を こえよう'),
+    goal: tUi('<ruby>目標<rt>もくひょう</rt></ruby>の <ruby>速<rt>はや</rt></ruby>さ'), goalSub: tUi('こえたら <ruby>合格<rt>ごうかく</rt></ruby>！'),
+    speed: tUi('今の <ruby>速<rt>はや</rt></ruby>さ'),
+    boost1: tUi('光る <ruby>板<rt>いた</rt></ruby>・<ruby>輪<rt>わ</rt></ruby>を ふむと <ruby>加速<rt>かそく</rt></ruby>！'),
+    boost2: tUi('光る <ruby>輪<rt>わ</rt></ruby>を くぐると <ruby>加速<rt>かそく</rt></ruby>！'),
+    branch: tUi('分かれ道は 3つの レーンの どれかを <ruby>選<rt>えら</rt></ruby>ぼう！'),
+    left: tUi('◀ 左を タップ'), right: tUi('右を タップ ▶'), keys: tUi('パソコンは ← → キーで 左右に <ruby>動<rt>うご</rt></ruby>く'),
+    banner: n => tUi('<ruby>時速<rt>じそく</rt></ruby> {n} {u} を こえよう！', {n, u:unitLabel()}),
+    pause: tUi('とめたい時や やりなおしたい時に おしてね'),
+    wait: tUi('じゅんびちゅう…'), go: tUi('タップで しゅっぱつ！'),
+    num: n => fmtSpeed(n),
   },
 };
 
@@ -48,8 +49,8 @@ const CSS = `
 const PLATE_SVG = '<svg width="34" height="22" viewBox="0 0 34 22"><rect x="1" y="5" width="32" height="15" rx="3" fill="#ffd54a" stroke="#7a5a1e" stroke-width="1.5"/><path d="M8 15 L17 8 L26 15" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>';
 const RING_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="' + LANE_CSS[0] + '" stroke-width="4"/></svg>';
 
-export function createHowto({ anchors, lang = 'ja' }){   // anchors() = { rival, time, goal, speed } (HUD の 要素)
-  const T = HOWTO_TEXT[lang] || HOWTO_TEXT.ja;
+export function createHowto({ anchors }){   // anchors() = { rival, time, goal, speed } (HUD の 要素)
+  const T = HOWTO_TEXT.ja;
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const dim = document.createElement('div'); dim.id = 'hwDim'; dim.hidden = true;
   const top = document.createElement('div'); top.id = 'hwTop'; top.hidden = true;

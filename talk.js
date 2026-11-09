@@ -1,3 +1,4 @@
+import { tUi, tLine, lang } from './i18n.js';   // ことばの 切り替え (11/9)
 // 会話の画面 (10/19): 神様とおばけの絵 + 文字の箱 + 自動送り + タップで早送り + 声。導入・2 面/3 面のはじめ・エンディングで 共通に使う
 // 台本の 1 行 = { id, who:'obake'|'kami'|'mama', face, listen, text, cast, layout, cue }。cast・layout は 書かなければ 前の行のまま
 // 文の中の {漢字|かな} は ふりがな付きの漢字になる
@@ -7,7 +8,7 @@ let outNode = null, outVol = 1;   // 全部の 音の 出口 = 音の 大きさ�
 export function audioOut(actx){ if(!outNode){ outNode = actx.createGain(); outNode.gain.value = outVol; outNode.connect(actx.destination); } return outNode; }
 export function setAudioVolume(actx, v){ outVol = v; if(outNode) outNode.gain.setTargetAtTime(v, actx.currentTime, 0.05); }
 const TAP_GAP = 0.25, END_GAP = 0.4;   // 行が出てから この秒数は タップを受けない (連打で 2 行進まない) / 「タップで しゅっぱつ！」が出てから この秒数は受けない
-const NAMES = { obake:'おばけ', kami:'かみさま', mama:'おかあさん' };
+const NAMES = { obake:tUi('おばけ'), kami:tUi('かみさま'), mama:tUi('おかあさん') }, lineText = L => tLine(L.id, L.text);
 
 const CSS = `
 .tk-root{position:fixed;inset:0;z-index:40;font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
@@ -23,6 +24,7 @@ const CSS = `
 .tk-dim{filter:saturate(.75) brightness(.92);opacity:.85}
 .tk-hide{opacity:0}
 .tk-box{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(720px,calc(100vw - 16px));box-sizing:border-box;min-height:calc(5.4em + 4px);background:rgba(255,255,255,.94);border:2px solid #f2c96b;border-radius:14px;padding:.55em 1.5em .5em;font-size:clamp(15px,4.2vw,22px);line-height:2;color:#333;box-shadow:0 2px 8px rgba(0,0,0,.15);pointer-events:none}   /* 11/4 社長「最大 2 行 なのに 4 行分」「左右の 余白」: 高さは 2 行分 (行の 間 2em に ふりがなの はみ出し 分 少し + 上下の 余白)・左右は 1.5 文字分。3 行に なる 長い セリフ だけ 箱が 伸びる */
+html:not([lang="ja"]) .tk-box{line-height:1.5}   /* 日本語 以外は ふりがなが 無い ので 行の 間を 詰める (長い 文でも 箱が 高く なりすぎない) */
 .tk-box rt{font-size:.5em;line-height:1;color:#7a5a20}
 .tk-tx .tc{opacity:0;transition:opacity .08s}
 .tk-tx .tc.on{opacity:1}
@@ -139,11 +141,11 @@ export function playSound(actx, url, vol = 1, valid = () => true){   // 1 回 �
 }
 const LATE_VOICE = 1.0;   // 行が出てから この秒数までに 声が届けば 遅れて鳴らす (それより遅いと 文字の時間のまま)
 
-export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, endPrompt = 'タップで しゅっぱつ！', skip = true, autoEnd = null, canEnd = null }){   // autoEnd = 最後の セリフの 後 この 秒で ひとりでに 終わる (「タップで しゅっぱつ！」を 出さない、11/6 社長: 会話の 後は 自動で 映像へ → 説明画面)   // skip = false: 右上の「とばす」を 出さない (エンディング、11/4 社長)
+export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, endPrompt = tUi('タップで しゅっぱつ！'), skip = true, autoEnd = null, canEnd = null }){   // autoEnd = 最後の セリフの 後 この 秒で ひとりでに 終わる (「タップで しゅっぱつ！」を 出さない、11/6 社長: 会話の 後は 自動で 映像へ → 説明画面)   // skip = false: 右上の「とばす」を 出さない (エンディング、11/4 社長)
   if(!document.getElementById('talk-css')){ const st = document.createElement('style'); st.id = 'talk-css'; st.textContent = CSS; document.head.appendChild(st); }
   root.className = 'tk-root';
   root.innerHTML = '<div class="tk-ch tk-kami tk-hide"><div class="tk-fr"><img alt=""></div></div><div class="tk-ch tk-obake tk-hide"><div class="tk-fr"><img alt=""></div></div>'
-    + '<div class="tk-box"><span class="tk-nm"></span><div class="tk-tx"></div></div><div class="tk-go"></div><button class="tk-skip" type="button">とばす</button>';
+    + '<div class="tk-box"><span class="tk-nm"></span><div class="tk-tx"></div></div><div class="tk-go"></div><button class="tk-skip" type="button">' + tUi('とばす') + '</button>';
   root.hidden = false;
   const el = { kami: root.querySelector('.tk-kami'), obake: root.querySelector('.tk-obake') };
   const img = { kami: el.kami.querySelector('img'), obake: el.obake.querySelector('img') };
@@ -191,12 +193,13 @@ export function createTalk({ root, faces, actx, voiceDir, onCue, onEnd, log, end
     const other = L.who === 'obake' ? 'kami' : L.who === 'kami' ? 'obake' : null;
     if(other) setFace(other, L.listen);
     nm.textContent = NAMES[L.who] || ''; nm.classList.toggle('tk-k', L.who !== 'obake');
-    const r = revealHtml(L.text); tx.innerHTML = r.html; setReveal(r.ws, r.bounds); tapT = 0;
+    const text = lineText(L), r = revealHtml(text); tx.innerHTML = r.html; setReveal(r.ws, r.bounds); tapT = 0;
+    if(lang !== 'ja') revealAll();   /* 日本語 以外の 字幕は セリフを まるごと 一度に 出す (11/9 社長: 声は 日本語で 語順が 違う ので 1 文字ずつ 出しても 声と 合わず、単語の 途中で 待たされて 読みにくい) */
     cueSec = L.cue ? (onCue(L.cue, L) || 0) : 0;
     stopVoice();
     const buf = voices.get(L.id);
     if(buf && actx.state === 'running'){ playVoice(buf); wait = Math.max(buf.duration + VOICE_PAD, cueSec); }
-    else wait = Math.max(textWait(L.text), cueSec);
+    else wait = Math.max(textWait(text), cueSec);
     if(log) log(L.id + ' wait ' + wait.toFixed(2) + (buf ? ' voice' : ''));
   }
   function next(){

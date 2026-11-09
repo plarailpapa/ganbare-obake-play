@@ -1,6 +1,5 @@
-// オプションの 板 (10/27 社長): 音の 大きさ・記録を 消す (画面の 向き たて / よこ は 10/27 社長「とりあえず のけて おく」)。タイトルの メニューから 開く
-export const VOLUMES = [0, 0.2, 0.5, 1];   // 音の 大きさの 段 (records の getVolume と 同じ 並び) → 音の 出口の 倍率。3 = ふつう = 今までの 大きさ
-const VOL_LABELS = ['なし', 'とても ちいさい', 'ちいさい', 'ふつう'];
+// せっていの 板 (10/27 社長。11/9 社長: オプション → せってい、音量は スマホや パソコンで 変えられる ので やめて ことば・はやさの たんい・記録を 消すの 3 つに)。タイトルの メニューから 開く
+import { LANGS, lang, setLang, tUi, getUnit, setUnit } from './i18n.js';
 
 const CSS = `
 .op-root{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(40,50,80,.35);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;user-select:none;-webkit-user-select:none;animation:op-in .25s ease}
@@ -18,25 +17,27 @@ const CSS = `
 `;
 function injectCss(){ if(document.getElementById('options-css')) return; const st = document.createElement('style'); st.id = 'options-css'; st.textContent = CSS; document.head.appendChild(st); }
 
-export function createOptions({ volume, onVolume, onReset, onClose }){
+export function createOptions({ onReset, onClose }){
   injectCss();
   const el = document.createElement('div'); el.className = 'op-root';
-  el.innerHTML = '<div class="op-panel"><h2>オプション</h2>'
-    + '<h3>おとの おおきさ</h3><div class="op-row">' + [3, 2, 1, 0].map(n => `<button data-v="${n}">${VOL_LABELS[n]}</button>`).join('') + '</div>'
-    + '<h3>きろく</h3><div class="op-row"><button class="op-warn" data-r="ask">きろくを けす</button></div>'
-    + '<div class="op-confirm" hidden><p>クリアと ハイスコアの きろくを けします。<br>ほんとうに けす？</p><div class="op-row"><button class="op-warn" data-r="yes">けす</button><button data-r="no">やめる</button></div></div>'
-    + '<button class="op-close">とじる</button></div>';
+  el.innerHTML = '<div class="op-panel"><h2>' + tUi('せってい') + '</h2>'
+    + '<h3>' + tUi('ことば') + '</h3><div class="op-row" data-nocheck>' + LANGS.map(l => `<button lang="${l.code}" data-l="${l.code}"${l.code === lang ? ' class="op-on"' : ''}>${l.label}</button>`).join('') + '</div>'
+    + '<h3>' + tUi('はやさの たんい') + '</h3><div class="op-row">' + [['km', tUi('キロメートル')], ['mi', tUi('マイル')]].map(([u, s]) => `<button data-u="${u}">${s}</button>`).join('') + '</div>'
+    + '<h3>' + tUi('きろく') + '</h3><div class="op-row"><button class="op-warn" data-r="ask">' + tUi('きろくを けす') + '</button></div>'
+    + '<div class="op-confirm" hidden><p>' + tUi('クリアと ハイスコアの きろくを けします。<br>ほんとうに けす？') + '</p><div class="op-row"><button class="op-warn" data-r="yes">' + tUi('けす') + '</button><button data-r="no">' + tUi('やめる') + '</button></div></div>'
+    + '<button class="op-close">' + tUi('とじる') + '</button></div>';
   document.body.appendChild(el);
   const confirm = el.querySelector('.op-confirm'), askBtn = el.querySelector('[data-r="ask"]');
-  const markVol = v => el.querySelectorAll('[data-v]').forEach(b => b.classList.toggle('op-on', +b.dataset.v === v));
-  markVol(volume);
+  const markUnit = () => el.querySelectorAll('[data-u]').forEach(b => b.classList.toggle('op-on', b.dataset.u === getUnit()));
+  markUnit();
   let open = true;
   const close = () => { if(!open) return; open = false; el.remove(); onClose(); };
   el.addEventListener('click', e => {
     const b = e.target.closest('button'); if(!b || !open) return;
-    if(b.dataset.v != null){ const v = +b.dataset.v; markVol(v); onVolume(v); }
+    if(b.dataset.l != null){ if(b.dataset.l !== lang) setLang(b.dataset.l); }
+    else if(b.dataset.u != null){ setUnit(b.dataset.u); markUnit(); }
     else if(b.dataset.r === 'ask'){ confirm.hidden = false; askBtn.hidden = true; }
-    else if(b.dataset.r === 'yes'){ onReset(); confirm.hidden = true; askBtn.hidden = false; askBtn.disabled = true; askBtn.textContent = 'けしました'; }
+    else if(b.dataset.r === 'yes'){ onReset(); confirm.hidden = true; askBtn.hidden = false; askBtn.disabled = true; askBtn.textContent = tUi('けしました'); }
     else if(b.dataset.r === 'no'){ confirm.hidden = true; askBtn.hidden = false; }
     else if(b.classList.contains('op-close')) close();
   });

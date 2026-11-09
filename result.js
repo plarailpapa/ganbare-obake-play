@@ -1,6 +1,7 @@
 // 結果発表の画面 (10/20): 面の終わりの お祝い。速さ・「○○より はやい！」・合格/あと何 km・おばけの絵・紙吹雪・ボタン・足りない時の 神様の励まし
 // 設計書 docs/superpowers/specs/2026-10-20-ganbare-obake-stage-flow-design.md 3〜4 章 (見本 result-layout.html)
 import { rubyHtml, playSound } from './talk.js';
+import { tUi, tLine, tName, lang, fmtSpeed, unitLabel } from './i18n.js';   // ことばの 切り替え (11/9)
 
 export const FAIL_LINES = [   // 足りなかった時の 神様の言葉 (声の台本 ファイル 6 の 1〜4)
   { id:'fail-01', text:'おしい！ もういちど {行|い}ってみよう' },
@@ -45,9 +46,12 @@ const CSS = `
 .rs-god .rs-obake{left:34%}
 .rs-kami{right:6vw;width:min(24vw,140px)}
 .rs-kami .rs-fr{aspect-ratio:0.642}.rs-kami img{width:107.8%;left:-1.08%;top:-7.8%}
-.rs-box{position:absolute;left:50%;transform:translateX(-50%);width:min(640px,calc(100vw - 16px));box-sizing:border-box;bottom:calc(3.5vh + env(safe-area-inset-bottom) + var(--rs-bh) + 16px);display:none;background:rgba(255,255,255,.94);border:2px solid #f2c96b;border-radius:14px;padding:18px 14px 12px;font-size:clamp(15px,4.2vw,22px);line-height:1.75;color:#333;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.rs-box .rs-nm{position:absolute;top:-14px;left:14px;background:#fff3c4;color:#5a3b00;border-radius:9px;padding:1px 12px;font-weight:bold;font-size:clamp(12px,3.4vw,16px)}
+.rs-box{position:absolute;right:0;bottom:calc(100% + 12px);width:min(56vw,240px);box-sizing:border-box;display:none;background:#fff;border:2px solid #f2c96b;border-radius:12px;padding:8px 12px;font-size:clamp(13px,3.6vw,17px);line-height:1.75;color:#333;box-shadow:0 2px 8px rgba(0,0,0,.15)}   /* 神様の 頭の 上の 四角い 吹き出し (11/9 社長: 大きな 箱が おばけの 顔を 隠した) */
+.rs-box::after{content:"";position:absolute;right:calc(min(24vw,140px) / 2 - 8px);bottom:-8px;width:12px;height:12px;background:#fff;border:solid #f2c96b;border-width:0 2px 2px 0;transform:rotate(45deg)}
+html:not([lang="ja"]) .rs-box{line-height:1.4}
 .rs-textgod .rs-box{display:block}
+@media (min-aspect-ratio:1/1){ .rs-textgod .rs-kami{top:auto;bottom:calc(3.5vh + env(safe-area-inset-bottom))} }   /* 横長: 神様を 下へ 寄せて 吹き出しの 場所を 空ける */
+@media (min-aspect-ratio:1/1) and (max-height:560px){ .rs-textgod .rs-praise{display:none} .rs-textgod .rs-kami{width:min(17vw,110px)} .rs-textgod .rs-box{width:min(46vw,300px);font-size:13px;padding:6px 10px} .rs-textgod .rs-box::after{right:calc(min(17vw,110px) / 2 - 8px)} }   /* 低い 横長 (スマホの 横向き): 上の 文字と 重ならない よう ほめ言葉を 出さず、神様を 小さく、吹き出しを 横長に (Codex 指摘 11/9) */
 .rs-btns{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(3.5vh + env(safe-area-inset-bottom));width:min(420px,84vw);display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:auto}
 .rs-btn{display:block;width:100%;border:0;border-radius:18px;font:inherit;font-weight:bold;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .rs-big{padding:16px 0;font-size:clamp(18px,5vw,26px);background:#ffd66b;color:#5a3b00;box-shadow:0 4px 0 #c9962a}
@@ -71,8 +75,7 @@ function startConfetti(cv){   // 紙吹雪 (2D)。3.2 秒 降らせて 止める
   return () => { alive = false; };
 }
 
-const fmt = n => Math.round(n).toLocaleString('en-US');
-const nameHtml = p => rubyHtml(p.kana ? '{' + p.name + '|' + p.kana + '}' : p.name);
+const nameHtml = p => rubyHtml(lang !== 'ja' ? tName(p.name) : p.kana ? '{' + p.name + '|' + p.kana + '}' : p.name);
 
 export function createResult(root, { actx, faces }){
   if(!document.getElementById('rs-css')){ const st = document.createElement('style'); st.id = 'rs-css'; st.textContent = CSS; document.head.appendChild(st); }
@@ -88,27 +91,26 @@ export function createResult(root, { actx, faces }){
     if(!sp || innerWidth >= innerHeight) return;
     let y = sp.getBoundingClientRect().bottom + 4;
     for(const el of parts){ if(!el) continue; el.style.top = y + 'px'; y = el.getBoundingClientRect().bottom + 4; }
-    const lim = box && getComputedStyle(box).display !== 'none' ? box : btns; if(!lim) return; const b = lim.getBoundingClientRect().top;   /* 下の 限り = 神様の 言葉の 箱 (出て いる 時) か ボタン */
-    for(const el of chars){ let r = el.getBoundingClientRect(); const room = b - y - 16;   /* 足りない 時の おばけと 神様も 文字の 下へ。入りきらない 時は 小さく して 収める (Codex 指摘 11/5) */
+    if(!btns) return; const b = btns.getBoundingClientRect().top, say = box && getComputedStyle(box).display !== 'none' ? box.getBoundingClientRect().height + 14 : 0;   /* say = 神様の 上に 吹き出しを 置く 高さ */
+    for(const el of chars){ let r = el.getBoundingClientRect(); const extra = el.classList.contains('rs-kami') ? say : 0, room = b - y - 16 - extra;   /* 足りない 時の おばけと 神様も 文字の 下へ。入りきらない 時は 小さく して 収める (Codex 指摘 11/5) */
       if(r.height > room && room > 0){ el.style.width = Math.max(40, r.width * room / r.height) + 'px'; r = el.getBoundingClientRect(); }
-      el.style.top = Math.max(y + 8, (y + b - r.height) / 2) + 'px'; }
+      el.style.top = Math.max(y + 8 + extra, (y + b - r.height) / 2) + 'px'; }
   };
   addEventListener('resize', () => { fitSpeed(); stack(); });
   function clear(){ gen++; if(voice){ try{ voice.stop(); }catch(e){} voice = null; } if(stopConf){ stopConf(); stopConf = null; } root.innerHTML = ''; root.className = ''; root.hidden = true; }
   return {
     show(d){
-      clear(); root.hidden = false; root.className = 'rs-root' + (d.god ? ' rs-god' : '');
-      const tags = (d.booster ? '<span class="rs-tag">ブースターつき</span>' : '') + (d.record ? '<span class="rs-tag rec">しんきろく！</span>' : '');   /* 順位の 札は 出さない (速さと 重なる・青は 合わない、10/27 社長)。しんきろくは 新記録の 時だけ */
+      clear(); root.hidden = false; root.className = 'rs-root' + (d.god ? ' rs-god' : '') + (d.god && lang !== 'ja' ? ' rs-textgod' : '');   /* 神様は 声だけ の 画面だが、日本語 以外の 人には 声が 分からない ので 字幕の 箱を 出す (11/9 社長) */
+      const tags = (d.booster ? '<span class="rs-tag">' + tUi('ブースターつき') + '</span>' : '') + (d.record ? '<span class="rs-tag rec">' + tUi('しんきろく！') + '</span>' : '');   /* 順位の 札は 出さない (速さと 重なる・青は 合わない、10/27 社長)。しんきろくは 新記録の 時だけ */
       let h = '<canvas class="rs-conf"></canvas>'
-        + `<div class="rs-speed"><span class="rs-num"><ruby>時速<rt>じそく</rt></ruby> ${fmt(d.kmh)} <small>km</small>${tags}</span></div>`
-        + (d.praise ? `<div class="rs-praise">${nameHtml(d.praise)}より はやい！</div>` : '')
+        + `<div class="rs-speed"><span class="rs-num">${tUi('<ruby>時速<rt>じそく</rt></ruby>')} ${fmtSpeed(d.kmh)} <small>${unitLabel()}</small>${tags}</span></div>`
+        + (d.praise ? `<div class="rs-praise">${tUi('{x}より はやい！', {x:nameHtml(d.praise)})}</div>` : '')
         + `<div class="rs-line">${rubyHtml(d.ok ? d.okLine : (d.remainLine || ''))}</div>`
         + `<div class="rs-ch rs-obake"><div class="rs-fr"><img alt="" src="${d.ok ? faces.obake.egao : faces.obake.eehatena}"></div></div>`;   /* 足りない時は 口開け (えー！？) の顔 (10/20 社長) */
-      if(d.god) h += `<div class="rs-ch rs-kami"><div class="rs-fr"><img alt="" src="${faces.kami.egao}"></div></div><div class="rs-box"><span class="rs-nm">かみさま</span>${rubyHtml(d.god.line.text)}</div>`;
+      if(d.god) h += `<div class="rs-ch rs-kami"><div class="rs-fr"><img alt="" src="${faces.kami.egao}"></div><div class="rs-box">${rubyHtml(tLine(d.god.line.id, d.god.line.text))}</div></div>`;
       h += '<div class="rs-btns">' + d.buttons.map(b => `<button type="button" class="rs-btn ${b.big ? 'rs-big' : 'rs-small'}" data-id="${b.id}">${b.label}</button>`).join('') + '</div>';
       root.innerHTML = h; fitSpeed();
       const btns = root.querySelector('.rs-btns');
-      root.style.setProperty('--rs-bh', btns.getBoundingClientRect().height + 'px');   // 神様の言葉の箱は ボタンの上に
       stack(); { const my = gen; document.fonts.ready.then(() => { if(my === gen){ fitSpeed(); stack(); } }); }   /* 丸文字の 読み込みが 終わったら 並べ直す (字の 高さが 変わる、Codex 指摘 11/5) */
       let done = false;
       const press = e => {   // 1 回押したら 全部のボタンを 効かなくする (連打・2 本指で 2 回始まらない)。指・マウスは pointerdown、キーボード (Tab → Enter・Space) は click (Codex 指摘 10/20)

@@ -36,6 +36,7 @@
   #trip .gh .bub{position:absolute;left:24px;top:-10px;background:#fff;color:#3a2a5c;font-size:12px;font-weight:bold;line-height:1.5;padding:0 7px;border-radius:10px;white-space:nowrap;opacity:0;text-shadow:none;box-shadow:0 1px 3px rgba(0,0,0,.35)}
   #trip .gh .bub.flip{left:auto;right:24px} #trip .gh .bub.on{animation:tripbub 1.2s ease-out}   /* 右の 方 (地球の 近く) では おばけの 左に 出す */
   @keyframes tripbub{0%{opacity:0;transform:translateY(4px) scale(.8)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+  #trip .gh .bub.on.long{animation-duration:3.5s}   /* 文の 長い 字幕は 読める 長さで */
   #tripRow{position:absolute;left:0;right:0;top:-20px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;font-size:12px;font-weight:bold;line-height:1.3;white-space:nowrap;-webkit-text-stroke:3px #3a2a5c;paint-order:stroke fill;text-shadow:0 1px 0 #3a2a5c}   /* がんばる表示の すぐ 上の 段 (おばけが 歩く 所の 外。地球の 左だと 終わり近くに おばけが 重なって 隠れた、Codex 指摘 11/5): 左 = おばけの 意味 (11/5 社長「残り 時間だと 分かる 文」)・右 = 地球の 上に いつも「目標 ○○ km」(超えたら 金色) */
   #tripNote{color:#c8f4ff;overflow:hidden;text-overflow:ellipsis;min-width:0;padding:2px 0} #tripGoal{color:#fff;flex:none;transform-origin:right bottom}
   #tripRow rt{font-size:.6em;-webkit-text-stroke:2px #3a2a5c} #tripGoal.hit{color:#ffe066}
@@ -138,20 +139,20 @@
 <div id="tilt3" hidden><div class="t"></div><div class="b"></div></div>
 <div class="edge" id="edgeL"></div><div class="edge" id="edgeR"></div>
 <div id="hud">
-  <div id="trip"><div class="road"></div><div class="done"></div><div class="clock" id="tripClock"></div><div id="tripRow"><span id="tripNote">おばけが 時計に つくまでに <ruby>目標<rt>もくひょう</rt></ruby>を こえよう</span><span id="tripGoal"></span></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
-  <div id="speed"><span class="u"><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u">km</span></div>
+  <div id="trip"><div class="road"></div><div class="done"></div><div class="clock" id="tripClock"></div><div id="tripRow"><span id="tripNote" data-t>おばけが 時計に つくまでに <ruby>目標<rt>もくひょう</rt></ruby>を こえよう</span><span id="tripGoal"></span></div><div class="gh" id="tripGh"><div class="j"><div class="b"><img class="n" src="assets/chara/obake-ganbaru.png" alt=""><img class="f fe" src="assets/chara/obake-egao.png" alt=""><img class="f fo" src="assets/chara/obake-odoroki.png" alt=""></div></div><span class="bub"></span></div></div>
+  <div id="speed"><span class="u" data-t><ruby>時速<rt>じそく</rt></ruby></span><span id="kmh">0</span><span class="u" id="kmhU">km</span></div>
   <div id="gainBox"><span id="combo"></span><span id="gain"></span></div>
   <div id="fps" hidden style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));font:12px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
   <div id="songclock" hidden style="position:fixed;left:8px;bottom:calc(28px + env(safe-area-inset-bottom));font:14px/1.4 monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:6px;z-index:50;pointer-events:none"></div>
-  <div id="target"><span class="l">つぎの あいて</span><span id="nxSlot"><span id="nxFlash"></span></span><span id="nxName">—</span><span id="nxKmh"></span></div>
+  <div id="target"><span class="l" data-t>つぎの あいて</span><span id="nxSlot"><span id="nxFlash"></span></span><span id="nxName">—</span><span id="nxKmh"></span></div>
   <div id="ladder"></div>
   <div id="dist2" hidden style="position:absolute;left:16px;top:calc(76px + env(safe-area-inset-top));font-size:13px;opacity:.9"></div>
   <div id="pops"></div>
   <div id="howto"></div>
   <div id="ptitle"></div>
   <div id="sign3"></div>
-  <div id="title" class="panel"><h1>がんばれおばけ！</h1><p>3D 試作 4 ・ 空へ、そして 宇宙へ</p><p>ひだり / みぎ を タップで レールを うつる。<br>かそくを ふむと はやくなる！</p></div>
-  <div id="tap">タップで はじめる</div>
+  <div id="title" class="panel"><h1 data-t>がんばれおばけ！</h1><p data-t>3D 試作 4 ・ 空へ、そして 宇宙へ</p><p data-t>ひだり / みぎ を タップで レールを うつる。<br>かそくを ふむと はやくなる！</p></div>
+  <div id="tap" data-t>タップで はじめる</div>
   <div id="finish" class="panel" hidden><h1>FINISH！</h1><p id="fin2"></p><p style="font-size:12px;opacity:.8">タップで もういちど</p></div>
   <div id="flash"></div>
   <div id="white3"></div>
@@ -159,7 +160,7 @@
   <div id="roll3"></div>
   <div id="credit"></div>
 </div>
-<div id="load3" hidden>よみこみちゅう…</div>   <!-- 読み込みを 待つ 間の 字 (#hud の 外 = 白い 幕 46 より 上に 出せる、Codex 指摘 10/29) -->
+<div id="load3" hidden data-t>よみこみちゅう…</div>   <!-- 読み込みを 待つ 間の 字 (#hud の 外 = 白い 幕 46 より 上に 出せる、Codex 指摘 10/29) -->
 <div id="optitle" hidden></div>
 <div id="result" hidden></div>
 <div id="ending" hidden></div>
@@ -173,7 +174,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import * as S2 from './stage2.js';   // 2 面 (宇宙・惑星レース) の計算と表 (9/30)
 import * as S3 from './stage3.js';   // 3 面 (神々の世界めぐり) の表・作り手・世界の景色 (10/8)
-import { createTalk, preloadVoices, playSound, rubyHtml, audioOut, setAudioVolume, loadSound } from './talk.js';   // 会話の画面 (導入・面のはじめ・エンディングで共通、10/19)・音の 出口 (音の 大きさの つまみ)
+import { createTalk, preloadVoices, playSound, rubyHtml, audioOut, loadSound } from './talk.js';   // 会話の画面 (導入・面のはじめ・エンディングで共通、10/19)・音の 出口 (音の 大きさの つまみ)
 import { sfxLane, sfxBoost, preloadSfx } from './sfx.js';   // ステージ中の 効果音 (レールを 移る・加速、11/4)
 import * as REC from './records.js';   // 遊びの 記録 (クリア・ハイスコア・音の 大きさ、10/27)
 import * as OPT from './options.js';   // オプションの 板 (音の 大きさ・記録を 消す、10/27)
@@ -183,10 +184,13 @@ import * as RS from './result.js';   // 結果発表の画面 (10/20)
 import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
 import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会話と 3D の説明、10/20)
 import { LANE_HEX } from './colors.js';   // レーンの 色 (11/9)
+import { tUi, tName, tLine, lang, startJaCheck, fmtSpeed, unitLabel, speedHtml, getUnit } from './i18n.js';   // ことばの 切り替え (11/9)
 import { createPause } from './pause.js';   // 一時停止 (11/9)
 import { createHowto } from './howto.js';   // 走り出す 前の 説明画面 (11/6)
 import { createHud3d } from './hud3d.js';   // 表示の 中の 小さな 3D (がんばる表示の 地球、11/5)
 import * as MV from './movie3.js';   // 3 面の 最後「太陽に 追いつけ！」の 映画 (立ち絵の おばけ、10/28)
+if(lang!=='ja'){ document.documentElement.lang=lang; document.title=tUi('がんばれおばけ！'); document.querySelectorAll('[data-t]').forEach(el=>{ el.innerHTML=tUi(el.innerHTML.trim()); }); }   // 日本語 以外の 時: ページに 直接 書いた 文字を 訳す (11/9)
+document.getElementById('kmhU').textContent=unitLabel();   // 時速の 単位の 字 (せっていで 選んだ 単位、11/9)
 
 /* ==================== 調整ノブ ==================== */
 /* 単位: 長さは メートル、速さは 秒速 (m/s)。1 単位 = 1 m */
@@ -259,17 +263,17 @@ const CAM_FAR2 = 250000, RIB2_GAP = 40; // 2 面の描画距離 (惑星は数十
 
 /* BGM (1 面 = 1 メドレー)。曲を順につなげて鳴らし、全部終わったら FINISH。最後の曲が ラストスパート */
 const BGM_TRACKS = [   /* 10/26 社長 (縦持ちで 遊んでもらって「間延び」→ 3 分〜3 分 30 秒に、C 案): クシコス・ポストは 96 秒 (はじめ + 静かめの中間) まで・最後の くり返しを 省いて 2.5 秒で消える → 天国と地獄を 全部。ラストスパートは 天国と地獄の 57.5 秒 (一度 静かになって 最後の大盛り上がりへ) から。全体 約 3 分 23 秒 */
-  {src:'bgm/necke-csikos-post-pocketsound.mp3', end:96.0, fadeOut:2.5, vol:0.5, credit:'ネッケ「クシコス・ポスト」／ 音源: ポケットサウンド https://pocket-se.info/', lines:['音楽: ネッケ「クシコス・ポスト」', '音源: ポケットサウンド https://pocket-se.info/']},
-  {src:'bgm/offenbach-cancan-section.mp3', spurt:57.5, vol:1.0, credit:'オッフェンバック「天国と地獄」カンカン ／ 演奏: Musopen (パブリックドメイン)', lines:['音楽: オッフェンバック「天国と地獄」カンカン', '演奏: Musopen (パブリックドメイン)']},
+  {src:'bgm/necke-csikos-post-pocketsound.mp3', end:96.0, fadeOut:2.5, vol:0.5, credit:tUi('ネッケ「クシコス・ポスト」／ 音源: ポケットサウンド https://pocket-se.info/'), lines:[tUi('音楽: ネッケ「クシコス・ポスト」'), tUi('音源: ポケットサウンド https://pocket-se.info/')]},
+  {src:'bgm/offenbach-cancan-section.mp3', spurt:57.5, vol:1.0, credit:tUi('オッフェンバック「天国と地獄」カンカン ／ 演奏: Musopen (パブリックドメイン)'), lines:[tUi('音楽: オッフェンバック「天国と地獄」カンカン'), tUi('演奏: Musopen (パブリックドメイン)')]},
 ];
 const BGM_TRACKS2 = [   /* 10/26 社長 (間延び → 3 分〜3 分 30 秒、B 案): 「木星」の 冒頭〜1:36 → 静かな所どうしを 3 秒 重ねて → 3:03 (有名な旋律の 少し前) 〜 4:55 を つないだ 1 本の曲 (holst-jupiter-short.mp3、3:25、終わりの 2 秒で 消える)。ラストスパート = 有名な旋律 (95 秒) から。下の 古い説明は 元の曲の時刻 */   // 2 面: ホルスト「木星」を 頭から 有名な旋律の終わりまで 切らずに (10/2 社長)。spurt = 曲の中の秒で「ラストスパート！」(有名な旋律の始まり 3:05)。end = 旋律の最後の和音が消える所 (4:55.3)、fadeOut = 終わりの この秒数で 音を小さく (社長「静かに終わってもいい」)。fadeIn 0 = 始まりの演奏が静かなので 最初から通常の音量で
-  {src:'bgm/holst-jupiter-short.mp3', spurt:153.0, fadeIn:0,   /* ラストスパート 95 → 153 秒 (11/7 社長「2 面も 1 面と 同じ 50 秒前くらい」: 曲の 終わり 203.5 秒の 約 50 秒前、静かに なった 後の フレーズの 頭) */ vol:2.0, credit:'ホルスト「木星」(組曲「惑星」より) ／ 演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)', lines:['音楽: ホルスト「木星」(組曲「惑星」より)', '演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド']},
+  {src:'bgm/holst-jupiter-short.mp3', spurt:153.0, fadeIn:0,   /* ラストスパート 95 → 153 秒 (11/7 社長「2 面も 1 面と 同じ 50 秒前くらい」: 曲の 終わり 203.5 秒の 約 50 秒前、静かに なった 後の フレーズの 頭) */ vol:2.0, credit:tUi('ホルスト「木星」(組曲「惑星」より) ／ 演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)'), lines:[tUi('音楽: ホルスト「木星」(組曲「惑星」より)'), tUi('演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド')]},
 ];
 const BGM_TRACKS3 = [   /* 11/2 社長「3 面の オーケストラが かなり 大きい」→ 測ったら 1 面 −22 dB・2 面 −31 dB・3 面 −12 dB (盛り上がりの 大きさ)。3 面は vol 0.32 (−10 dB) で 1 面並み、2 面は vol 2.0 (+6 dB、少し 控えめ = 社長 B 案。効果音・おばけの 声を 後で 足す 分の 余裕) */   // 3 面: ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の 行進」の 短い版 (2:47、10/28 社長が 選んだ。前は ジムノペディ)。世界の長さは 曲の 時刻表 (S3.MUSIC3) で 決まる
-  {src:'bgm/rossini-william-tell-finale-cut.mp3', fadeIn:0, vol:0.25, spurtAt:117.2,   /* ラストスパート = 銀河に 入って 世界の 名前が 消えた 後の 拍 (銀河の 輪 112.61 秒 + 4.6 秒、11/7 社長) */   /* 0.32 → 0.25 (11/6 社長「3 面の 音量が 大きく 感じる」) */  credit:'ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」／ 音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/', lines:['音楽: ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」', '音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/']},
+  {src:'bgm/rossini-william-tell-finale-cut.mp3', fadeIn:0, vol:0.25, spurtAt:117.2,   /* ラストスパート = 銀河に 入って 世界の 名前が 消えた 後の 拍 (銀河の 輪 112.61 秒 + 4.6 秒、11/7 社長) */   /* 0.32 → 0.25 (11/6 社長「3 面の 音量が 大きく 感じる」) */  credit:tUi('ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」／ 音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/'), lines:[tUi('音楽: ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」'), tUi('音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/')]},
 ];
 const BGM_NURSERY3 = [   /* 子ども部屋の 曲 (3 面の 当たりの 結果発表の「つぎへ」から 子ども部屋 & エンディング、10/28 社長。下の 説明の「最後の輪」= 子ども部屋の 始まり) */
-  {src:'bgm/twinkle-musicbox-short.mp3', startAt:S3.FOG3_SEC+0.75, rise:2, vol:0.6,   /* rise 5 → 2 (11/4 社長「聞こえ始めを もう少し 早く、声の スタートと 近いと 急な 感じ」: 曲の 始まりは 最後の 和音・真っ白・カメラに 合わせて ある ので 動かさず、大きく なる 速さ だけ 速く = 声の 約 3〜4 秒 前から 聞こえる) */ spurt:Infinity, credit:'きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)'}   /* 10/26 社長 A 案: 1 分 14 秒 → 約 38 秒 (きらきら星 1 回分 + 曲の本当の終わり方。子ども部屋は エンディングの一部。3 面ぜんぶで 約 3 分 34 秒) */,   // ⑤ 子ども部屋 (10/21 社長: 最後の輪を くぐって 1 拍 (オルゴールの 4 分音符 0.75 秒) おいてから、ほんとに ごく小さい音で始めて 5 秒かけて 少しずつ 大きく = 約 3 秒から じわっと 聞こえ 声 (5 秒) の前に 届く (10/27 社長、前は 14 秒で 声の間 ほぼ 聞こえなかった) =「？？？の世界」は はじめ 何か分からない。ジムノペディの 消えていく和音と 少し重なる)。startAt = ステージの時計で 始める秒 (前の曲の 続きでなく)。元の 2:26 の 1 回目と 4 回目 (終わり) を つないだ 1:14。spurt = Infinity: 3 面は「ラストスパート！」を出さない
+  {src:'bgm/twinkle-musicbox-short.mp3', startAt:S3.FOG3_SEC+0.75, rise:2, vol:0.6,   /* rise 5 → 2 (11/4 社長「聞こえ始めを もう少し 早く、声の スタートと 近いと 急な 感じ」: 曲の 始まりは 最後の 和音・真っ白・カメラに 合わせて ある ので 動かさず、大きく なる 速さ だけ 速く = 声の 約 3〜4 秒 前から 聞こえる) */ spurt:Infinity, credit:tUi('きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)')}   /* 10/26 社長 A 案: 1 分 14 秒 → 約 38 秒 (きらきら星 1 回分 + 曲の本当の終わり方。子ども部屋は エンディングの一部。3 面ぜんぶで 約 3 分 34 秒) */,   // ⑤ 子ども部屋 (10/21 社長: 最後の輪を くぐって 1 拍 (オルゴールの 4 分音符 0.75 秒) おいてから、ほんとに ごく小さい音で始めて 5 秒かけて 少しずつ 大きく = 約 3 秒から じわっと 聞こえ 声 (5 秒) の前に 届く (10/27 社長、前は 14 秒で 声の間 ほぼ 聞こえなかった) =「？？？の世界」は はじめ 何か分からない。ジムノペディの 消えていく和音と 少し重なる)。startAt = ステージの時計で 始める秒 (前の曲の 続きでなく)。元の 2:26 の 1 回目と 4 回目 (終わり) を つないだ 1:14。spurt = Infinity: 3 面は「ラストスパート！」を出さない
 ];
 const BGM_SETS = {1:BGM_TRACKS, 2:BGM_TRACKS2, 3:BGM_TRACKS3};
 const RISE_FLOOR = 0.005, BGM_GAP = 0.5, TRIM_LEVEL = 0.02, NO_TRACK_LEN = 120, BGM_VOL = 0.7, BGM_FADE = 2.0, NO_BGM_LEN = 300;
@@ -630,7 +634,7 @@ function setStage(n){ RU.uRDay.value=0; vis3Day(false); ringGlowMesh.material.op
   ringBurst.visible=false; burstT=-1;   // 輪・柱・光の点の表示は ensurePlates が 使っている輪の数で決める
   for(const mm of [ringMesh, ringGlowMesh, ringBeamMesh]){ mm.material.fog=!sp; mm.material.needsUpdate=true; }   // 2 面の輪は もやを通して光る (海王星の雲の中で 3.5 km 先から消えていた、10/4 社長)。1 面は 今のまま霧に溶ける
   beaconPts.renderOrder= sp ? 2 : 0;   // 2 面: 光の点を 半透明のもの・パイプの奥の光 (1) の後に描く (海王星の雲の筋に覆われて暗くならないように)。1 面は 今のまま
-  $('title').querySelectorAll('p')[0].textContent= n===3 ? '3めん ・ かみがみの せかい' : two ? '2めん ・ わくせいレース' : '3D 試作 4 ・ 空へ、そして 宇宙へ';
+  $('title').querySelectorAll('p')[0].textContent= n===3 ? tUi('3めん ・ かみがみの せかい') : two ? tUi('2めん ・ わくせいレース') : tUi('3D 試作 4 ・ 空へ、そして 宇宙へ');
   rung=-1; buildLadderHUD(); { const want= n===3 && nursery3Run ? BGM_NURSERY3 : BGM_SETS[n]; if(bgmTracks!==want){ bgmStop(); bgmLoad(want); } }   /* 3 面の 子ども部屋の 回は きらきら星 */
   if(two) S2.preloadPlanetTex(); else S2.clearPrebuilt();   // 惑星の模様を 裏で読み始める (何度呼んでもよい)。2 面以外へ移る時は 先に作った惑星を片づける (メモリを空ける)
   clearPlanets2(); clearWorlds3();   // 惑星 (遠景の形 と 奥行きだけの球) / 3 面の世界の景色 を片づける
@@ -730,7 +734,7 @@ function onEvent2(ev){ const pv= prev2 && prev2.def===ev.def ? prev2 : null, m= 
   const oc=new THREE.Mesh(OCC_GEO, occluderMat); oc.userData.r=ev.R-50; oc.scale.setScalar(oc.userData.r);   /* 見える球より 50 m 内側 (割合だと木星で 2 km ずれる、Codex 指摘 10/2) */ oc.renderOrder=-100; oc.position.copy(ev.center); oc.visible=false;   /* 色のある物より必ず先に描く (先に描かれたレールは 後から隠せないため、Codex 指摘 10/1)。本当の位置に着くまでは 使わない */ scene.add(oc); ev.occ=oc; ev.passed=false; ev.shown=false; events2.push(ev); }
 const _mw=new THREE.Vector3();
 const DOT2_ANG=0.007, DOT2_MIN=0.0015, R_EARTH_KM=6371;   // 見せ始めの 惑星の見かけの半径 (rad): 地球で 0.007 (≒ 0.4°)、ほかは 本物の半径の比率 (10/2 社長: 本物どおり。木星は最初から大きな円盤)。小さくても 1〜2 画素の光の点は残す
-function planetTitle2(def){ const el=$('ptitle'); el.innerHTML=(def.kana ? '<div class="k">'+def.kana+'</div>' : '')+'<div class="n"><span class="ln"></span><span class="w">'+def.name+'</span><span class="ln r"></span></div>'; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }   // 惑星名を ステージ名のように (10/3 社長: エルデンリング風、名前だけ。10/4: 漢字 + 小さなふりがな)。名前は 決まった表の文字だけ
+function planetTitle2(def){ const el=$('ptitle'); el.innerHTML=(def.kana && lang==='ja' ? '<div class="k">'+def.kana+'</div>' : '')+'<div class="n"><span class="ln"></span><span class="w">'+tName(def.name)+'</span><span class="ln r"></span></div>'; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }   // 惑星名を ステージ名のように (10/3 社長: エルデンリング風、名前だけ。10/4: 漢字 + 小さなふりがな)。名前は 決まった表の文字だけ
 const titled2=new Set(), TITLE_PX=3;   // 名前を出した惑星 / 名前を出す 見かけの半径 (画素。10/5 社長: 遠くに見えた瞬間に。小さい火星は 60% では まだ 1〜2 画素の点で 名前が早すぎた)
 function titleIfVisible2(def, r, pos){ if(state!=='run' || titled2.has(def.name) || small2.some(o=>o.active && !o.passed)) return;   /* 姿のある小物を抜き終わるまで 惑星の名前を待つ (10/7 社長: 海王星の名前の後に「冥王星を ぬいた！」で 渋滞) */ const px=r/Math.max(1, camera.position.distanceTo(pos))/(camera.fov*Math.PI/180/Math.max(1, innerHeight)); if(px>=TITLE_PX){ titled2.add(def.name); planetTitle2(def); } }
 let prev2=null;   // 見え始めの惑星 (10/5 社長: 速さ 60% で 遠くに見え始め、速くなるほど 近づく。80% で イベントが始まったら 同じ形を引き継ぐ)
@@ -914,10 +918,10 @@ function updatePlanets2(dtMove, dt){   // 抜いた判定 / 太陽の向き / �
     sunDir2.lerp(e.sunDir, Math.min(1, dt*0.5)).normalize();
     if(e.cross==null && e.mid!=null) e.cross=e.mid;   // 抜く所 = 印 mid (10/5 から 公転速度に届いて 惑星を離れる所)
     if(e.cross!=null && s>=e.cross){   // 弧の真ん中 = 抜く瞬間 (速さは 輪だけで決まる。ためる・おまけの加速・追い風は なし、10/5 社長)
-      e.passed=true; passed2.add(e.def.name); ovPassed(e.def.name); warp2=-1; dist2=dist2From=e.def.dist; dist2S=s;   /* (ワープ中に抜いた時は ワープを終えて 距離を その惑星に合わせる、Codex 指摘 10/1) */ pop('「'+nameHtml(e.def.name)+'」を ぬいた！'); recomputeRung2(); gearUp(); if(state==='run') startOv2(e); }
+      e.passed=true; passed2.add(e.def.name); ovPassed(e.def.name); warp2=-1; dist2=dist2From=e.def.dist; dist2S=s;   /* (ワープ中に抜いた時は ワープを終えて 距離を その惑星に合わせる、Codex 指摘 10/1) */ pop(passedHtml(e.def.name)); recomputeRung2(); gearUp(); if(state==='run') startOv2(e); }
   }
   cleanupPlanets2();
-  for(const o of S2.LADDER2) if(o.kind==='small' && !small2Names.has(o.name) && !passed2.has(o.name) && v>=o.ms){ passed2.add(o.name); if(!o.bonus) pop('「'+nameHtml(o.name)+'」を ぬいた！'); recomputeRung2(); }   // 姿のない小物は 速さで (姿のある小物は updateSmall2 で 真横に並んだ時)
+  for(const o of S2.LADDER2) if(o.kind==='small' && !small2Names.has(o.name) && !passed2.has(o.name) && v>=o.ms){ passed2.add(o.name); if(!o.bonus) pop(passedHtml(o.name)); recomputeRung2(); }   // 姿のない小物は 速さで (姿のある小物は updateSmall2 で 真横に並んだ時)
 }
 function updateSun2(dt){ const after= passed2.has('水星') && !ov2; if(after){ frameAt(s, _sunF); _sunT.copy(_sunF.t).addScaledVector(_sunF.u, SUN2_UP).normalize(); sunDir2.lerp(_sunT, Math.min(1, dt*2)).normalize(); } sunBig2+=((after ? SUN2_BIG : 1)-sunBig2)*Math.min(1, dt*2); }   /* 毎コマ (曲の終わりの間も。特別カメラの間は 止める、Codex 指摘 10/7) */   // 水星の後 (太陽へ まっすぐ): 特別カメラ「たいよう」が終わったら 太陽を コースの行き先の 少し右上へ (10/7 社長: 行き先と重なって 太陽が見えない → 真上 10°。少し大きく = 円盤 2 倍・まわりの光 1.3 倍。特別カメラの間は 本物の大きさ)
 const SUN2_UP=Math.tan(10*Math.PI/180), SUN2_BIG=2, _sunF=mkFrame(), _sunT=new THREE.Vector3(); let sunBig2=1;   // 水星の後の太陽: コースの行き先の 真上 10° (右上 6° を試して 社長「真上に」) / 円盤の大きさの倍率 (まわりの光は その平方根ほど) / いまの倍率
@@ -1207,7 +1211,7 @@ function buildStartGate(){
   if(PROPS.gate){ const gate=PROPS.gate.scene.clone(); put(gate, 0, 0, 0); gate.rotateY(Math.PI); }   // 飾りアーチ (Codex 製: 幅 9.2 m・高さ 6.5 m、リボン巻きの柱・花飾り・金の玉)。飾りの面を走ってくる側へ (9/12 ゴージャス化)
   else { put(new THREE.Mesh(new THREE.BoxGeometry(0.25,4.2,0.25), woodMat), -w, 2.1, 0); put(new THREE.Mesh(new THREE.BoxGeometry(0.25,4.2,0.25), woodMat), w, 2.1, 0); put(new THREE.Mesh(new THREE.BoxGeometry(w*2+0.5,0.25,0.25), woodMat), 0, 4.2, 0); }   // 読み込めない時は 木の柱と横木
   const c=document.createElement('canvas'); c.width=512; c.height=128; const cx=c.getContext('2d'); cx.fillStyle='#fff3c4'; cx.fillRect(0,0,512,128); cx.fillStyle='#d94848'; cx.fillRect(0,0,512,14); cx.fillRect(0,114,512,14);
-  cx.fillStyle='#5b2a2a'; cx.font='bold 84px sans-serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('スタート', 256, 66);
+  cx.fillStyle='#5b2a2a'; cx.font='bold 84px sans-serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText(tUi('スタート'), 256, 66);
   const banner=new THREE.Mesh(new THREE.PlaneGeometry(w*1.8, w*0.45), own(new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c), side:THREE.DoubleSide}))); put(banner, 0, PROPS.gate ? 4.65 : 3.45, 0.02); banner.rotateY(Math.PI);   // 走ってくる側 (後ろ) に文字を向ける。飾りアーチなら 梁 (5.6 m) の下に吊る
   { const cc=document.createElement('canvas'); cc.width=64; cc.height=256; const g2=cc.getContext('2d'); g2.fillStyle='#b8303a'; g2.fillRect(0,0,64,256); g2.fillStyle='#e0b050'; g2.fillRect(0,0,4,256); g2.fillRect(60,0,4,256);   // 赤いカーペット (金の縁): スタート位置 (START_S の 1 m 手前) から スタートライン (ゲート) まで 13 m (9/14 社長指示)
     const t=new THREE.CanvasTexture(cc); t.colorSpace=THREE.SRGBColorSpace; const carpet=new THREE.Mesh(new THREE.PlaneGeometry(3.4, 13).rotateX(-Math.PI/2), own(new THREE.MeshBasicMaterial({map:t}))); frameAt(gs-6.5, F); carpet.position.copy(F.p).addScaledVector(F.u, -0.16); carpet.quaternion.setFromRotationMatrix(basisAt(F)); g.add(carpet); }
@@ -1558,7 +1562,7 @@ function updateShuttle(r, dt){   // 抜かれる直前に 切り離す (10/26 �
   S.fm.op=S.fp.op=Math.max(0, 1-t/0.4);
   const b=S.base[0][0]; S.t.position.set(b.x, b.y-2*t2-2.5*t2*t2, b.z-4*t2*t2); S.t.rotation.set(0.12*t2, 0, 0); S.t.visible=t2<4; }
 function updateRivals(dtMove){
-  for(let i=0;i<LADDER.length;i++){ if(!rivalByRung[i] && !announced[i] && v>=LADDER[i].ms){ announced[i]=true; if(i<HUD_RUNGS) pop('「'+nameHtml(LADDER[i].name)+'」を ぬいた！'); recomputeRung(); } }   // 姿のない相手 (自転など) は 速さで
+  for(let i=0;i<LADDER.length;i++){ if(!rivalByRung[i] && !announced[i] && v>=LADDER[i].ms){ announced[i]=true; if(i<HUD_RUNGS) pop(passedHtml(LADDER[i].name)); recomputeRung(); } }   // 姿のない相手 (自転など) は 速さで
   if(planeRival && !planeRival.active && !planeRival.passed && songRemaining()<CATCHUP_SEC+15) trySpawnRival(true);   // 飛行機は 曲の終わりが近ければ 速さが足りなくても出す
   const sky= segFor(s).phase!=='ground';
   for(const r of rivals){
@@ -1571,7 +1575,7 @@ function updateRivals(dtMove){
       if(r.climbTrigger){ const rem=songRemaining(); if(rem<CATCHUP_SEC){ const closing=(gap+20)/Math.max(3, rem-30)/flowK(); tv=Math.min(tv, v-Math.max(8, closing)); } }   // 飛行機: 曲が終わりそうなら ゆずる (残り 30 秒は見せ場に)
       r.v+=(tv-r.v)*Math.min(1, dtMove*2);
       if(!r.met && gap<r.len+8) r.met=true;
-      if((sky ? gap+r.v*dtMove*flowK() : gap)<=0){ r.passed=true; ovPassed(r.name);   /* 空の判定は 相手も このフレームぶん進めた後の距離で (待つ距離が近いので コマ落ちの時に まだ前にいる相手を 抜いたことにしないように、Codex 指摘 10/26)。地上は 社長OKの これまでの判定のまま (並走する相手で 抜くタイミングが 数秒変わるため) */   /* 真横に並んだ瞬間 (体の真ん中同士) に 抜いた (10/19 社長: 追い越しきって 3 m 先 だと 並走が長い乗り物ほど 何秒も遅れた) */ if(r.i<HUD_RUNGS) pop('「'+nameHtml(r.name)+'」を ぬいた！'); recomputeRung(); if(r.climbTrigger) startClimb(s, v); if(r.fly) camKick=Math.min(1, camKick+0.5); }   // 飛ぶ相手を抜いた瞬間は 軽いカメラのキック (9/15)   // 「ならんだ！」「そらへ！」の吹き出しは 9/10 社長判断で廃止 (抜いた！だけで十分)
+      if((sky ? gap+r.v*dtMove*flowK() : gap)<=0){ r.passed=true; ovPassed(r.name);   /* 空の判定は 相手も このフレームぶん進めた後の距離で (待つ距離が近いので コマ落ちの時に まだ前にいる相手を 抜いたことにしないように、Codex 指摘 10/26)。地上は 社長OKの これまでの判定のまま (並走する相手で 抜くタイミングが 数秒変わるため) */   /* 真横に並んだ瞬間 (体の真ん中同士) に 抜いた (10/19 社長: 追い越しきって 3 m 先 だと 並走が長い乗り物ほど 何秒も遅れた) */ if(r.i<HUD_RUNGS) pop(passedHtml(r.name)); recomputeRung(); if(r.climbTrigger) startClimb(s, v); if(r.fly) camKick=Math.min(1, camKick+0.5); }   // 飛ぶ相手を抜いた瞬間は 軽いカメラのキック (9/15)   // 「ならんだ！」「そらへ！」の吹き出しは 9/10 社長判断で廃止 (抜いた！だけで十分)
       r.s+=r.v*dtMove*flowK();
     } else { r.v=Math.min(r.ms, v-Math.max(2, v*0.05)); r.s+=r.v*dtMove*flowK(); }   // 抜かれたあとは おばけより必ず遅く (もう前に出てこない)
     if(r.passed && s-r.s>350){ r.active=false; r.mesh.visible=false; continue; }   // 遠く後ろに消えたら 片づける
@@ -1681,7 +1685,7 @@ function updateSmall2(ds, dt){   // ds = この コマで おばけが進んだ�
     else if(L.planet || L.quick){ if(r.passDrift==null) r.passDrift=Math.max(L.drift, Math.max(0, gap)/SMALL2_QUICK_SEC); r.s-=Math.min(Math.max(0, r.s-s), (L.planet ? r.passDrift : Math.min(r.passDrift, vm*0.8))*dt); }   /* 1 コマで おばけを 越えない (抜くコマは 真上で止め、次のコマから 後ろへ離れる。コマ落ちで 離れる姿が出ずに消えないように、Codex 指摘 10/26) */   /* 準惑星 (冥王星・ケレス・エリス) は 止まって見せる間なしに 約 1 秒で 頭上を通り過ぎて抜ける (10/26 社長。ボイジャーは 並んで 1 秒止まる 今のまま。quick を付けた相手も 同じ動き) */
     else if(r.paceT<(L.paceSec??SMALL2_PACE_SEC) || gap>L.pace+L.tol){ r.s+=Math.max(-L.close*dt, (L.pace-gap)*(1-Math.exp(-(L.catch||0.8)*dt)));   /* 速さを超えていても まだ遠い時は まず並ぶ所まで寄る (並走なしの準惑星も。10/7 社長: 冥王星の速さを とっくに超えても 追いつけない = 3,000 km 先から 下がる速さで来ていた) */ if(gap<=L.pace+L.tol) r.paceT+=dt; }   // 届いたら 前の上に並んで 一緒に飛ぶ (tol = 並んだとみなす幅)
     else r.s-=(L.planet ? L.drift : Math.min(L.drift, vm*0.8))*dt;   // ゆっくり下がって おばけの真上を越える (近くを飛ぶ ハレー彗星・ボイジャーは 下がる速さを 前へ飛ぶ速さの 8 割まで = 後ろ向きに飛ばない、?real=0 の時、Codex 指摘 10/26。遠くの準惑星 (エリス・冥王星・ケレス) には かけない: かけたら エリスが 1 分近く 抜けなかった、10/26 社長)
-    if(!fin && !r.passed && r.s<=s){ r.passed=true; passed2.add(r.def.name); ovPassed(r.def.name); pop('「'+nameHtml(r.def.name)+'」を ぬいた！'); recomputeRung2(); }   // 真上に並んだ瞬間
+    if(!fin && !r.passed && r.s<=s){ r.passed=true; passed2.add(r.def.name); ovPassed(r.def.name); pop(passedHtml(r.def.name)); recomputeRung2(); }   // 真上に並んだ瞬間
     if(r.passed && s-r.s>(L.away||300)){ r.active=false; r.mesh.visible=false; continue; }   // 後ろへ離れたら 片づける
     if(L.planet){ frameAt(s, PF); r.mesh.position.copy(PF.p).addScaledVector(PF.t, r.s-s).addScaledVector(PF.u, L.up).addScaledVector(PF.r, L.side||0); faceSmall2(r.mesh, L.planet, PF.u); }   // 準惑星は 何百 km 先 (コースはまだ無い) → おばけの所の向きで まっすぐ先に置き、見せる所を カメラへ
     else { frameAt(r.s, PF); r.mesh.position.copy(PF.p).addScaledVector(PF.u, L.up); r.mesh.quaternion.setFromRotationMatrix(basisAt(PF)); }
@@ -1940,7 +1944,7 @@ function mkOumuamua(){   // オウムアムア (2017 年に 見つかった 太�
 for(const o of S3.LADDER3){ const L=RIV3_LOOKS[o.name]; if(!L) continue; const mesh=L.make(); snapOps(mesh); mesh.visible=false; scene.add(mesh); rivals3.push({name:o.name, ms:o.kmh/3.6, L, mesh, active:false, passed:false, s:0, paceT:0, fade:0}); }
 let riv3Fresh=true; function rivals3Reset(){ riv3Fresh=true; passed3.clear(); for(const r of rivals3){ r.active=false; r.passed=false; r.mesh.visible=false; } }
 function recomputeRung3(){ let k=-1; for(let i=0;i<S3.LADDER3.length;i++){ if(!passed3.has(S3.LADDER3[i].name)) break; k=i; } if(k!==rung){ rung=k; updateLadderHUD(); } }   // 段 = 先頭から 続けて 抜いた 所まで
-function riv3Pass(name){ passed3.add(name); ovPassed(name); pop('「'+nameHtml(name)+'」を ぬいた！'); recomputeRung3(); }
+function riv3Pass(name){ passed3.add(name); ovPassed(name); pop(passedHtml(name)); recomputeRung3(); }
 function nearBranch3(){ for(const r of plan3){ if(!r.branch) continue; if(stageT>=r.t0-S3.SPREAD3_SEC-6 && stageT<=r.t0+S3.RECONV3_SEC+CAMREF3_SEC) return true; } return false; }   // 分かれ道で レールが 広がる 6 秒前から 元に 戻るまで (11/6 社長: フルコンボ 近くだと ロボットが コース 選びの 最中に 現れて わけも 分からず 去った) = この 間は 新しい ライバルを 出さない
 function updateRivals3(ds, dt){   // ds = この コマで おばけが 進んだ 距離 (m)、dt = 秒
   if(state!=='run' || cut3 || nursery3Run){ for(const r of rivals3) if(r.active){ r.active=false; r.mesh.visible=false; } return; }   // 太陽に 追いつけ (映画)・子ども部屋の 回は 出さない
@@ -2012,11 +2016,12 @@ const OV_VOL=0.8 /* 声の 大きさ (11/4 社長「少しだけ 下げる」) *
 const OV_COMBO={10:'rc-03', 20:'rc-04', 30:'rc-05', 40:'rc-06', 50:'rc-07', 60:'rc-08'}, OV_WOW=['rc-14', 'rc-15', 'rc-16', 'rc-17'];   // それっ・いい感じ・速ーい・止まらなーい・びゅんびゅーん・おばけパワー (70〜100 は ふわふわ〜ん) / へ〜・おお〜・すごーい・わあっ
 let ovSrc=null, ovPr=0, ovEnd=0, ovN=0, ovAlt=0, ovTok=0;
 const ovPick=a=>a[Math.floor(Math.random()*a.length)];
-const RC_TEXT={'rc-01':'行くぞー！', 'rc-02':'しゅっぱーつ！', 'rc-03':'それっ！', 'rc-04':'いい かんじ！', 'rc-05':'はやーい！', 'rc-06':'止まらなーい！', 'rc-07':'びゅんびゅーん！', 'rc-08':'おばけパワー！', 'rc-09':'ふわふわ〜ん！', 'rc-10':'あっ、いた！', 'rc-11':'まてまてー！', 'rc-12':'ぬいたー！', 'rc-13':'お先にー！', 'rc-14':'へ〜！', 'rc-15':'おお〜！', 'rc-16':'すごーい！', 'rc-17':'わあっ！', 'rc-18':'つぎの せかいだ！', 'rc-19':'よーし、もう 少し！', 'rc-20':'いっけー！', 'rc-21':'やったー！', 'rc-22':'おいついたー！', 'rc-23':'あーん、おしい…'},   // 吹き出しの セリフ (声と 同じ。漢字は 2 年生まで、ほかは ひらがな)
+const RC_TEXT={'rc-01':tUi('行くぞー！'), 'rc-02':tUi('しゅっぱーつ！'), 'rc-03':tUi('それっ！'), 'rc-04':tUi('いい かんじ！'), 'rc-05':tUi('はやーい！'), 'rc-06':tUi('止まらなーい！'), 'rc-07':tUi('びゅんびゅーん！'), 'rc-08':tUi('おばけパワー！'), 'rc-09':tUi('ふわふわ〜ん！'), 'rc-10':tUi('あっ、いた！'), 'rc-11':tUi('まてまてー！'), 'rc-12':tUi('ぬいたー！'), 'rc-13':tUi('お先にー！'), 'rc-14':tUi('へ〜！'), 'rc-15':tUi('おお〜！'), 'rc-16':tUi('すごーい！'), 'rc-17':tUi('わあっ！'), 'rc-18':tUi('つぎの せかいだ！'), 'rc-19':tUi('よーし、もう 少し！'), 'rc-20':tUi('いっけー！'), 'rc-21':tUi('やったー！'), 'rc-22':tUi('おいついたー！'), 'rc-23':tUi('あーん、おしい…')},   // 吹き出しの セリフ (声と 同じ。漢字は 2 年生まで、ほかは ひらがな)
   RC_ODOROKI=new Set(['rc-10', 'rc-11', 'rc-14', 'rc-15', 'rc-16', 'rc-17', 'rc-23']);   // 驚いた 顔 (大物を 見つけた・へ〜 おお〜 すごーい わあっ・おしい)。ほかは 笑顔
 let reactTm=0;
+if(lang!=='ja') RC_TEXT['warp3-01']=tUi('べつの せかいに きちゃったかな？');   // 3 面の 神様の 声 (日本語は 声だけ) の 字幕を がんばる表示の おばけの 吹き出しに (11/9 社長)
 function hudReact(id){ const t=RC_TEXT[id]; if(!t) return; const gh=$('tripGh'), bub=gh.querySelector('.bub');   // がんばる表示の おばけが 声に 合わせて 跳ねる・顔が 0.9 秒 変わる・吹き出し 1.2 秒 (11/5 社長「お化けが しゃべる タイミングで リアクション」)
-  gh.classList.remove('egao', 'odoroki'); gh.classList.add(RC_ODOROKI.has(id) ? 'odoroki' : 'egao'); bub.textContent=t; bub.classList.toggle('flip', tripF>0.55);
+  gh.classList.remove('egao', 'odoroki'); gh.classList.add(RC_ODOROKI.has(id) ? 'odoroki' : 'egao'); bub.textContent=t; bub.classList.toggle('flip', tripF>0.55); bub.classList.toggle('long', id==='warp3-01');
   for(const el of [gh.firstChild, bub]){ el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
   clearTimeout(reactTm); reactTm=setTimeout(()=>gh.classList.remove('egao', 'odoroki'), 900); }
 function ovPreload(){ if(!actx) return; for(let i=1;i<=23;i++) loadSound(actx, OV_DIR+'rc-'+String(i).padStart(2, '0')+'.mp3'); loadSound(actx, OV_DIR+'warp3-01.mp3'); }
@@ -2047,25 +2052,25 @@ function ovWorld(n){ if(n===1) say('warp3-01', 4); else if(n===2) say(ovPick(['r
 function mom3Step(){   // 毎コマ (3 面): 子ども部屋の お母さんの声・字幕・オルゴールを 下げる。時刻は 曲の時計 (タブを隠すと 声も 一緒に 止まる)
   const on=nurseryOn3(), tn= on ? stageT-nurseryT0() : -1, i= on ? MOM3.findIndex(m=>tn>=m.at && tn<m.at+m.len) : -1, el=$('mom3');
   if(on && !mom3Pre && actx){ mom3Pre=true; preloadVoices(actx, 'assets/voice/', MOM3); }   // 子ども部屋に 入ったら 先に 読んでおく
-  if(i!==mom3i){ mom3i=i; if(i>=0){ el.innerHTML=rubyHtml(MOM3[i].text); el.style.opacity=1; } else el.style.opacity=0; }   // 字幕は ふわっと 出て 消える (消える間は 前の文のまま)
+  if(i!==mom3i){ mom3i=i; if(i>=0){ el.innerHTML=rubyHtml(tLine(MOM3[i].id, MOM3[i].text)); el.style.opacity=1; } else el.style.opacity=0; }   // 字幕は ふわっと 出て 消える (消える間は 前の文のまま)
   if(i>=0 && !mom3Done.has(i) && actx && actx.state==='running'){ mom3Done.add(i); const m=MOM3[i], tok=mom3Tok, late=()=>stageT-nurseryT0()-m.at; if(late()<MOM3_LATE) playSound(actx, 'assets/voice/'+m.id+'.mp3', 1, ()=>tok===mom3Tok && nurseryOn3() && late()<MOM3_LATE).then(s=>{ if(s) mom3Srcs.push(s); }); }   // 1 回だけ。音が 止まっている間 (タブから 戻った直後) は 待つ。読み込みが 遅れて 1 秒を 過ぎたら 鳴らさない (次の文と 重ねない、Codex 指摘 10/27)
   const a0=MOM3[0].at, e1=MOM3[MOM3.length-1].at+MOM3[MOM3.length-1].len, w= on ? Math.max(0, Math.min(1, (tn-a0+MOM3_RAMP)/MOM3_RAMP, (e1+MOM3_RAMP-tn)/MOM3_RAMP)) : 0, dk=1-(1-MOM3_DUCK)*w;   // 最初の声の 0.6 秒前から 下げ、最後の声の 後 0.6 秒で 戻す (間の 1 秒は 下げたまま)
   if(duck3 && Math.abs(dk-duckV)>0.002){ duckV=dk; duck3.gain.setTargetAtTime(dk, actx.currentTime, 0.03); } }
 function mom3Reset(){ mom3Tok++; mom3i=-1; mom3Pre=false; mom3Done.clear(); $('mom3').style.opacity=0; for(const s of mom3Srcs.splice(0)){ try{ s.stop(); }catch(_){} } if(duck3){ duck3.gain.cancelScheduledValues(0); duck3.gain.value=1; } duckV=1; }   // もういちど・タイトルへ: 声を止め 字幕を消し 曲の大きさを 元へ
 const ROLL3_A=4, ROLL3_B=28;   // スタッフロールを 流す 秒 (子ども部屋の 始まりから。おばけが ベッドに 着く 28 秒までに 流れ切る)
 const CREDITS3=[   // スタッフロールの 中身 (c = 列: a はじめ / l 左 / r 右 / e 最後、h = 見出し、i = 行。名前は まだ 空ける、10/26 社長)
-  {c:'a', h:'つくった ひと', i:['プラさん']}, {c:'a', h:'え を かいた ひと', i:['いおりちゃん']},   /* 10/28 社長 */ {c:'a', h:'こえ', i:['おゆ']}, {c:'a', h:'てつだった AI', i:['Claude<small>Anthropic</small>', 'Codex<small>OpenAI</small>']},
-  {c:'l', h:'おんがく', i:['ネッケ「クシコス・ポスト」<small>音源: ポケットサウンド https://pocket-se.info/</small>', 'オッフェンバック「天国と地獄」<small>演奏: Musopen (パブリックドメイン)</small>', 'ホルスト「木星」<small>演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)</small>', 'ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」<small>音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/</small>', 'モーツァルト「きらきら星変奏曲」K.265<small>演奏: Simone Renzi (CC BY 3.0)</small>', 'きらきら星 (オルゴール)<small>音源: KonstantinPazuzuStudio (Pixabay)</small>']},
-  {c:'l', h:'こうかおん', i:['歓声と拍手<small>効果音ラボ https://soundeffect-lab.info/</small>']},
-  {c:'r', h:'3D の ぶひん', i:['Kenney<small>Nature Kit・City Kit Suburban・Car Kit・Furniture Kit・Fantasy Town Kit (CC0) www.kenney.nl</small>', 'Quaternius<small>Farm Animals・Ultimate Animated Animals (CC0)</small>', 'ボイジャー 1 号<small>NASA</small>']},
-  {c:'r', h:'しゃしん・ちず', i:['惑星・月・太陽の 地図<small>Solar System Scope (CC BY 4.0)</small>', '天の川銀河の 想像図<small>NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0)</small>', 'アンドロメダ銀河<small>Giuseppe Donatiello (CC BY 4.0)</small>', '冥王星・ケレスの 地図<small>NASA</small>']},
-  {c:'l', h:'プログラムの ぶひん', i:['three.js<small>MIT License</small>']},
-  {c:'r', h:'', i:['<small>曲・画像の 一部は 長さ・色・大きさを 変えて 使っています。<br>CC BY 3.0: creativecommons.org/licenses/by/3.0/<br>CC BY 4.0: creativecommons.org/licenses/by/4.0/</small>']},
-  {c:'e', h:'スペシャルサンクス', i:['プレイしてくれた あなた']}];   // 出典は 10/27 に コード・LICENSE・倉庫・記録から 洗い出し (CC BY の 曲 1 つ・画像 2 つは 必ず。ほかは 感謝として)
+  {c:'a', h:tUi('つくった ひと'), i:[tUi('プラさん')]}, {c:'a', h:tUi('え を かいた ひと'), i:[tUi('いおりちゃん')]},   /* 10/28 社長 */ {c:'a', h:tUi('こえ'), i:[tUi('おゆ')]}, {c:'a', h:tUi('てつだった AI'), i:['Claude<small>Anthropic</small>', 'Codex<small>OpenAI</small>']},
+  {c:'l', h:tUi('おんがく'), i:[tUi('ネッケ「クシコス・ポスト」<small>音源: ポケットサウンド https://pocket-se.info/</small>'), tUi('オッフェンバック「天国と地獄」<small>演奏: Musopen (パブリックドメイン)</small>'), tUi('ホルスト「木星」<small>演奏: アメリカ空軍ヘリテージ・オブ・アメリカ・バンド (パブリックドメイン)</small>'), tUi('ロッシーニ「ウィリアム・テル」序曲 より「スイス軍の行進」<small>音源: クラシック名曲サウンドライブラリー https://classical-sound.seesaa.net/</small>'), tUi('モーツァルト「きらきら星変奏曲」K.265<small>演奏: Simone Renzi (CC BY 3.0)</small>'), tUi('きらきら星 (オルゴール)<small>音源: KonstantinPazuzuStudio (Pixabay)</small>')]},
+  {c:'l', h:tUi('こうかおん'), i:[tUi('歓声と拍手<small>効果音ラボ https://soundeffect-lab.info/</small>')]},
+  {c:'r', h:tUi('3D の ぶひん'), i:[tUi('Kenney<small>Nature Kit・City Kit Suburban・Car Kit・Furniture Kit・Fantasy Town Kit (CC0) www.kenney.nl</small>'), tUi('Quaternius<small>Farm Animals・Ultimate Animated Animals (CC0)</small>'), tUi('ボイジャー 1 号<small>NASA</small>')]},
+  {c:'r', h:tUi('しゃしん・ちず'), i:[tUi('惑星・月・太陽の 地図<small>Solar System Scope (CC BY 4.0)</small>'), tUi('天の川銀河の 想像図<small>NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0)</small>'), tUi('アンドロメダ銀河<small>Giuseppe Donatiello (CC BY 4.0)</small>'), tUi('冥王星・ケレスの 地図<small>NASA</small>')]},
+  {c:'l', h:tUi('プログラムの ぶひん'), i:['three.js<small>MIT License</small>']},
+  {c:'r', h:'', i:[tUi('<small>曲・画像の 一部は 長さ・色・大きさを 変えて 使っています。<br>CC BY 3.0: creativecommons.org/licenses/by/3.0/<br>CC BY 4.0: creativecommons.org/licenses/by/4.0/</small>')]},
+  {c:'e', h:tUi('スペシャルサンクス'), i:[tUi('プレイしてくれた あなた')]}];   // 出典は 10/27 に コード・LICENSE・倉庫・記録から 洗い出し (CC BY の 曲 1 つ・画像 2 つは 必ず。ほかは 感謝として)
 let roll3Built=false, roll3A=-1, roll3H=-1, roll3Hold=0;   // 帯と 中身の 高さ (前の コマ) / この時刻までは 消しておく
 function roll3Step(){   // 毎コマ (3 面): 子ども部屋の スタッフロールを 曲の時計に 合わせて 下から上へ (一定の 速さ。画面の形が 変わっても その場で 計り直す)
   const on=nurseryOn3(), tn= on ? stageT-nurseryT0() : -1, el=$('roll3'), k=(tn-ROLL3_A)/(ROLL3_B-ROLL3_A), show= on && k>=0 && k<=1;
-  if(on && !roll3Built){ roll3Built=true; const col=k=>CREDITS3.filter(c=>c.c===k).map(c=>'<h4>'+c.h+'</h4>'+c.i.map(t=>'<p>'+t+'</p>').join('')).join(''); el.innerHTML='<div class="in"><div class="ca"><img src="assets/title-logo.png" width="1200" height="619" alt="がんばれおばけ！">'+col('a')+'</div><div class="cl">'+col('l')+'</div><div class="cr">'+col('r')+'</div><div class="ce">'+col('e')+'</div></div>'; }   // 子ども部屋に 入ったら 作っておく (題名の絵を 先に 読む)
+  if(on && !roll3Built){ roll3Built=true; const col=k=>CREDITS3.filter(c=>c.c===k).map(c=>'<h4>'+c.h+'</h4>'+c.i.map(t=>'<p>'+t+'</p>').join('')).join(''); el.innerHTML='<div class="in"><div class="ca"><img src="assets/title-logo.png" width="1200" height="619" alt="'+tUi('がんばれおばけ！')+'">'+(lang==='ja' ? '' : '<p>'+tUi('がんばれおばけ！')+'</p>')+col('a')+'</div><div class="cl">'+col('l')+'</div><div class="cr">'+col('r')+'</div><div class="ce">'+col('e')+'</div></div>'; }   // 子ども部屋に 入ったら 作っておく (題名の絵を 先に 読む)
   if(on && tn>=ROLL3_A) document.body.classList.add('hud-calm');   // スタッフロールが 始まったら 速度などの 表示を 消す (結果発表の 後の もういちど・タイトルへ まで)
   if(!show || !el.firstChild){ el.style.opacity=0; return; }
   const A=el.clientHeight, H=el.firstChild.offsetHeight, now=performance.now()/1000;
@@ -2164,7 +2169,7 @@ function bgmLoad(tracks){   // 面の曲を読む (面を切り替えるたび)�
 }
 function bgmBuf(src){ if(!bgmBufCache.has(src)) bgmBufCache.set(src, fetch(src).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }).then(ab=>new Promise((ok,ng)=>actx.decodeAudioData(ab, ok, ng))).then(b=>{ alog('読めた '+src.replace('bgm/','')); return b; }).catch(err=>{ alog('読めない '+src.replace('bgm/','')+' '+(err && (err.name+' '+err.message) || err)); bgmBufCache.delete(src); throw err; })); return bgmBufCache.get(src); }   // 曲を読む (同じ曲は 1 度だけ)。失敗は置き場に残さない (次に面を切り替えた時に読み直せる、Codex 指摘 10/1)
 /* 天国の会話の曲 (1・2・3 面のはじめ、10/21 社長: モーツァルト「きらきら星変奏曲」・毎回 同じ)。主題〜第 3 変奏 (2:54) を くり返す。会話の声が 聞こえるよう 小さめに */
-const HEAVEN_BGM = {src:'bgm/mozart-k265-renzi.mp3', vol:0.35, credit:'音楽: モーツァルト「きらきら星変奏曲」K.265 ／ 演奏: Simone Renzi (CC BY 3.0)'};
+const HEAVEN_BGM = {src:'bgm/mozart-k265-renzi.mp3', vol:0.35, credit:tUi('音楽: モーツァルト「きらきら星変奏曲」K.265 ／ 演奏: Simone Renzi (CC BY 3.0)')};
 let heaven=null;   // 鳴らしている 天国の曲 { src, g }
 function heavenPlay(){   // 読めるまでは 無音で待ち、読めたら ふわっと
   if(op) op.musicCredit(HEAVEN_BGM.credit);
@@ -2173,7 +2178,7 @@ function heavenPlay(){   // 読めるまでは 無音で待ち、読めたら �
   alog('天国の曲を 呼ぶ (音 '+actx.state+')');
   bgmBuf(HEAVEN_BGM.src).then(buf=>{ if(heaven!==h){ alog('天国の曲: もう いらない'); return; } const s=actx.createBufferSource(), t0=actx.currentTime; alog('天国の曲を 鳴らす (音 '+actx.state+')'); s.buffer=buf; s.loop=true; s.connect(h.g); s.start(t0); h.src=s; h.g.gain.setValueAtTime(0, t0); h.g.gain.linearRampToValueAtTime(HEAVEN_BGM.vol, t0+1.5); }).catch(err=>console.error('BGM', HEAVEN_BGM.src, err));
 }
-const TITLE_BGM = {src:'bgm/twinkle-musicbox-short.mp3', vol:0.45, credit:'音楽: きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)'};   // タイトル画面の 曲 (10/27 社長「タイトルの 音楽を オルゴールの きらきら星に」)。子ども部屋と 同じ 音源を くり返す
+const TITLE_BGM = {src:'bgm/twinkle-musicbox-short.mp3', vol:0.45, credit:tUi('音楽: きらきら星 (オルゴール) ／ 音源: KonstantinPazuzuStudio (Pixabay)')};   // タイトル画面の 曲 (10/27 社長「タイトルの 音楽を オルゴールの きらきら星に」)。子ども部屋と 同じ 音源を くり返す
 let titleMus=null;   // 鳴らしている タイトルの 曲 { src, g }。タイトル画面の 間だけ (frame で 見張る)
 function titleMusicPlay(){   // 読めるまでは 無音で待ち、読めたら ふわっと (最初に 開いた 時は 音の 許可 = 最初の タップまで 鳴らない)
   if(op) op.musicCredit(TITLE_BGM.credit);
@@ -2229,20 +2234,20 @@ function tickStage(dt){   // dt = 実時間
 }
 function creditLines(){   // クレジット (11/5 社長「いちばん 小さい 字で 1 行」): 今 鳴って いる 曲の 分だけ。1 行に 入らない 表記は 何行かに 分けて (lines) 6 秒ごとに 切り替える
   let L;
-  if(!bgmTracks.length) L=['おんがくは じゅんびちゅう']; else if(bgmFail) L=['おんがくは なし (よみこめませんでした)']; else if(!bgmReady) L=['おんがくを よみこみ中…'];
+  if(!bgmTracks.length) L=[tUi('おんがくは じゅんびちゅう')]; else if(bgmFail) L=[tUi('おんがくは なし (よみこめませんでした)')]; else if(!bgmReady) L=[tUi('おんがくを よみこみ中…')];
   else { let i=0; for(let j=0;j<bgmSegs.length;j++) if(bgmSegs[j] && bgmSegs[j].at<=stageT) i=j;
-    const t=bgmTracks[i] || bgmTracks[0]; L=(t.lines || ['音楽: '+t.credit]).map(x=>x+(bgmSegs[i] && !bgmSegs[i].buf ? ' (よみこめず)' : '')); }
-  return stage===2 ? [...L, '惑星の地図: Solar System Scope (CC BY 4.0)'] : L; }   // 2 面は 惑星の地図の 出どころも (交代で。曲が 読めない 時も 出す、Codex 指摘 11/5)
+    const t=bgmTracks[i] || bgmTracks[0]; L=(t.lines || [tUi('音楽: ')+t.credit]).map(x=>x+(bgmSegs[i] && !bgmSegs[i].buf ? tUi(' (よみこめず)') : '')); }
+  return stage===2 ? [...L, tUi('惑星の地図: Solar System Scope (CC BY 4.0)')] : L; }   // 2 面は 惑星の地図の 出どころも (交代で。曲が 読めない 時も 出す、Codex 指摘 11/5)
 let creditShown=null, comboShown=0;
 function creditTick(){ const L=creditLines(), h=L[Math.floor(Math.max(0, stageT)/6)%L.length]; if(h===creditShown) return; creditShown=h; const el=$('credit'); el.textContent=h; let f=10; el.style.fontSize=f+'px'; while(el.scrollWidth>el.clientWidth && f>8){ f-=0.5; el.style.fontSize=f+'px'; } }   // 細い 画面で はみ出す 時だけ 少し 小さく (8px まで)
 function showCredit(){ creditShown=null; creditTick(); }
 function goalKmh(){ return stage===3 ? GOAL3_KMH : stage===2 ? EARTH2_KMH : Math.round(V_GOAL*3.6); }   // 合格の 速さ (1 面 地球の 自転・2 面 地球の 公転・3 面 太陽系の 公転)
 let goalShown='', goalHit=null;
-function goalTick(){ const g=goalKmh(), t=g.toLocaleString('ja-JP'); if(t!==goalShown){ goalShown=t; $('tripGoal').innerHTML='<ruby>目標<rt>もくひょう</rt></ruby> '+t+' km'; fitTripNote(); }   // がんばる表示の 地球の 左に いつも「目標 ○○ km」(11/5 社長: 奥さま「何キロ 出せば いいか 分からない」)
-function fitTripNote(){ const n=$('tripNote'); let f=12; n.style.fontSize=''; while(n.scrollWidth>n.clientWidth+1 && f>8){ f-=0.5; n.style.fontSize=f+'px'; } }   // がんばる表示の 上の 文が 目標の 文字と 並んで 入りきらない 時だけ 少し 小さく (幅の 狭い スマホ、11/5)
+function goalTick(){ const g=goalKmh(), t=fmtSpeed(g); if(t!==goalShown){ goalShown=t; $('tripGoal').innerHTML=tUi('<ruby>目標<rt>もくひょう</rt></ruby> {n} {u}', {n:t, u:unitLabel()}); fitTripNote(); }   // がんばる表示の 地球の 左に いつも「目標 ○○ km」(11/5 社長: 奥さま「何キロ 出せば いいか 分からない」)
   const hit= (state==='finish' ? finalV : v)*3.6>=g; if(hit!==goalHit){ goalHit=hit; $('tripGoal').classList.toggle('hit', hit); } }   /* 超えたら 金色 */
+function fitTripNote(){ const n=$('tripNote'); let f=12; n.style.fontSize=''; while(n.scrollWidth>n.clientWidth+1 && f>8){ f-=0.5; n.style.fontSize=f+'px'; } }   // がんばる表示の 上の 文が 目標の 文字と 並んで 入りきらない 時だけ 少し 小さく (幅の 狭い スマホ、11/5)
 function showHowto(){ const touch=IS_MOBILE || matchMedia('(pointer: coarse)').matches, el=$('howto');   // 走り 始めの 説明 (約 5 秒、11/5 社長: 奥さま「何を すれば いいか 分からない」)
-  el.innerHTML='<span class="a">'+(stage===1 ? 'ひかる いたを ふむと' : 'ひかる わを くぐると')+' はやく なるよ！</span><span class="b">'+(touch ? 'がめんの ひだり・みぎ を タップで いどう' : '← → キーで いどう')+'</span><span class="c">時間が なくなるまでに<br><ruby>時速<rt>じそく</rt></ruby> '+goalKmh().toLocaleString('ja-JP')+' km を こえよう！</span>';
+  el.innerHTML='<span class="a">'+(stage===1 ? tUi('ひかる いたを ふむと はやく なるよ！') : tUi('ひかる わを くぐると はやく なるよ！'))+'</span><span class="b">'+(touch ? tUi('がめんの ひだり・みぎ を タップで いどう') : tUi('← → キーで いどう'))+'</span><span class="c">'+tUi('時間が なくなるまでに<br><ruby>時速<rt>じそく</rt></ruby> {n} {u} を こえよう！', {n:fmtSpeed(goalKmh()), u:unitLabel()})+'</span>';
   for(const e of [el, $('trip')]){ e.classList.remove('hint', 'on'); void e.offsetWidth; } el.classList.add('on'); $('trip').classList.add('hint'); }
 let tripF=0, tripShown=-1, hudA=0;   // がんばる表示の 進み (0〜1) / 書き込んだ 値 / 3D の 地球の 濃さ
 function tripEnd(){ if(stage===3){ const c=plan3.find(o=>o.def.key==='catchup'); if(c) return c.t0; } return stageLen()-FINISH_LEAD; }   // おばけが 地球に 着く 時刻 (11/5 社長): 1・2 面 = FINISH・3 面 = 「太陽に 追いつけ」の 映画が 始まる 瞬間
@@ -2262,12 +2267,12 @@ const $=id=>document.getElementById(id);
 const HUD_RUNGS=LADDER.findIndex(o=>o.name==='スペースシャトル')+1;   // 左上の点の列と「つぎの あいて」は スペースシャトルまで (X-15 以降は おまけ扱い。9/14 社長判断: ほとんどの回は ミサイルに追いつくかどうか → 10/26 フルコンボ近くの子の 最後の目標に スペースシャトルを足した)
 const ladderEl=$('ladder'), ladderNow=()=> stage===3 ? S3.LADDER3 : stage===2 ? S2.LADDER2 : LADDER, hudRungs=()=> stage===3 ? S3.LADDER3.length : stage===2 ? S2.HUD_RUNGS2 : HUD_RUNGS;
 function buildLadderHUD(){ ladderEl.innerHTML=''; ladderNow().slice(0, hudRungs()).forEach(()=>ladderEl.appendChild(document.createElement('i'))); updateLadderHUD(); }
-const fmtKmh=x=> Math.round(x*3.6).toLocaleString('ja-JP');   // 中の計算は m/s、表示は 時速 km
+const fmtKmh=x=> fmtSpeed(x*3.6);   // 中の計算は m/s、表示は 時速 km
 let finalV=0, flashed=false;   // FINISH の瞬間の速さ (記録)。打ち上げ中に速くなっても 表示はこれを守る。flashed = ピカーンを出したか
 const layerAnn={strato:false, ozone:false, plasma:false};   // 高さの境目の一言を出したか
 let hudNextKey=null, hudRunT0=0;   // 模型を 出して いる 相手 ('面:名前') / 走り 始めた 時刻
 function updateLadderHUD(){ const L=ladderNow(), H=hudRungs(); [...ladderEl.children].forEach((el,i)=>el.classList.toggle('on', i<=rung)); const nx= rung+1<H ? L[rung+1] : null;   /* 次の 相手 1 人だけ (11/5 社長: 全員の 目盛りは やめた) */
-  $('target').classList.toggle('done', !nx); $('nxName').innerHTML= nx ? nameHtml(nx.name) : 'ぜんぶ ぬいた！'; $('nxKmh').innerHTML= nx && nx.kmh ? '<ruby>時速<rt>じそく</rt></ruby> '+nx.kmh.toLocaleString('ja-JP')+' km' : '';
+  $('target').classList.toggle('done', !nx); $('nxName').innerHTML= nx ? nameHtml(nx.name) : tUi('ぜんぶ ぬいた！'); $('nxKmh').innerHTML= nx && nx.kmh ? speedHtml(nx.kmh) : '';
   const key=stage+':'+(nx ? nx.name : ''); if(key===hudNextKey) return;   /* 次の 相手の 模型: 相手が 変わった 時だけ。走り 始めの 1 秒 (途中の 速さから 始めて まとめて 抜いた 時など) と 面の 切り替えは 飛ぶ 演出 なしで 置き換え */
   const animate= state==='run' && hudNextKey!==null && hudNextKey.split(':')[0]===String(stage) && performance.now()-hudRunT0>1000; hudNextKey=key;
   hud3d.relayout(); hud3d.setNext(nx ? hudModelFor(nx, rung+1) : null, {animate}); }
@@ -2288,17 +2293,18 @@ function hudPlanet(p){   // 2 面の 惑星の 模型: 地図を 貼った 小�
   let ring=null; if(p.ring){ const sat=p.ring==='saturn'; ring=new THREE.Mesh(new THREE.RingGeometry(1.25, sat ? 2.2 : 1.7, 64), new THREE.MeshBasicMaterial({ color: sat ? 0xd8c8a0 : 0xc8dcff, transparent:true, opacity: sat ? 0.8 : 0.35, side:THREE.DoubleSide, depthWrite:false })); ring.rotation.x=-Math.PI/2; tilt.add(ring); tilt.rotation.z= sat ? 0.47 : 1.71; }   /* 土星 27 度・天王星 98 度 */
   g.userData.dispose=()=>{ if(own) map.dispose(); ball.geometry.dispose(); if(ring) ring.geometry.dispose(); }; return g; }
 const NAME_RUBY={'ハレー彗星':'ハレー<ruby>彗星<rt>すいせい</rt></ruby>', 'ボイジャー1号':'ボイジャー1<ruby>号<rt>ごう</rt></ruby>', '冥王星':'<ruby>冥王星<rt>めいおうせい</rt></ruby>', '月':'<ruby>月<rt>つき</rt></ruby>', '宇宙戦艦':'<ruby>宇宙<rt>うちゅう</rt></ruby><ruby>戦艦<rt>せんかん</rt></ruby>', 'アンドロメダ銀河':'アンドロメダ<ruby>銀河<rt>ぎんが</rt></ruby>'};
-function nameHtml(n){ if(NAME_RUBY[n]) return NAME_RUBY[n]; const o=S2.LADDER2.find(p=>p.name===n && p.kana); return o ? '<ruby>'+n+'<rt>'+o.kana+'</rt></ruby>' : n; }   // 漢字の 名前に ふりがな (惑星は 読みの データ、ほかは 表)。名前は 中の 決まった 文字だけ (innerHTML で よい)
+function nameHtml(n){ if(lang!=='ja') return tName(n); if(NAME_RUBY[n]) return NAME_RUBY[n]; const o=S2.LADDER2.find(p=>p.name===n && p.kana); return o ? '<ruby>'+n+'<rt>'+o.kana+'</rt></ruby>' : n; }   // 漢字の 名前に ふりがな (惑星は 読みの データ、ほかは 表)。名前は 中の 決まった 文字だけ (innerHTML で よい)
+const passedHtml=n=>tUi('「{x}」を ぬいた！', {x:nameHtml(n)});   // 語順が 変わる 言語の ために 差し込みの 形 (11/9)
 function layoutHUD(){   // 字の 大きさを 画面の 大きさで 決める (11/5 社長「桁が 増えたから 小さく するのは 良くない、はじめから その 桁数の 大きさに」)。読み込み時・画面の 大きさが 変わった 時だけ
   const land=innerWidth>=innerHeight, s=land ? Math.min(1.5, Math.max(0.7, Math.min(innerHeight/576, innerWidth/1024))) : 1, R=document.documentElement.style; R.setProperty('--s', s);   /* 横長は 見本 (1024×576) の 並びの まま 拡大・縮小。高さだけで 決めると 横幅の 狭い 窓で がんばる表示と 時速が ぶつかる (11/5 社長) */  const sp=$('speed'), k=$('kmh'), keep=k.textContent, lim= land ? 290 : 0.7*(innerWidth-32); k.textContent='8,888,888'; let fs=44; k.style.fontSize=fs+'px';
   while(sp.offsetWidth>lim && fs>20){ fs--; k.style.fontSize=fs+'px'; } k.textContent=keep;   /* 時速: 7 けたが 入る 大きさ (縦長 = 段の 幅の 7 割・横長 = 290px を 拡大) */
   R.setProperty('--sp-h', (sp.offsetHeight+6)+'px');   /* 連続と 加速は 時速の すぐ 下 (高さは 拡大・移動の 影響を 受けない) */
   const box=$('pops'), d=document.createElement('div'); d.className='pop'; d.style.cssText='visibility:hidden;animation:none'; box.appendChild(d); let pf=Math.round(22*s);
-  for(const n of [...LADDER, ...S2.LADDER2, ...S3.LADDER3].map(o=>o.name)){ d.innerHTML='<span>「'+nameHtml(n)+'」を ぬいた！</span>'; const w=d.firstChild; d.style.fontSize=pf+'px'; while(w.offsetWidth*1.12+6>box.clientWidth && pf>12){ pf--; d.style.fontSize=pf+'px'; } }   /* 文字の 実際の 幅で 判定。飛び出す 時の 1.12 倍と 縁取りの 分も 見込む (Codex 指摘 11/5) */
+  for(const n of [...LADDER, ...S2.LADDER2, ...S3.LADDER3].map(o=>o.name)){ d.innerHTML='<span>'+passedHtml(n)+'</span>'; const w=d.firstChild; d.style.fontSize=pf+'px'; while(w.offsetWidth*1.12+6>box.clientWidth && pf>12){ pf--; d.style.fontSize=pf+'px'; } }   /* 文字の 実際の 幅で 判定。飛び出す 時の 1.12 倍と 縁取りの 分も 見込む (Codex 指摘 11/5) */
   d.remove(); R.setProperty('--pop-fs', pf+'px'); hud3d.relayout(); fitTripNote(); howto.relayout(); }   /* 「ぬいた！」: いちばん 長い 名前でも 1 行に 入る 大きさで 固定 */
 function pop(html, small){ const d=document.createElement('div'); d.className='pop'+(small?' small':''); d.innerHTML=html; $('pops').appendChild(d); setTimeout(()=>d.remove(), 1900); }
-function spurtPop(){ const d=document.createElement('div'); d.className='spurtpop'; d.textContent='ラストスパート！'; $('hud').appendChild(d); setTimeout(()=>d.remove(), 2500); }   // ラストスパートの 大きな 文字 (11/7)
-function showGain(add, cb=0){ const g=$('gain'); g.innerHTML='＋'+fmtKmh(add-cb/3.6)+' km'+(cb ? '<span class="cb">＋'+cb+' ボーナス</span>' : '');   /* コンボ ボーナスは 別に 小さく黄色で */ g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
+function spurtPop(){ const d=document.createElement('div'); d.className='spurtpop'; d.textContent=tUi('ラストスパート！'); $('hud').appendChild(d); setTimeout(()=>d.remove(), 2500); }   // ラストスパートの 大きな 文字 (11/7)
+function showGain(add, cb=0){ const g=$('gain'); g.innerHTML=tUi('＋')+fmtKmh(add-cb/3.6)+' '+unitLabel()+(cb ? '<span class="cb">'+tUi('＋')+(getUnit()==='mi' ? fmtSpeed(cb) : cb)+tUi(' ボーナス')+'</span>' : '');   /* コンボ ボーナスは 別に 小さく黄色で */ g.classList.remove('on'); void g.offsetWidth; g.classList.add('on'); }   // 右上に小さく +○ (アニメを毎回やり直す)
 let combo=0, fcMiss=false;   // fcMiss = この 回で 1 回でも 取りこぼした (ランキングの フルコンボの 王冠、11/4 社長)
 let titleOpening=false;   // タイトルに もどった後は どの入口から始めても 導入から (10/20)
 function beginRun(){ if((OPENING_ON || titleOpening) && !openingSeen) beginOpening(titleOpening ? 0 : OP_FROM); else startRun(); }   // 題名のタップ: 1 面の入口なら 先に導入 (10/19)
@@ -2375,10 +2381,10 @@ function showResult(){   // 結果発表 (設計書 3 章): 合格か・褒め�
   const ok= stage===1 ? finalV>=V_GOAL : stage===2 ? (passed2.has('地球') || kmh>=EARTH2_KMH) : (pass3 ?? finalV*3.6>=GOAL3_KMH);   /* 3 面: 最後の輪で 太陽系の公転に 届いていれば 子ども部屋へ = 合格 (10/21 社長)。輪で決めた合否を そのまま使う (丸めた数字で比べると 境目で 食い違う、Codex 指摘 10/21) */   /* 2 面: 地球を抜く前に 曲が終わっても 速さが届いていれば 合格 (付録 B) */
   if(ok) failCount[stage]=0; else failCount[stage]++;
   const praise= stage===1 ? RS.praiseFor(LADDER, kmh, 'ちきゅうの じてん') : stage===2 ? RS.praiseFor(S2.LADDER2, kmh, '地球') : RS.praiseFor(RS.COSMIC3, kmh, '');
-  const okLine= stage===1 ? '{地球|ちきゅう}の {自転|じてん}を おいぬいた！' : stage===2 ? '{地球|ちきゅう}の {公転|こうてん}を おいぬいた！' : '{太陽系|たいようけい}の {公転|こうてん}を おいぬいた！';
-  const rest=Math.max(1, goal-kmh).toLocaleString('en-US'), remainLine= stage===1 ? '{自転|じてん}まで あと '+rest+' km！' : '{公転|こうてん}まで あと '+rest+' km！';
-  const buttons= !ok ? (failCount[stage]>=1 ? [{id:'booster', label:'ブースターで ちょうせん', big:true}, {id:'retry', label:'もういちど'}] : [{id:'retry', label:'もういちど'}]) :   /* 足りなければ 1 回目から 救済の やり直し (10/20 社長「2 回続けて」→ 11/5 社長「1 回目の 失敗から」) */ stage===3 ? [{id:'nursery', label:'つぎへ すすむ', big:true}] :   /* 3 面の 当たり (太陽に 追いついた 映画の 後) は つぎへ = 子ども部屋 & エンディング だけ (10/28 社長) */ [{id:'next', label:'つぎへ すすむ', big:true}];   /* 通しで 遊ぶ 時の 合格は つぎへ だけ (11/9 社長: 初めて 1 面を クリアした 人が もういちど を 押して「先に 進まんやんけ」) */
-  const soloButtons= ok ? [...(stage===3 ? [{id:'nursery', label:'エンディングを 見る', big:true}] : []), {id:'retry', label:'もういちど', big:stage!==3}, {id:'title', label:'メニューに もどる'}] : [...buttons, {id:'title', label:'メニューに もどる'}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎの 面へは 出さず タイトルへ (10/27 設計書)。3 面の 当たりは 子ども部屋 & エンディングへも 進める */
+  const okLine= stage===1 ? tUi('{地球|ちきゅう}の {自転|じてん}を おいぬいた！') : stage===2 ? tUi('{地球|ちきゅう}の {公転|こうてん}を おいぬいた！') : tUi('{太陽系|たいようけい}の {公転|こうてん}を おいぬいた！');
+  const rest=fmtSpeed(Math.max(1, goal-kmh)), remainLine= stage===1 ? tUi('{自転|じてん}まで あと {n} {u}！', {n:rest, u:unitLabel()}) : tUi('{公転|こうてん}まで あと {n} {u}！', {n:rest, u:unitLabel()});
+  const buttons= !ok ? (failCount[stage]>=1 ? [{id:'booster', label:tUi('ブースターで ちょうせん'), big:true}, {id:'retry', label:tUi('もういちど')}] : [{id:'retry', label:tUi('もういちど')}]) :   /* 足りなければ 1 回目から 救済の やり直し (10/20 社長「2 回続けて」→ 11/5 社長「1 回目の 失敗から」) */ stage===3 ? [{id:'nursery', label:tUi('つぎへ すすむ'), big:true}] :   /* 3 面の 当たり (太陽に 追いついた 映画の 後) は つぎへ = 子ども部屋 & エンディング だけ (10/28 社長) */ [{id:'next', label:tUi('つぎへ すすむ'), big:true}];   /* 通しで 遊ぶ 時の 合格は つぎへ だけ (11/9 社長: 初めて 1 面を クリアした 人が もういちど を 押して「先に 進まんやんけ」) */
+  const soloButtons= ok ? [...(stage===3 ? [{id:'nursery', label:tUi('エンディングを 見る'), big:true}] : []), {id:'retry', label:tUi('もういちど'), big:stage!==3}, {id:'title', label:tUi('メニューに もどる')}] : [...buttons, {id:'title', label:tUi('メニューに もどる')}];   /* 夢の タイトルで 選んだ 面だけの 時: つぎの 面へは 出さず タイトルへ (10/27 設計書)。3 面の 当たりは 子ども部屋 & エンディングへも 進める */
   const sc= SCORE_Q ? REC.addScore(stage, kmh, boosterOn, RIVALS[stage], !fcMiss && combo>0, easyOn && stage!==3) : null;   /* 速さを 面ごとの 上位 10 件へ (ランキングの 板に 出る)。自分の 1 位を 超えたら「しんきろく！」(順位の 札は 出さない、10/27 社長) */
   if(!resultUI) resultUI=RS.createResult($('result'), {actx, faces:OP.FACES});
   resultUI.show({ kmh, praise, ok, okLine, remainLine, booster:boosterOn, record:!!(sc && sc.best), god: ok ? null : {line:RS.failLine(failCount[stage])}, buttons: soloStage ? soloButtons : buttons, confetti:ok,
@@ -2427,18 +2433,18 @@ function makeTitle(){   // 天国の タイトルの 文字・ボタン。クリ
   if(op) op.setDream(t.dream);   /* 夢の 雲の 中に うろうろの おばけを 収める (縦持ち) */
   return t;
 }
-const EASY_TXT=['<ruby>本物<rt>ほんもの</rt></ruby>の <ruby>速<rt>はや</rt></ruby>さで 走るよ！', '<ruby>本物<rt>ほんもの</rt></ruby>の 2分の1の <ruby>速<rt>はや</rt></ruby>さで 走るよ'];   // タイトルの ふつう / ゆっくり の 説明 (11/9 社長)
-function modeHtml(){ return '<div class="ot-mode"><div class="ot-mode-r"><button class="ot-btn ot-small'+(easyOn ? '' : ' ot-sel')+'" data-id="m0">ふつう</button><button class="ot-btn ot-small'+(easyOn ? ' ot-sel' : '')+'" data-id="m1">ゆっくり</button></div><div class="ot-mode-t">'+EASY_TXT[+easyOn]+'</div></div>'; }
+const EASY_TXT=[tUi('<ruby>本物<rt>ほんもの</rt></ruby>の <ruby>速<rt>はや</rt></ruby>さで 走るよ！'), tUi('<ruby>本物<rt>ほんもの</rt></ruby>の 2分の1の <ruby>速<rt>はや</rt></ruby>さで 走るよ')];   // タイトルの ふつう / ゆっくり の 説明 (11/9 社長)
+function modeHtml(){ return '<div class="ot-mode"><div class="ot-mode-r"><button class="ot-btn ot-small'+(easyOn ? '' : ' ot-sel')+'" data-id="m0">'+tUi('ふつう')+'</button><button class="ot-btn ot-small'+(easyOn ? ' ot-sel' : '')+'" data-id="m1">'+tUi('ゆっくり')+'</button></div><div class="ot-mode-t">'+EASY_TXT[+easyOn]+'</div></div>'; }
 function setEasy(on){ easyOn=on; REC.setEasy(on); const r=document.querySelector('.ot-mode'); if(r){ r.querySelectorAll('button').forEach((b, i)=>b.classList.toggle('ot-sel', i===+on)); r.querySelector('.ot-mode-t').innerHTML=EASY_TXT[+on]; } }   // 次の 遊びから 効く・覚えて おく
 function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション。夢の タイトルは ステージ 1〜3・ぜんぶ あそぶ・オプション
-  const dream=opTitle.dream, items= dream ? [{html:modeHtml()}, {id:'s1', label:'ステージ 1'}, {id:'s2', label:'ステージ 2'}, {id:'s3', label:'ステージ 3'}, {id:'start', label:'ぜんぶ あそぶ', big:true}, {id:'options', label:'オプション', small:true}] : [{html:modeHtml()}, {id:'start', label:'はじめから はじめる', big:true}, {id:'options', label:'オプション'}];
+  const dream=opTitle.dream, items= dream ? [{html:modeHtml()}, {id:'s1', label:tUi('ステージ 1')}, {id:'s2', label:tUi('ステージ 2')}, {id:'s3', label:tUi('ステージ 3')}, {id:'start', label:tUi('ぜんぶ あそぶ'), big:true}, {id:'options', label:tUi('せってい'), small:true}] : [{html:modeHtml()}, {id:'start', label:tUi('はじめから はじめる'), big:true}, {id:'options', label:tUi('せってい')}];
   opTitle.menu(items, id=>{
     if(state!=='title' || panelUI) return;
     if(id==='m0' || id==='m1'){ setEasy(id==='m1'); return; }
     if(id==='start'){ if(canStart() && !pendingStart) beginRun(); }
     else if(id==='options'){ let reset=false;
-      panelUI=OPT.createOptions({ volume:REC.getVolume(), onVolume:n=>{ REC.setVolume(n); if(actx) setAudioVolume(actx, OPT.VOLUMES[n]); }, onReset:()=>{ REC.resetRecords(); reset=true; },
-        onClose:()=>{ panelUI=null; if(reset && opTitle.dream && !CLEARED_Q) whiteSwap(()=>{ if(state!=='title') return; opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); }); } });   /* 夢の タイトルで 記録を 消したら クリア前の タイトルへ */ }
+      panelUI=OPT.createOptions({ onReset:()=>{ REC.resetRecords(); reset=true; },
+        onClose:()=>{ panelUI=null; $('kmhU').textContent=unitLabel(); if(reset && opTitle.dream && !CLEARED_Q) whiteSwap(()=>{ if(state!=='title') return; opTitle.dispose(); opTitle=makeTitle(); opTitle.setText(tUi('タップで はじめる')); }); } });   /* 夢の タイトルで 記録を 消したら クリア前の タイトルへ */ }
     else { const n=+id[1];   /* ステージ 1〜3: その面の ランキングと はじめる ボタン (ストーリー あり / なし・もどる、10/27 社長) */
       const rv=RIVALS[n].slice().sort((a, b)=>b.kmh-a.kmh), now=Date.now(), rows= RKDEMO_Q ? [...rv, {kmh:Math.round(rv[0].kmh*1.04), t:now, fc:true, you:true}, {kmh:rv[2].kmh+1, t:now-1.8*864e5, you:true}].sort((a, b)=>b.kmh-a.kmh).slice(0, 5) : REC.ranking(n, RIVALS[n]);
       panelUI=RK.createRanking({ stage:n, rows, actx, onPick:p=>{ panelUI=null; if(p!=='back' && state==='title' && canStart() && !pendingStart) startSolo(n, p==='story'); } }); }
@@ -2448,7 +2454,7 @@ function goTitle(){   // タイトルに もどる (3 面の結果): 白 → 天
   whiteSwap(()=>{
     setBooster(false); resetRun(); setStage(1); openingSeen=false; titleOpening=true; soloStage=0;
     if(talk){ talk.dispose(); talk=null; } if(op) op.dispose(); op=OP.createOpening({renderer, getKit:()=>KIT, actx});
-    if(opTitle) opTitle.dispose(); opTitle=makeTitle(); opTitle.setText('タップで はじめる'); $('hud').style.visibility='hidden'; state='title';
+    if(opTitle) opTitle.dispose(); opTitle=makeTitle(); opTitle.setText(tUi('タップで はじめる')); $('hud').style.visibility='hidden'; state='title';
     if(ERRLOG) logSend({title:'back'});
   });
 }
@@ -2475,7 +2481,7 @@ window.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft' || e.key==='ArrowRight'){ const l0=lane; if(!laneLock3 && !cut3) lane= e.key==='ArrowLeft' ? Math.max(0,lane-1) : Math.min(LANES-1,lane+1); if(lane!==l0 && state==='run') sfxLane(actx, lane-l0); }
   else if(e.key===' '||e.key==='Enter'){ if(e.repeat || (e.target instanceof Element && e.target.closest('button'))) return;   /* ボタンに 合わせた Enter・Space は ボタンに 任せる (オプションで Enter → 始まって しまった)・長押しの くり返しは 受けない (Codex 指摘 10/27) */
     if(state==='opening') talk.tap(); else if(state==='title' && !pendingStart && !panelUI){ if(canStart()){ if(opTitle && !opTitle.menuOpen) openTitleMenu(); else beginRun(); } } }
-  else if((e.key==='c'||e.key==='C') && stage>=2){ camMode2= camMode2==='watch' ? 'follow' : 'watch'; pop(camMode2==='watch' ? 'カメラ: みまもる' : 'カメラ: おばけに あわせる', true); }
+  else if((e.key==='c'||e.key==='C') && stage>=2){ camMode2= camMode2==='watch' ? 'follow' : 'watch'; pop(camMode2==='watch' ? tUi('カメラ: みまもる') : tUi('カメラ: おばけに あわせる'), true); }
 });
 
 /* ==================== 毎コマ ==================== */
@@ -2505,7 +2511,7 @@ function update(dt, dtReal){   // dt = 見た目の補間用 (上限 0.05 秒)�
       else if(!b.hit && !b.missed && b.s<s-1.6*b.sc){ b.missed=true; if(b.grp){ b.grp.s=b.s; grpMiss.push(b.grp); } else { combo=0; fcMiss=true; } } }   /* 踏めなかったと決めるのは 踏める範囲 (板の長さの半分) を 過ぎてから (前は 3 m 後ろ固定で、大きい板は まだ踏めるのに コンボだけ先に切れた = ボーナスが付かない、Codex 指摘 10/26) */
     for(const g of grpMiss) if(!g.hit && !g.cut){ g.cut=true; combo=0; fcMiss=true; }   /* 同じ 音の 3 本は 全部 調べて から: どれも 踏めて いない 時だけ 連続を 切る (1 コマで 3 本を 越えた時 先に 調べた 輪で 切れた、Codex 指摘 10/28) */
     if(stage===3) for(const g of gates3) if(!g.hit && g.at!=null && g.at<=s){ g.hit=true; hits++; ghostGlint(); ringBurstStart(lane); sparkBurst3({s:g.at, lane}); boostHit(); }   /* 世界が 変わる 輪も 加速の 輪と して 数える (10/28 社長。くぐる 時刻は 曲の 拍 = MUSIC3.gates)。輪の 位置が 後から 決まっても 抜けない (Codex 指摘 10/28) */
-    { const ct= combo>=3 ? combo : 0; if(ct!==comboShown){ comboShown=ct; $('combo').innerHTML= ct ? ct+' <ruby>連続<rt>れんぞく</rt></ruby>' : ''; } }   /* 変わった 時だけ 書き換える */
+    { const ct= combo>=3 ? combo : 0; if(ct!==comboShown){ comboShown=ct; $('combo').innerHTML= ct ? ct+tUi(' <ruby>連続<rt>れんぞく</rt></ruby>') : ''; } }   /* 変わった 時だけ 書き換える */
     if(stage===2){ updatePlanets2(dtMove, dt); updateSmall2(s-sPrev, dtMove); }   // 惑星イベント (追い風・ぬいた・ギアアップ) / 姿のある小物
     if(stage===3) updateRivals3(s-sPrev, dtMove);   // 3 面の ライバル
     trackGrowth(stageT, moveSpeed(v)); if(stage===1) updateRivals(dtMove); ensurePlates(s, moveSpeed(v), dt); tidyCourse(s);   // 速さの段の更新は updateRivals の中 (抜いた時 / 速さで)。板の間隔は 画面の流れの速さで (2 面)
@@ -2665,7 +2671,7 @@ function resize(){ const w=window.innerWidth, h=window.innerHeight; renderer.set
 window.addEventListener('resize', resize); resize();
 window.addEventListener('resize', layoutHUD); document.fonts.load('700 44px "M PLUS Rounded 1c"', '8,888,888時速km「」を ぬいた！').catch(()=>{}).then(layoutHUD);   /* 表示の 字の 大きさ (丸文字が 読めて から 測る、11/5) */
 let kitsReady=false;   // 部品集の読み込みが終わるまで スタートを待つ (読み込めなくても 簡易の形で始められる)
-bgmPrepare(); preloadSfx(actx); if(actx) setAudioVolume(actx, OPT.VOLUMES[REC.getVolume()]); bgmLoad(STAGE_Q===3 && nursery3Run ? BGM_NURSERY3 : BGM_SETS[STAGE_Q]);   /* 音の 大きさは 覚えている 段で (オプション、10/27) */ if(actx) bgmBuf(HEAVEN_BGM.src).catch(()=>{}); $('tap').textContent='ぶひんを よみこみ中…';   /* 天国の曲も 先に読んでおく */
+bgmPrepare(); preloadSfx(actx); bgmLoad(STAGE_Q===3 && nursery3Run ? BGM_NURSERY3 : BGM_SETS[STAGE_Q]); if(actx) bgmBuf(HEAVEN_BGM.src).catch(()=>{}); $('tap').textContent=tUi('ぶひんを よみこみ中…');   /* 天国の曲も 先に読んでおく */
 preloadVoices(actx, 'assets/voice/', RS.FAIL_LINES);   /* 結果発表の 神様の声を 先に読んでおく (10/20) */
 if(OPENING_ON){   /* 1 面の入口は 天国の タイトル画面 (雲の上を おばけが うろうろ)。部品集を読んでいる間から 描く (10/19) */
   op=OP.createOpening({renderer, getKit:()=>KIT, actx}); opTitle=makeTitle(); opTitle.setText($('tap').textContent); $('hud').style.visibility='hidden'; preloadVoices(actx, 'assets/voice/', OP.OPENING_LINES);   /* 声は タイトルの間に 先読み (最初の行に 間に合うように) */
@@ -2677,7 +2683,7 @@ loadSmall2().catch(e=>console.warn('2 面の小物の姿を読み込めません
 try{ KIT=await loadKits(); }catch(e){ console.warn('部品集を読み込めませんでした。簡易の形で続けます', e); KIT=null; }
 await rivalsP; await fieldP; await propsP;
 prewarmRivals();   /* 相手の姿を 始まる前に 見えない所で 一度 描いておく (初めて出る瞬間の カクつきを防ぐ、10/26 社長: 序盤に 次々 出る所で かくつく) */
-kitsReady=true; $('tap').textContent= KIT ? 'タップで はじめる' : 'ぶひんが よみこめませんでした (かんいの かたちで はじめます) ・ タップで はじめる';   // 読み込み失敗を画面で分かるように
+kitsReady=true; $('tap').textContent= KIT ? tUi('タップで はじめる') : tUi('ぶひんが よみこめませんでした (かんいの かたちで はじめます) ・ タップで はじめる');   // 読み込み失敗を画面で分かるように
 if(opTitle) opTitle.setText($('tap').textContent);
 setStage(STAGE_Q); resetCourse(); resetPlates(); if(stage===3) prepGal3();   /* 確かめ用の 入口 (?stage=3): タイトルの 間に 銀河の 遠景と 映画の 画像を 読み始める (10/29) */
 const QUICK_KMH={1:[2350,1150], 2:[130000,95000], 3:[900000,600000]};   /* 試し: ?result=ok / ?result=ng (面は ?stage=N)。どの面も 走り始めて 5 秒で 見本の速さにして FINISH → 本番と同じく 飛び去るコースの上に 結果発表。ブースター中は ふつうに最後まで (10/20) */
@@ -2725,6 +2731,7 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   requestAnimationFrame(frame); }
 requestAnimationFrame(frame);
 const logQ=[]; let logWs=null; const logSend=o=>{ const t=JSON.stringify({type:'game-log', ...o}); if(logWs && logWs.readyState===1) logWs.send(t); else logQ.push(t); };   // 確かめ用の記録 (?errlog=1・?tap=1): 確認用サーバーの記録 (state/server.log) へ送る
+if(ERRLOG && Q.has('jacheck')) startJaCheck(logSend);   // 確かめ用: 画面に 残った 日本語を 記録へ (11/9)
 if(ERRLOG || Q.has('tap')){ try{ logWs=new WebSocket('ws://'+location.host+'/?key='+encodeURIComponent(Q.get('key')||'')); logWs.onopen=()=>{ for(const t of logQ.splice(0)) logWs.send(t); }; }catch(e){ console.warn('log', e); } }
 if(Q.has('tap')){   /* ?tap=1 (10/12 社長: 加速の輪を 右手の旋律に合わせる・耳で記録): 走っている間 右手の音ごとに スペースキー → 曲の時刻 (頭の無音を切った所から、秒) を記録へ。秘書が 録音の打鍵に合わせて整え、時刻表にする */
   const el=document.createElement('div'); el.style.cssText='position:fixed;left:12px;top:45%;color:#fff;font:bold 22px sans-serif;text-shadow:0 0 6px #000;z-index:50;pointer-events:none'; el.textContent='きろく 0'; document.body.appendChild(el); let n=0;

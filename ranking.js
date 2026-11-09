@@ -1,4 +1,5 @@
 // ランキングの 板 (10/27 社長): 夢の タイトルで「ステージ N」を 押すと、その面の ランキング (ライバル + 自分の 記録、5 位まで) と
+import { tUi, tName, lang, fmtSpeed, unitLabel } from './i18n.js';   // ことばの 切り替え (11/9)
 // はじめる ボタン (ストーリー あり / なし)・もどる。rows = [{ name, kana, kmh, you, t, date, fc }] (速い 順。ブースターの 回は 入らない)
 // 11/4 社長: 5 位 → 1 位の 順に 横から 滑り込む (ス、ス、ス、シャキン、シャキーン)・1 位は 大きく 2 位は 少し 大きく 3〜5 位は 同じ・あなたは 日付と 時刻・フルコンボは 金の 王冠
 import { rubyHtml, audioOut } from './talk.js';
@@ -62,7 +63,7 @@ const when = r => {   // あなたの 記録の 日付と 時刻 (11/4 社長)�
   if(Number.isFinite(r.t) && r.t > 0){ const d = new Date(r.t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; }
   return typeof r.date === 'string' && r.date.length === 10 ? `${+r.date.slice(5, 7)}/${+r.date.slice(8, 10)}` : '';
 };
-const nameHtml = r => r.you ? 'あなた' + (when(r) ? ` <small>${when(r)}</small>` : '') + (r.fc ? ` <span class="rk-fc">${CROWN}フルコンボ</span>` : '') + (r.easy ? ` <span class="rk-easy">ゆっくり</span>` : '') : r.kana ? rubyHtml(`{${r.name}|${r.kana}}`) : r.name;
+const nameHtml = r => r.you ? tUi('あなた') + (when(r) ? ` <small>${when(r)}</small>` : '') + (r.fc ? ` <span class="rk-fc">${CROWN}${tUi('フルコンボ')}</span>` : '') + (r.easy ? ` <span class="rk-easy">${tUi('ゆっくり')}</span>` : '') : lang !== 'ja' ? tName(r.name) : r.kana ? rubyHtml(`{${r.name}|${r.kana}}`) : r.name;
 
 function sfx(actx, kind){   // ス (風を 切る) / シャキン (金属の きらっ) / シャキーン (長く 響く)。音が 出せない 時は 鳴らさない
   if(!actx || actx.state !== 'running') return;
@@ -82,10 +83,10 @@ function sfx(actx, kind){   // ス (風を 切る) / シャキン (金属の き
 export function createRanking({ stage, rows, onPick, actx }){
   injectCss();
   const el = document.createElement('div'); el.className = 'rk-root';
-  el.innerHTML = `<div class="rk-panel"><h2>ステージ ${stage} の ランキング</h2><ol class="rk-list">`
-    + rows.map((r, i) => `<li class="rk-wait rk-r${i + 1}${r.you ? ' rk-you' : ''}"><div class="rk-row"><span class="rk-no">${i + 1}</span><span class="rk-nm">${nameHtml(r)}</span><span class="rk-sp">${Math.round(r.kmh).toLocaleString('en-US')} km</span></div></li>`).join('')
-    + '</ol><div class="rk-side"><div class="rk-btns"><button class="rk-big" data-id="story">ストーリー ありで はじめる</button><button data-id="nostory">ストーリー なしで はじめる</button></div>'
-    + '<button class="rk-back" data-id="back">もどる</button></div></div>';
+  el.innerHTML = `<div class="rk-panel"><h2>${tUi('ステージ {n} の ランキング', {n:stage})}</h2><ol class="rk-list">`
+    + rows.map((r, i) => `<li class="rk-wait rk-r${i + 1}${r.you ? ' rk-you' : ''}"><div class="rk-row"><span class="rk-no">${i + 1}</span><span class="rk-nm">${nameHtml(r)}</span><span class="rk-sp">${fmtSpeed(r.kmh)} ${unitLabel()}</span></div></li>`).join('')
+    + '</ol><div class="rk-side"><div class="rk-btns"><button class="rk-big" data-id="story">' + tUi('ストーリー ありで はじめる') + '</button><button data-id="nostory">' + tUi('ストーリー なしで はじめる') + '</button></div>'
+    + '<button class="rk-back" data-id="back">' + tUi('もどる') + '</button></div></div>';
   document.body.appendChild(el);
   const lis = [...el.querySelectorAll('.rk-list li')], timers = [];
   let open = true, done = false;

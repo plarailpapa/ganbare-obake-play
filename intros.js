@@ -1,3 +1,4 @@
+import { tUi, speedHtml } from './i18n.js';   // ことばの 切り替え (11/9)
 // 2 面・3 面のはじめ (10/20): 天国の会話の台本と、天国の場面に足す 3D の説明 (公転・銀河)。設計書 docs/superpowers/specs/2026-10-20-ganbare-obake-stage-flow-design.md 5 章・付録 A
 // 天国の場面は opening.js の createOpening({ extra: introExtra(n) }) で 共通に使う
 import * as THREE from 'three';
@@ -48,7 +49,6 @@ function loadSun(loader, sunMat, own, isDead){   // 太陽の表面の画像。�
   tx.colorSpace = THREE.SRGBColorSpace; own.push(tx);
 }
 function radialMask(){ const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), rg = g.createRadialGradient(128, 128, 96, 128, 128, 128); rg.addColorStop(0, '#fff'); rg.addColorStop(1, '#000'); g.fillStyle = rg; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); }   // 丸い ふち消し (白 = 見える)
-function speedHtml(n){ return '<ruby>時速<rt>じそく</rt></ruby> ' + Math.round(n).toLocaleString('en-US') + ' km'; }
 
 // 2 面のはじめ: 公転の説明 (設計書 5 章 3)。雲の海の上に 太陽・地球の通り道 (光の輪)・地球 (背景は 宇宙へ)。見て分かる速さに 縮めてある (本物の 1 年 1 周ではない)
 const SUN_C = new THREE.Vector3(0, 80, -640), SUN_R = 26, ORB_R = 150, ORB_TILT = 0.42, EARTH_R = 13, MINI_H = 22, KMH2 = 107000;
@@ -107,7 +107,7 @@ function orbitExtra(ctx){
   const st = { u:new THREE.Vector3(1, 0, 0), upN:new THREE.Vector3(0, 1, 0), appear:-1, th:Math.PI * 0.55, lap:null, w:W_IDLE, count:-1, behind:-1, depart:-1, from:new THREE.Vector3(), fromLook:new THREE.Vector3(), reveal:0 };   // th = 地球の 通り道の上の角度 (手前 = π/2 あたり)
   const q1 = new THREE.Quaternion(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), base = new THREE.Vector3(), baseLook = new THREE.Vector3(), pA = new THREE.Vector3(), lA = new THREE.Vector3(), pB = new THREE.Vector3(), lB = new THREE.Vector3(), sunW = new THREE.Vector3();
   const earthPos = (th, out) => out.set(Math.cos(th) * ORB_R, 0, Math.sin(th) * ORB_R);
-  function show(instant){ if(grp.visible) return; grp.visible = true; st.appear = instant ? 99 : 0; credit('太陽・惑星の画像: Solar System Scope (CC BY 4.0)'); }   // クレジットは 画像を出す 所で (とばして 出発しても 出る、Codex 指摘 10/21)
+  function show(instant){ if(grp.visible) return; grp.visible = true; st.appear = instant ? 99 : 0; credit(tUi('太陽・惑星の画像: Solar System Scope (CC BY 4.0)')); }   // クレジットは 画像を出す 所で (とばして 出発しても 出る、Codex 指摘 10/21)
   function closeShot(pos, look){ const fit = earthFit(); look.copy(mini.position); pos.copy(base).sub(look).normalize().multiplyScalar(55 * fit).add(look); }   // おばけへ ズームイン
   function wideShot(pos, look){   // おばけと 離れていく地球が 両方入る所まで 引く
     earth.getWorldPosition(v1); look.copy(mini.position).add(v1).multiplyScalar(0.5);
@@ -190,9 +190,10 @@ function orbitExtra(ctx){
 //   → 太陽系が 銀河の中を進み始め 惑星の動きが らせんに (おばけは 取り残される) → 引いて 銀河の全体 (太陽系の場所は 光の印)
 //   見る向きは 2 面の 公転の説明と同じ 水平 (惑星の回る面を こちらへ ORB_TILT 傾ける)。太陽系は 画面の上へ進み、銀河は 画面と平行な面 = 引くと 正面から 全体が見える (10/21 社長)
 const KMH3 = 830000, GAL_R = 1300, SUN_IMG_Y = 0.69;   // 銀河の半径・想像図の中の 太陽の位置 (上から 69% = 中心の真下の オリオン腕。ESO の書き込み版 eso1339e で確認、10/21)
-const MW_CREDIT = '天の川銀河の想像図: NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0) ／ 太陽・地球の画像: Solar System Scope (CC BY 4.0)';
+const MW_CREDIT = tUi('天の川銀河の想像図: NASA/JPL-Caltech/ESO/R. Hurt (CC BY 4.0) ／ 太陽・地球の画像: Solar System Scope (CC BY 4.0)');
 const SYS0 = new THREE.Vector3(0, 0.5, -9);   // 説明の始まりの 太陽系の場所 (天国のカメラの 正面。舞台が 1/20 なので 近くに置き、寄る動きを 前と同じ ゆるさに)
 const T1 = 1.2, T2 = 2.6, T3 = 4.6, T4 = 7.6, T4H = 12.6, T5 = 18.1, GAL_IN_SEC = 18.3, GAL_DEPART_SEC = 4.0;   // 太陽系が出る → おばけが 地球へ → 一緒に回る (アップ) → らせんへ (取り残される) → らせんを 横から じっくり → 銀河の全体 (10/21 社長: らせんは 時間をかけて、全体は「こんどこそ」の頃まで。引き終わるまで s3-08 を 待たせ、s3-09 は 銀河の全体の上で)
+const SPEED_HOLD3 = 3;   // 3 面の はじめの「時速 830,000 km」: 銀河の 全体まで 引き切って から この 秒数は 出しておく (11/9 社長「銀河系 全体が 表示されても しばらく いてほしい」)。前は 出てから 7 秒で 消えた
 const LOCAL3 = [ { r:8, s:0.6, col:0xb9b2a8, w:2.6 }, { r:12, s:0.9, col:0xe9cf96, w:1.9 }, { r:17, s:1.1, col:0x5aa0ff, w:1.4, earth:true }, { r:23, s:0.8, col:0xff6a4a, w:1.0 } ];   // 水星・金星・地球・火星 (同心円の半径・大きさ・光の筋の色・回る速さ)
 const SUN3_R = 3.2, SUN3_SPEED = 14, TRAIL_N = 480, GHOST3_H = 3.6;   // 太陽の大きさ / 太陽系が進む 見かけの速さ / 光の筋の長さ (点の数) / 小さなおばけの高さ
 const ORBIT_SLOW3 = 0.6;   // 同心円を回る間の 公転の速さ (10/21 社長「もう少し ゆっくり」)。らせんの場面では 1 秒で 元の速さへ戻す (らせんの形を 保つ)
@@ -293,7 +294,7 @@ function galaxyExtra(ctx){
       }
       if(st.left){ gh.visible = true; ghPos.copy(ghLeft); ghM.map = ghostTex.odoroki[0]; }   // 太陽系が 進み始めると その場に 取り残される (早送りで 出る前に ここへ来ても 映す、Codex 指摘 10/21)
       gh.position.copy(ghPos);
-      if(st.count >= 0){ st.count += dt; speedEl.innerHTML = speedHtml(KMH3 * ease(st.count / 2)); if(st.count > 7){ speedEl.classList.remove('on'); st.count = -1; } }
+      if(st.count >= 0){ st.count += dt; speedEl.innerHTML = speedHtml(KMH3 * ease(st.count / 2)); if(st.count > 7 && t >= T5 + SPEED_HOLD3){ speedEl.classList.remove('on'); st.count = -1; } }
       base.copy(camera.position); camera.getWorldDirection(baseLook).multiplyScalar(400).add(base);   // 天国のカメラ (ふだんの位置) を 基準に
       keys(t);
       if(st.depart < 0){

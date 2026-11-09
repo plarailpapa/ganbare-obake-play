@@ -1,3 +1,4 @@
+import { LANGS, lang, setLang, tUi, speedHtml } from './i18n.js';   // ことばの 切り替え (11/9)
 // 導入 (10/19): タイトル画面 (雲の上を おばけが うろうろ) → 雲の上の天国で 神様と新人おばけの会話 → 自転の説明 → 1 面へ。設計書 docs/superpowers/specs/2026-10-16-ganbare-obake-opening-design.md
 import * as THREE from 'three';
 import { cloudTex } from './stage3.js';
@@ -56,6 +57,14 @@ const OP_CSS = `
 .ot-btn:active{transform:translateY(2px)}
 .ot-mode{display:flex;flex-direction:column;align-items:center;gap:5px}.ot-mode-r{display:flex;gap:8px}.ot-btn.ot-small.ot-sel{background:#5aa9e6;color:#fff;box-shadow:0 3px 0 #3a7fb8,0 6px 16px rgba(0,0,0,.15)}.ot-mode-t{font-size:clamp(12px,3.2vw,15px);font-weight:bold;color:#5a4030;background:rgba(255,255,255,.85);border-radius:999px;padding:.15em .9em}.ot-mode-t rt{font-size:.5em}   /* ふつう / ゆっくり (11/9) */
 @media (min-aspect-ratio:1/1) and (max-height:560px){ .ot-logo img{width:auto;height:42vh} .ot-menu{flex-direction:row;bottom:calc(16vh + env(safe-area-inset-bottom))} }   /* 横長の 低い 画面: 題名を 小さめに、ボタンは 横に 並べる (題名・操作の ヒントと 重ならない) */
+.ot-has-sub{--sub:clamp(15px,4.4vw,24px);margin-top:calc(var(--sub) * -.9);animation:ot-bob 2.4s ease-in-out infinite}.ot-has-sub img{display:block;margin:0 auto;animation:none}   /* 英語の 時は 題名を 添える 分だけ ロゴを 上へ: 題名の 下の 端が 日本語の ロゴの 下の 端より 上に 収まり、うろうろの おばけに 重ならない (11/9 社長) */
+.ot-sub{margin-top:calc(var(--sub) * -.55);font-size:var(--sub);line-height:1.2;font-weight:900;color:#fff;-webkit-text-stroke:.18em #e0782a;paint-order:stroke fill;letter-spacing:.02em}
+.ot-lang{position:absolute;top:calc(10px + env(safe-area-inset-top));right:10px;pointer-events:auto;display:flex;align-items:center;gap:.4em;min-height:44px;box-sizing:border-box;padding:.2em .9em;border:0;border-radius:999px;background:rgba(255,250,240,.92);color:#c0603a;font:inherit;font-weight:bold;font-size:clamp(14px,3.8vw,18px);box-shadow:0 2px 10px rgba(160,110,60,.28);cursor:pointer;touch-action:manipulation}   /* 言語の ボタン (11/9 社長): タイトルの 間 ずっと 右上に。🌐 の 横に 言語の 名前が 順に 出る */
+.ot-lang-n{display:inline-grid}.ot-lang-n b{grid-area:1/1;text-align:center;white-space:nowrap;opacity:0;transition:opacity .35s ease}.ot-lang-n b.on{opacity:1}   /* 名前を 全部 同じ 場所に 重ねる = 幅は 一番 長い 名前で 決まり 動かない */
+.ot-lang-bg{position:absolute;inset:0;pointer-events:auto}
+.ot-lang-list{position:absolute;top:calc(60px + env(safe-area-inset-top));right:10px;pointer-events:auto;display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:18px;background:#fffaf2;box-shadow:0 6px 24px rgba(0,0,0,.25);max-height:calc(100vh - 80px);overflow:auto}
+.ot-lang-list button{font:inherit;font-weight:bold;font-size:clamp(16px,4.2vw,20px);min-height:44px;padding:.2em 1.6em;border:2px solid #f2c48a;border-radius:999px;background:#fff;color:#a0582e;cursor:pointer;touch-action:manipulation}.ot-lang-list button.on{background:#f29a1f;border-color:#f29a1f;color:#fff}
+.ot-out .ot-lang,.ot-out .ot-lang-bg,.ot-out .ot-lang-list{pointer-events:none}
 .ot-hint{position:absolute;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));text-align:right;font-size:clamp(11px,3vw,14px);line-height:1.5;color:#4a5a7a;opacity:.85}
 .ot-night{position:fixed;inset:0;z-index:-1;transition:opacity .9s ease;background:radial-gradient(2px 2px at 12% 18%,#fff,transparent),radial-gradient(1.5px 1.5px at 27% 72%,#fff,transparent),radial-gradient(2px 2px at 44% 86%,#fff,transparent),radial-gradient(1.5px 1.5px at 63% 78%,#fff,transparent),radial-gradient(2px 2px at 82% 9%,#fff,transparent),radial-gradient(1.5px 1.5px at 91% 38%,#fff,transparent),radial-gradient(2px 2px at 76% 62%,#fff,transparent),radial-gradient(1.5px 1.5px at 6% 52%,#fff,transparent),radial-gradient(1.5px 1.5px at 55% 4%,#fff,transparent),linear-gradient(#1b2350,#352f68 55%,#5a4a86)}
 .ot-dream .ot-hint{display:none}
@@ -90,6 +99,7 @@ const OP_CSS = `
 .op-speed{position:fixed;left:0;right:0;top:calc(5vh + env(safe-area-inset-top));z-index:36;text-align:center;pointer-events:none;font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;font-weight:900;font-size:clamp(26px,7vw,52px);color:#fff;-webkit-text-stroke:.12em #3a7ad8;paint-order:stroke fill;opacity:0;transition:opacity .4s ease}
 .op-speed rt{font-size:.38em;-webkit-text-stroke:.1em #3a7ad8}
 .op-speed.on{opacity:1}
+html:not([lang="ja"]) .op-speed{top:calc(max(13vh, 96px) + env(safe-area-inset-top))}   /* 英語は 出典の 行が 増える ので 下げる (左上の 出典と ぶつかった、11/9 社長) */
 .op-credit{position:fixed;left:8px;top:calc(6px + env(safe-area-inset-top));z-index:36;max-width:72vw;font:10px/1.4 sans-serif;color:rgba(255,255,255,.82);text-shadow:0 0 3px #000;pointer-events:none;display:none;white-space:pre-line}
 `;
 function injectCss(){ if(!document.getElementById('op-css')){ const st = document.createElement('style'); st.id = 'op-css'; st.textContent = OP_CSS; document.head.appendChild(st); } }
@@ -111,9 +121,18 @@ export function createTitle(root, { dream = false, babies = [], canvas = null, o
   injectCss();
   root.className = 'ot-root' + (dream ? ' ot-dream' : ''); root.hidden = false;
   root.innerHTML = (dream ? '<div class="ot-catch"></div><div class="ot-dreamy"><img class="ot-baby" src="' + babies[Math.floor(Math.random() * babies.length)] + '" alt=""><i class="ot-bub b1"></i><i class="ot-bub b2"></i><i class="ot-bub b3"></i><span class="ot-z z1">z</span><span class="ot-z z2">Z</span></div>' : '')   /* 眠る 赤ちゃんは 開くたびに 1 枚を 選ぶ (何通りか 届いたら、10/27 社長) */
-    + '<div class="ot-logo"><img src="assets/title-logo.png" alt="がんばれおばけ！"></div>'   /* 題名は 絵 (10/26 社長から 届いた 文字の絵。余白を切って 横 1200) */
-    + '<div class="ot-tap"></div><div class="ot-menu"></div><div class="ot-hint">ひだり / みぎ を タップで レールを うつる<br>かそくを ふむと はやくなる！</div>';
+    + '<div class="ot-logo' + (lang === 'ja' ? '' : ' ot-has-sub') + '"><img src="assets/title-logo.png" alt="' + tUi('がんばれおばけ！') + '">' + (lang === 'ja' ? '' : '<div class="ot-sub">' + tUi('がんばれおばけ！') + '</div>') + '</div>'   /* 題名は 絵 (10/26 社長から 届いた 文字の絵。余白を切って 横 1200) */
+    + '<div class="ot-tap"></div><div class="ot-menu"></div><div class="ot-hint">' + tUi('ひだり / みぎ を タップで レールを うつる<br>かそくを ふむと はやくなる！') + '</div><button class="ot-lang" type="button" data-nocheck aria-label="Language">🌐<span class="ot-lang-n">' + LANGS.map(l => '<b lang="' + l.code + '">' + l.label + '</b>').join('') + '</span></button>';
   const tap = root.querySelector('.ot-tap'), menuEl = root.querySelector('.ot-menu');
+  const langNames = [...root.querySelectorAll('.ot-lang-n b')]; let langI = LANGS.findIndex(l => l.code !== lang), langList = null;   // 🌐 の 横の 言語の 名前: 2 秒ごとに 順に 出す。押すと 一覧が 開く (押した 瞬間に 出て いた 名前には 切り替えない、文字が 変わる 時に 押すと 違う 言語に なる ため)
+  langNames[langI].classList.add('on');
+  const langTimer = setInterval(() => { langNames[langI].classList.remove('on'); langI = (langI + 1) % langNames.length; langNames[langI].classList.add('on'); }, 2000);
+  const closeLang = () => { if(langList){ langList.remove(); langList = null; } }, stopLang = () => { clearInterval(langTimer); closeLang(); };
+  root.querySelector('.ot-lang').addEventListener('click', () => { if(langList){ closeLang(); return; }
+    langList = document.createElement('div'); langList.dataset.nocheck = '';
+    langList.innerHTML = '<div class="ot-lang-bg"></div><div class="ot-lang-list">' + LANGS.map(l => '<button type="button" lang="' + l.code + '" data-c="' + l.code + '"' + (l.code === lang ? ' class="on"' : '') + '>' + l.label + '</button>').join('') + '</div>';
+    langList.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if(b && b.dataset.c !== lang) setLang(b.dataset.c); else closeLang(); });
+    root.appendChild(langList); });
   if(dream && onTap) root.querySelector('.ot-catch').addEventListener('pointerdown', e => { e.preventDefault(); onTap(); });   // 雲の 外を タップしても「タップで はじめる」
   let night = null, cs = null, leaveTimer = 0;
   const lay = () => {   // 3D の 画面を 縮めて 雲の 形に 切り抜く (画面の 形が 変わるたびに 計算し直す)
@@ -134,10 +153,10 @@ export function createTitle(root, { dream = false, babies = [], canvas = null, o
     },
     get menuOpen(){ return root.classList.contains('ot-menu-on'); },
     hide(){   // はじめる: 文字は 消え、夢の 雲は ぐーっと 広がって 画面いっぱいに (夢の 中へ 入っていく)
-      root.classList.add('ot-out');
+      root.classList.add('ot-out'); stopLang();
       if(cs){ removeEventListener('resize', lay); cs.transition = 'transform .9s cubic-bezier(.3,.6,.3,1), mask-size .9s ease-in, -webkit-mask-size .9s ease-in'; cs.transform = 'none'; cs.webkitMaskSize = cs.maskSize = '320% 320%'; leaveTimer = setTimeout(unlay, 950); }
     },
-    dispose(){ unlay(); root.innerHTML = ''; root.className = ''; root.hidden = true; }
+    dispose(){ stopLang(); unlay(); root.innerHTML = ''; root.className = ''; root.hidden = true; }
   };
 }
 
@@ -286,7 +305,7 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
   }
   function ensureEarth(instant){   // 途中のセリフから始めても (?op=N) 地球が出ているように
     if(!E) E = buildEarth();
-    E.grp.visible = true; credit('地球の画像: Solar System Scope (CC BY 4.0)');   // クレジットは 地球を出す 所で (とばして 出発しても 出る、Codex 指摘 10/21)
+    E.grp.visible = true; credit(tUi('地球の画像: Solar System Scope (CC BY 4.0)'));   // クレジットは 地球を出す 所で (とばして 出発しても 出る、Codex 指摘 10/21)
     if(instant && es.appear < 0){ es.appear = 99; E.grp.scale.setScalar(1); }
   }
   function jpWorld(p, n){ E.grp.updateMatrixWorld(true); E.body.localToWorld(p.copy(E.jp).multiplyScalar(ER)); n.copy(p).sub(E.grp.position).normalize(); return p; }
@@ -324,7 +343,7 @@ export function createOpening({ renderer, getKit, actx, extra = null, title = tr
     E.cloudsM.rotation.y += 0.02 * dt;
     es.guide += (es.guideTo - es.guide) * Math.min(1, dt * 4); E.axis.material.opacity = es.guide * 0.9; E.arMat.opacity = es.guide * 0.85;
     E.marker.material.opacity = es.count >= 0 ? 0.75 + 0.25 * Math.sin(t * 6) : Math.max(0, E.marker.material.opacity - dt * 2);
-    if(es.count >= 0){ es.count += dt; const n = Math.round(JP_KMH * ease(es.count / 2)); speedEl.innerHTML = '<ruby>時速<rt>じそく</rt></ruby> ' + n.toLocaleString('en-US') + ' km'; }
+    if(es.count >= 0){ es.count += dt; speedEl.innerHTML = speedHtml(JP_KMH * ease(es.count / 2)); }
     if(es.mini && es.catchT < 0 && !es.align){ es.houseT += dt; const d = E.body.rotation.y - es.houseA0; es.spin = HOUSE_SPIN * Math.max(0, Math.min(1, (es.houseT - HOUSE_WAIT) / 0.8)) * Math.max(0, Math.min(1, (HOUSE_GO - d) / 0.1)); }   // カメラが 寄り終わってから ゆっくり回り始め (10/21 社長)、家が離れるのは HOUSE_GO まで (画面の外へ 出ていかないように、Codex 指摘 10/19)
     if(es.mini){   // 取り残される 小さなおばけ → 追いつく
       const m = E.mini, hp = jpWorld(v1, v2); E.tilt.getWorldQuaternion(q1); east.set(0, 1, 0).applyQuaternion(q1).cross(v2).normalize();   /* 家の所の 東向き = 地軸 × 上向き */

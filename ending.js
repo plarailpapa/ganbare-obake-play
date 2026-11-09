@@ -1,6 +1,7 @@
 // エンディング (10/27): 子ども部屋で 真っ白に なった後、赤ちゃんの目から 見た景色。目を閉じて むにゃむにゃ → 瞬きしながら 目が開く → 白い世界に ぼんやり 人影 → タップで ばあ！ (赤ちゃんの 絵の 顔に 寄った所から 上半身まで 引く) → 歓声・おしまい → タップで 結果発表
 // 設計書 docs/superpowers/specs/2026-10-27-ganbare-obake-ending-design.md 2・3 章
 import { createTalk, preloadVoices, loadSound, audioOut } from './talk.js';
+import { tUi } from './i18n.js';   // ことばの 切り替え (11/9)
 
 const LINES = [   // 声の台本 (10/26 版。声優さんの連絡で「人を」「いくぞ！」)。おばけの 顔の絵は 出さない (cast なし = 赤ちゃんの目から 見た 景色)
   { id:'e-04', who:'obake', cast:[], text:'むにゃむにゃ… どうやら {地球|ちきゅう}に {追|お}いついたみたい…' },
@@ -65,7 +66,7 @@ function drawLid(el, o){
 export function createEnding({ root, talkRoot, actx, faces, onDone, log }){   // root = エンディングの層 (白い幕の上・会話の下)、talkRoot = 会話の画面の 置き場。onDone = おしまいの 後の タップ (→ 結果発表)
   injectCss();
   root.className = 'ed-root'; root.hidden = false;
-  root.innerHTML = '<div class="ed-shadows"><div class="ed-sh"><i></i></div><div class="ed-sh"><i></i></div></div><div class="ed-lid"></div><div class="ed-baa"><div class="ed-bg"></div><img class="ed-baby" src="assets/ending/baa.png" width="1143" height="1600" alt="" draggable="false"><div class="ed-owari">おしまい</div></div>';   // ばあ！の 絵は 先に 読んでおく。人影 2 つ (お父さんと お母さんが 左右から すぐ近くで のぞき込む。左右対称だと 怖いので 左 = 近く 大きく 低め、右 = 奥で 小さく 高め・少し 遅れて 出る。赤ちゃんの 目なので 大きく ぼかす。灰色で 陽炎のように ゆらゆら、目鼻は なし = 怖く しない)
+  root.innerHTML = '<div class="ed-shadows"><div class="ed-sh"><i></i></div><div class="ed-sh"><i></i></div></div><div class="ed-lid"></div><div class="ed-baa"><div class="ed-bg"></div><img class="ed-baby" src="assets/ending/baa.png" width="1143" height="1600" alt="" draggable="false"><div class="ed-owari">' + tUi('おしまい') + '</div></div>';   // ばあ！の 絵は 先に 読んでおく。人影 2 つ (お父さんと お母さんが 左右から すぐ近くで のぞき込む。左右対称だと 怖いので 左 = 近く 大きく 低め、右 = 奥で 小さく 高め・少し 遅れて 出る。赤ちゃんの 目なので 大きく ぼかす。灰色で 陽炎のように ゆらゆら、目鼻は なし = 怖く しない)
   const lid = root.querySelector('.ed-lid'), baa = root.querySelector('.ed-baa'), bg = root.querySelector('.ed-bg'), baby = root.querySelector('.ed-baby'), VOICE_DIR = 'assets/voice/';
   let talk = null, done = false, t = 0, baaT = -1, cheered = false; const snd = [];   // snd = 鳴らした 音 (片づけで ふわっと 消す。歓声は 約 4 秒 = おしまいの 後の タップでは まだ 鳴っている、Codex 指摘 10/27)
   const play = (url, vol) => { if(actx) loadSound(actx, url).then(buf => { if(!buf || done || actx.state !== 'running') return; const s = actx.createBufferSource(), g = actx.createGain(); g.gain.value = vol; s.buffer = buf; s.connect(g).connect(audioOut(actx)); s.onended = () => g.disconnect(); s.start(); snd.push({ s, g }); }); };
@@ -98,7 +99,7 @@ export function createEnding({ root, talkRoot, actx, faces, onDone, log }){   //
       if(t < FADE){ const k = t / FADE; lid.style.display = 'block'; lid.style.background = LID; lid.style.opacity = (k * k * (3 - 2 * k)).toFixed(3); }
       else { lid.style.opacity = 1; drawLid(lid, lidOpen(t - TALK_AT)); }
       if(!talk && t >= TALK_AT){
-        talk = createTalk({ root:talkRoot, faces, actx, voiceDir:VOICE_DIR, endPrompt:'タップで ばあ！', skip:false, onCue:n => { if(n === 'shadow') root.classList.add('ed-shadow-on'); return 0; }, onEnd:startBaa, log });
+        talk = createTalk({ root:talkRoot, faces, actx, voiceDir:VOICE_DIR, endPrompt:tUi('タップで ばあ！'), skip:false, onCue:n => { if(n === 'shadow') root.classList.add('ed-shadow-on'); return 0; }, onEnd:startBaa, log });
         talkRoot.classList.add('ed-talk'); talk.start(LINES);
       }
       if(talk) talk.update(dt);
