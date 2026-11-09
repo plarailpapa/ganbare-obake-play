@@ -284,6 +284,7 @@ const ENDING_Q = Q.get('ending')==='1';   // 確かめ用: 子ども部屋に �
 const NURSERY_Q = Q.get('nursery')==='1';   // 確かめ用: ?stage=3&nursery=1 で 子ども部屋 & エンディング から (3 面の 当たりの「つぎへ」の 先、10/28)
 let nursery3Run = NURSERY_Q;   // 3 面を 子ども部屋だけで 走る (当たりの 結果発表の「つぎへ」、10/28 社長)。曲は きらきら星
 const CLEARED_Q = Q.get('cleared')==='1';   // 確かめ用: クリア済みの 夢の タイトル (記録は 書かない、10/27)
+const ZUKAN_Q = Q.has('zukan');   // ずかんの ボタンは ?zukan=1 の 時だけ (11/10 社長: 実機で 確かめてから 正式に 出す)
 const RKDEMO_Q = Q.has('rkdemo');   // 確かめ用: ランキングの 板に 見本の「あなた」(1 位 = フルコンボ・3 位 = ふつう) を 足して 出す (保存は しない、11/4)
 if(Q.get('save')==='reset') REC.resetRecords();   // 確かめ用: ?save=reset で 記録を 消してから 始める (10/27)
 const SCORE_Q = !['stage', 'world', 'w3', 'branch', 'draft', 'kmh', 'result', 'planet', 'ending', 'room', 'talk', 'op'].some(k=>Q.has(k));   // ハイスコアを 貯めるのは ふつうに 遊んだ 時だけ (試しの 入口で 出した 速さは 入れない)
@@ -2414,6 +2415,7 @@ function beginIntro(n, from=0){   // 2 面・3 面のはじめ: 天国の会話�
   talk.start(n===2 ? IN.S2_LINES : IN.S3_LINES, from, {enter:'up'}); heavenPlay();
   if(ERRLOG) logSend({intro:n, from});
 }
+let zukanOpen=false;   // ずかんを 開いている 間 (タイトルの 3D を 止める)
 let panelUI=null;   // 開いている 板 (オプション・ランキング)
 let soloStage=0, pendingT=0;   // 夢の タイトルで 選んだ 面 (その面だけ 遊ぶ。0 = 通し) / ストーリー なしで 曲・部品を 待っている 秒
 function startSolo(n, story){   // ステージ n だけ 遊ぶ (10/27 社長): ストーリー あり = その面の 天国の 会話から (1 面は いつもの 導入から)、なし = 白 → 会話なしで すぐ (曲・部品が 読めたら 走る)
@@ -2438,12 +2440,12 @@ function modeHtml(){ return '<div class="ot-mode"><div class="ot-mode-r"><button
 function setEasy(on){ easyOn=on; REC.setEasy(on); const r=document.querySelector('.ot-mode'); if(r){ r.querySelectorAll('button').forEach((b, i)=>b.classList.toggle('ot-sel', i===+on)); r.querySelector('.ot-mode-t').innerHTML=EASY_TXT[+on]; } }   // 次の 遊びから 効く・覚えて おく
 function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション。夢の タイトルは ステージ 1〜3・ぜんぶ あそぶ・オプション
   if(panelUI) return; if(needUnitAsk()){ panelUI=OPT.createUnitAsk({ onPick:()=>{ panelUI=null; $('kmhU').textContent=unitLabel(); openTitleMenu(); } }); return; }   // 日本語 以外で まだ 単位を 選んで いない 人に 最初の 1 回だけ 聞く (11/9 社長)
-  const dream=opTitle.dream, items= dream ? [{html:modeHtml()}, {id:'s1', label:tUi('ステージ 1')}, {id:'s2', label:tUi('ステージ 2')}, {id:'s3', label:tUi('ステージ 3')}, {id:'start', label:tUi('ぜんぶ あそぶ'), big:true}, {id:'options', label:tUi('せってい'), small:true}] : [{html:modeHtml()}, {id:'start', label:tUi('はじめから はじめる'), big:true}, {id:'options', label:tUi('せってい')}];
+  const dream=opTitle.dream, items= dream ? [{html:modeHtml()}, {id:'s1', label:tUi('ステージ 1')}, {id:'s2', label:tUi('ステージ 2')}, {id:'s3', label:tUi('ステージ 3')}, {id:'start', label:tUi('ぜんぶ あそぶ'), big:true}, ...(ZUKAN_Q ? [{id:'zukan', label:tUi('ずかん')}] : []), {id:'options', label:tUi('せってい'), small:true}] : [{html:modeHtml()}, {id:'start', label:tUi('はじめから はじめる'), big:true}, {id:'options', label:tUi('せってい')}];
   opTitle.menu(items, id=>{
     if(state!=='title' || panelUI) return;
     if(id==='m0' || id==='m1'){ setEasy(id==='m1'); return; }
     if(id==='start'){ if(canStart() && !pendingStart) beginRun(); }
-    else if(id==='options'){ let reset=false;
+    else if(id==='zukan'){ panelUI={dispose(){}}; zukanOpen=true; const back=()=>{ panelUI=null; zukanOpen=false; }; import('./zukan.js').then(Z=>Z.openZukan(document.body, { makers:{halley:mkHalley, oumuamua:mkOumuamua, parker:mkParker3, andromeda:mkAndromeda3}, shared:[glowTex], onClose:back })).catch(back); }   /* ずかん (全クリ後のタイトルだけ、11/10 社長)。押した時だけ読み込む = 走る部分に関わらない */ else if(id==='options'){ let reset=false;
       panelUI=OPT.createOptions({ onReset:()=>{ REC.resetRecords(); reset=true; },
         onClose:()=>{ panelUI=null; $('kmhU').textContent=unitLabel(); if(reset && opTitle.dream && !CLEARED_Q) whiteSwap(()=>{ if(state!=='title') return; opTitle.dispose(); opTitle=makeTitle(); opTitle.setText(tUi('タップで はじめる')); }); } });   /* 夢の タイトルで 記録を 消したら クリア前の タイトルへ */ }
     else { const n=+id[1];   /* ステージ 1〜3: その面の ランキングと はじめる ボタン (ストーリー あり / なし・もどる、10/27 社長) */
@@ -2711,6 +2713,7 @@ function frame(now){ const raw=Math.max(0,(now-last)/1000); last=now;
   if(quickMode && !boosterOn && state==='run' && stageT>(stage===3 ? plan3[0].t0 : 0)+5){ v=QUICK_KMH[stage][quickMode==='ok' ? 0 : 1]/3.6; finishRun(); }   /* 試しの入口 (?result=) */
   if((state==='title' && !!op)!==!!titleMus){ if(titleMus) titleMusicStop(1); else titleMusicPlay(); }
   if(pendingStart){ requestAnimationFrame(frame); return; }   /* ストーリー なしで その面を 待つ 間 (白い 幕の 下) は ゲームを 動かさない・描かない (前の 遊びの 位置・速さの まま 動いて 止まった、Codex 指摘 10/27)。始まりは startRun が 全部 整える */   /* 天国の タイトル画面の 間だけ オルゴールの きらきら星 (始める・面の 試しの 入口などで タイトルを 離れたら 1 秒で 消す) */
+  if(zukanOpen){ requestAnimationFrame(frame); return; }   /* ずかんを開いている間は タイトルの 3D を止める (スマホで 2 画面ぶん描かない) */
   if(op && (state==='opening' || state==='title')){ const dt=Math.min(0.05,raw); op.update(dt); if(talk) talk.update(dt); if(diving) diveStep(dt); if(op){ renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(op.scene, op.camera); } requestAnimationFrame(frame); return; }   /* タイトル画面と 導入の間は 天国の場面だけ描く (10/19)。talk.update で 導入が終わると op は片づいている */
   const pf0= ERRLOG ? performance.now() : 0, pg0= ERRLOG ? (renderer.info.programs || []).length : 0, tx0= ERRLOG ? renderer.info.memory.textures : 0; if(!paused) update(Math.min(0.05,raw), Math.min(2,raw)); pauseUI.showButton(canPause() || (howtoHold && howto.isOpen())); if(ERRLOG) PF3.u=performance.now()-pf0;
   updateCloud2(); renderer.setClearColor(cloudK2>0.02 ? CLOUD2_COL : fogA3>0 ? FOG3.col : 0x000000, cloudK2>0.02 ? 1 : fogA3); renderer.info.reset(); renderer.clear();   /* 海王星の雲の中は 深い青で塗る (ふだんは 透明 = 後ろの宇宙の色) */

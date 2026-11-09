@@ -47,6 +47,7 @@ export default {
     '{x}より はやい！': "Faster than {x}!",
     'ブースターつき': "With booster",
     'しんきろく！': "New record!",
+    'ずかん': "Field Guide",
     '{地球|ちきゅう}の {自転|じてん}を おいぬいた！': "You passed Earth's spin!",
     '{地球|ちきゅう}の {公転|こうてん}を おいぬいた！': "You passed Earth's orbit!",
     '{太陽系|たいようけい}の {公転|こうてん}を おいぬいた！': "You passed the Solar System's orbit!",
