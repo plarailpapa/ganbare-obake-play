@@ -1,5 +1,5 @@
 // 一時停止 (11/9 社長): 画面の 下の 真ん中の ボタン・止めた 時の 板 (つづける / やりなおす / タイトルへ)。ブラウザや アプリが 裏に 回った 時も 自動で 開く。文字は PAUSE_TEXT (ことば表)
-export const PAUSE_TEXT = { ja:{ title:'いちじ ていし', resume:'つづける', retry:'やりなおす', toTitle:'タイトルへ' } };
+export const PAUSE_TEXT = { ja:{ title:'いちじ ていし', resume:'つづける', retry:'やりなおす', toTitle:'タイトルへ もどる' } };
 
 const CSS = `
 #pzBtn{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;width:44px;height:44px;padding:0;border:2px solid rgba(255,255,255,.75);border-radius:50%;background:rgba(30,22,60,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
