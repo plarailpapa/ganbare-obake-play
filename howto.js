@@ -14,6 +14,7 @@ export const HOWTO_TEXT = {
     branch: '分かれ道は 3つの レーンの どれかを <ruby>選<rt>えら</rt></ruby>ぼう！',
     left: '◀ 左を タップ', right: '右を タップ ▶', keys: 'パソコンは ← → キーで 左右に <ruby>動<rt>うご</rt></ruby>く',
     banner: kmh => '<ruby>時速<rt>じそく</rt></ruby> ' + kmh + ' km を こえよう！',
+    pause: 'とめたい時や やりなおしたい時に おしてね',
     wait: 'じゅんびちゅう…', go: 'タップで しゅっぱつ！',
     num: n => n.toLocaleString('ja-JP'),
   },
@@ -26,7 +27,7 @@ const CSS = `
 #hwTop.on{opacity:1} #hwTop.out{animation:hwPeel .55s cubic-bezier(.5,0,.75,.2) forwards;transform-origin:0 0}
 #hwTop::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity 1s ease;background:radial-gradient(1.2px 1.2px at 12% 18%,#fff 60%,transparent 70%) 0 0/170px 150px,radial-gradient(1.6px 1.6px at 63% 41%,#fff 60%,transparent 70%) 0 0/230px 190px,radial-gradient(1px 1px at 38% 77%,#cfe0ff 60%,transparent 70%) 0 0/130px 120px,radial-gradient(ellipse at 50% 40%,#1b1446 0%,#07051a 75%)}   /* 仮の 星空 (3 面で 曲が まだ 届かない 間の 背景、11/7) */
 #hwTop.ph::before{opacity:1} #hwTop.phz{z-index:50}   /* phz = 白い 幕より 前 (星空が 消え 終わるまで) */
-#hwTop.ph svg.ln,#hwTop.ph .cb[data-k="rival"],#hwTop.ph .cb[data-k="time"],#hwTop.ph .cb[data-k="speed"]{visibility:hidden !important}   /* 星空の 間は 表示 (HUD) を 指す 吹き出しは 出さない (表示が まだ 見えない、Codex 指摘 11/7) */
+#hwTop.ph svg.ln,#hwTop.ph .cb[data-k="rival"],#hwTop.ph .cb[data-k="time"],#hwTop.ph .cb[data-k="speed"],#hwTop.ph .cb[data-k="pause"]{visibility:hidden !important}   /* 星空の 間は 表示 (HUD) を 指す 吹き出しは 出さない (表示が まだ 見えない、Codex 指摘 11/7) */
 @keyframes hwPeel{0%{transform:none;opacity:1}25%{transform:rotate(-2deg) translate(0,-1.5%) skewX(-2deg)}100%{transform:rotate(-14deg) translate(-18%,-115%) skewX(-6deg);opacity:0}}
 #hwTop .fr{position:absolute;inset:calc(6px + env(safe-area-inset-top)) calc(6px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));border:4px solid #f6e7b8;border-radius:14px;box-shadow:0 0 0 2px #7a5a1e,inset 0 0 0 2px #7a5a1e,0 0 18px rgba(0,0,0,.45)}
 #hwTop svg.ln{position:absolute;inset:0;width:100%;height:100%;overflow:visible} #hwTop .ic svg{display:block}
@@ -61,7 +62,7 @@ export function createHowto({ anchors, lang = 'ja' }){   // anchors() = { rival,
     top.innerHTML = '<div class="fr"></div><svg class="ln"></svg>'
       + cb('rival', T.rival + '<small>' + T.rivalSub + (stageNo === 1 ? '<br>' + T.rivalHit : '') + '</small>') + cb('time', T.time + '<small>' + T.timeSub + '</small>')
       + cb('speed', T.speed) + cb('boost', boost)   /* 目標の 速さは 真ん中の 帯で 言うので 吹き出しは なし (11/7 社長) */
-      + (stageNo === 3 ? cb('branch', T.branch) : '')
+      + (stageNo === 3 ? cb('branch', T.branch) : '') + cb('pause', T.pause)
       + '<div class="bn">' + T.banner(T.num(o.goalKmh)) + '</div>'
       + '<div class="tp l">' + T.left + '</div><div class="tp r">' + T.right + '</div>' + (o.touch ? '' : '<div class="ky">' + T.keys + '</div>')
       + '<div class="go wait">' + T.wait + '</div>';
@@ -99,10 +100,12 @@ export function createHowto({ anchors, lang = 'ja' }){   // anchors() = { rival,
     const free = (k, x, y) => { const el = top.querySelector('.cb[data-k="' + k + '"]'); if(!el) return; const w = el.offsetWidth, h = el.offsetHeight; el.style.left = Math.max(M + 6, Math.min(W - M - 6 - w, x(w))) + 'px'; el.style.top = Math.max(M + 6, Math.min(H - M - 6 - h, y(h))) + 'px'; };
     const low = boxes.reduce((m, b) => Math.max(m, b.y + b.h), 0);
     const bnEl = top.querySelector('.bn'); bnEl.style.top = Math.max(H * (portrait ? 0.5 : 0.4), low + 14 + bnEl.offsetHeight / 2) + 'px';   /* 帯は 吹き出しより 下 (小さい スマホで 重ならない) */
-    const tl = top.querySelector('.tp.l').getBoundingClientRect(), bn = bnEl.getBoundingClientRect();
-    const bY = portrait ? Math.max(low + 12, bn.bottom + 14) : Math.max(tl.top + 6, bn.bottom + 14);   /* 横長 = 「左を タップ」と「右を タップ」の 間 (11/6 社長)、縦長 = 帯の 下 */
+    const goEl = top.querySelector('.go'), bn = bnEl.getBoundingClientRect(); goEl.style.bottom = 'auto'; goEl.style.top = (bn.bottom + 12) + 'px';   /* 帯の 真下に「タップで しゅっぱつ」(11/9 社長: 下の 真ん中を 空けて ⏸ の 現物を 枠で 囲む) */
+    const bY = goEl.getBoundingClientRect().bottom + 12;   /* その 下に 分かれ道 (3 面) → 加速 */
     const brh = (top.querySelector('.cb[data-k="branch"]') || {}).offsetHeight || 0; free('branch', w => W / 2 - w / 2, h => bY);   /* 3 面の 分かれ道は 加速の 上 (11/6 社長) */
     free('boost', w => W / 2 - w / 2, h => bY + (brh ? brh + 10 : 0));
+    const pz = rectOf(A.pause), pe = top.querySelector('.cb[data-k="pause"]');   /* ⏸ の 現物を 枠で 囲み、右横に 説明 */
+    if(pe){ pe.style.visibility = pz ? '' : 'hidden'; if(pz){ const x = pz.right + 18; pe.style.maxWidth = Math.max(110, W - x - M - 6) + 'px'; const h = pe.offsetHeight, y = Math.min(H - M - 6 - h, pz.top + pz.height / 2 - h / 2); pe.style.left = x + 'px'; pe.style.top = y + 'px'; lines += '<rect x="' + (pz.left - 5) + '" y="' + (pz.top - 5) + '" width="' + (pz.width + 10) + '" height="' + (pz.height + 10) + '" rx="14" fill="none" stroke="#ffd66b" stroke-width="3"/><line x1="' + (pz.right + 5) + '" y1="' + (pz.top + pz.height / 2) + '" x2="' + x + '" y2="' + (pz.top + pz.height / 2) + '" stroke="#ffd66b" stroke-width="3"/>'; } }
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.innerHTML = lines;
   }
 
