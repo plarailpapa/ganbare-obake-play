@@ -1,6 +1,8 @@
 // 走り出す 前の 説明画面 (11/6 社長、設計書 2026-11-06-ganbare-obake-howto-screen-design.md):
 // 止めた スタート画面の 上に 額縁・吹き出し・帯・ボタン。タップで ペロンと はがれて 出発。文字は 全部 HOWTO_TEXT (ことば表) から = 言語を 足す 時は 表を 足すだけ
 
+import { LANE_CSS } from './colors.js';
+
 export const HOWTO_TEXT = {
   ja: {
     rival: 'つぎの あいて', rivalSub: 'この <ruby>速<rt>はや</rt></ruby>さを こえると ぬける！', rivalHit: 'ぶつかっても すりぬけるから だいじょうぶ',   /* rivalHit = 1 面だけ (2 面・3 面の 相手は ぶつからない、11/7 社長) */
@@ -12,7 +14,7 @@ export const HOWTO_TEXT = {
     branch: '分かれ道は 3つの レーンの どれかを <ruby>選<rt>えら</rt></ruby>ぼう！',
     left: '◀ 左を タップ', right: '右を タップ ▶', keys: 'パソコンは ← → キーで 左右に <ruby>動<rt>うご</rt></ruby>く',
     banner: kmh => '<ruby>時速<rt>じそく</rt></ruby> ' + kmh + ' km を こえよう！',
-    wait: 'じゅんびちゅう…', go: 'タップで しゅっぱつ！',
+    wait: 'じゅんびちゅう…', go: 'タップで しゅっぱつ！', easy: 'ゆっくり',
     num: n => n.toLocaleString('ja-JP'),
   },
 };
@@ -32,6 +34,7 @@ const CSS = `
 #hwTop .cb small{display:block;font-weight:500;font-size:.78em;color:#5a4a7a}
 #hwTop .cb .ic{display:inline-flex;gap:6px;vertical-align:middle;margin-right:6px}
 #hwTop .bn{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);white-space:nowrap;background:linear-gradient(#ffe48a,#ffbf3a);color:#5a2d00;font-weight:800;font-size:clamp(20px,4.2vw,46px);padding:.18em 1em;border-radius:2em;box-shadow:0 5px 0 #8a4d00}
+#hwTop .bn .ez{display:inline-block;margin-right:.5em;padding:0 .6em;border-radius:1em;background:#5aa9e6;color:#fff;font-size:.62em;vertical-align:middle}   /* ゆっくりモードの 印 (11/9) */
 #hwTop .tp{position:absolute;bottom:17%;width:21%;height:20%;border:3px dashed rgba(255,255,255,.75);border-radius:18px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:clamp(14px,2.2vw,24px);text-shadow:0 2px 4px #000;background:rgba(255,255,255,.08)}
 #hwTop .tp.l{left:4%} #hwTop .tp.r{right:4%}
 #hwTop .ky{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);white-space:nowrap;color:#fff;font-weight:500;font-size:clamp(12px,1.5vw,17px);text-shadow:0 2px 4px #000}
@@ -43,7 +46,7 @@ const CSS = `
 @media (max-aspect-ratio:999/1000){ #hwTop .tp{width:30%;height:12%;bottom:14%} #hwTop .bn{top:50%} #hwTop .cb{max-width:44vw} #hwTop .ky{bottom:12%} }
 `;
 const PLATE_SVG = '<svg width="34" height="22" viewBox="0 0 34 22"><rect x="1" y="5" width="32" height="15" rx="3" fill="#ffd54a" stroke="#7a5a1e" stroke-width="1.5"/><path d="M8 15 L17 8 L26 15" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>';
-const RING_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#4cd964" stroke-width="4"/></svg>';
+const RING_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="' + LANE_CSS[0] + '" stroke-width="4"/></svg>';
 
 export function createHowto({ anchors, lang = 'ja' }){   // anchors() = { rival, time, goal, speed } (HUD の 要素)
   const T = HOWTO_TEXT[lang] || HOWTO_TEXT.ja;
@@ -60,7 +63,7 @@ export function createHowto({ anchors, lang = 'ja' }){   // anchors() = { rival,
       + cb('rival', T.rival + '<small>' + T.rivalSub + (stageNo === 1 ? '<br>' + T.rivalHit : '') + '</small>') + cb('time', T.time + '<small>' + T.timeSub + '</small>')
       + cb('speed', T.speed) + cb('boost', boost)   /* 目標の 速さは 真ん中の 帯で 言うので 吹き出しは なし (11/7 社長) */
       + (stageNo === 3 ? cb('branch', T.branch) : '')
-      + '<div class="bn">' + T.banner(T.num(o.goalKmh)) + '</div>'
+      + '<div class="bn">' + (o.easy ? '<span class="ez">' + T.easy + '</span>' : '') + T.banner(T.num(o.goalKmh)) + '</div>'
       + '<div class="tp l">' + T.left + '</div><div class="tp r">' + T.right + '</div>' + (o.touch ? '' : '<div class="ky">' + T.keys + '</div>')
       + '<div class="go wait">' + T.wait + '</div>';
   }

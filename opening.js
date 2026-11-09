@@ -54,6 +54,7 @@ const OP_CSS = `
 .ot-btn{pointer-events:auto;font:inherit;font-weight:bold;font-size:clamp(16px,4.4vw,22px);padding:.5em 1.6em;border:0;border-radius:999px;background:#fff;color:#c0603a;box-shadow:0 3px 0 rgba(170,110,50,.4),0 6px 16px rgba(0,0,0,.15);cursor:pointer;touch-action:manipulation}
 .ot-btn.ot-big{background:#f29a1f;color:#fff;font-size:clamp(19px,5.4vw,28px);box-shadow:0 4px 0 #c46f0a,0 8px 18px rgba(0,0,0,.18)}
 .ot-btn:active{transform:translateY(2px)}
+.ot-mode{display:flex;flex-direction:column;align-items:center;gap:5px}.ot-mode-r{display:flex;gap:8px}.ot-btn.ot-small.ot-sel{background:#5aa9e6;color:#fff;box-shadow:0 3px 0 #3a7fb8,0 6px 16px rgba(0,0,0,.15)}.ot-mode-t{font-size:clamp(12px,3.2vw,15px);font-weight:bold;color:#5a4030;background:rgba(255,255,255,.85);border-radius:999px;padding:.15em .9em}.ot-mode-t rt{font-size:.5em}   /* ふつう / ゆっくり (11/9) */
 @media (min-aspect-ratio:1/1) and (max-height:560px){ .ot-logo img{width:auto;height:42vh} .ot-menu{flex-direction:row;bottom:calc(16vh + env(safe-area-inset-bottom))} }   /* 横長の 低い 画面: 題名を 小さめに、ボタンは 横に 並べる (題名・操作の ヒントと 重ならない) */
 .ot-hint{position:absolute;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));text-align:right;font-size:clamp(11px,3vw,14px);line-height:1.5;color:#4a5a7a;opacity:.85}
 .ot-night{position:fixed;inset:0;z-index:-1;transition:opacity .9s ease;background:radial-gradient(2px 2px at 12% 18%,#fff,transparent),radial-gradient(1.5px 1.5px at 27% 72%,#fff,transparent),radial-gradient(2px 2px at 44% 86%,#fff,transparent),radial-gradient(1.5px 1.5px at 63% 78%,#fff,transparent),radial-gradient(2px 2px at 82% 9%,#fff,transparent),radial-gradient(1.5px 1.5px at 91% 38%,#fff,transparent),radial-gradient(2px 2px at 76% 62%,#fff,transparent),radial-gradient(1.5px 1.5px at 6% 52%,#fff,transparent),radial-gradient(1.5px 1.5px at 55% 4%,#fff,transparent),linear-gradient(#1b2350,#352f68 55%,#5a4a86)}
@@ -127,7 +128,7 @@ export function createTitle(root, { dream = false, babies = [], canvas = null, o
     dream,
     setText(s){ tap.textContent = s; },
     menu(items, onPick){   // 「タップで はじめる」の 後の ボタン (10/27 社長: 最初の タップで 音が 使えるように なり、ここから タイトルの 曲が 鳴る)。items = [{ id, label, big, small }]
-      menuEl.innerHTML = items.map(b => `<button class="ot-btn${b.big ? ' ot-big' : b.small ? ' ot-small' : ''}" data-id="${b.id}">${b.label}</button>`).join('');
+      menuEl.innerHTML = items.map(b => b.html || `<button class="ot-btn${b.big ? ' ot-big' : b.small ? ' ot-small' : ''}" data-id="${b.id}">${b.label}</button>`).join('');
       menuEl.onclick = e => { const b = e.target.closest('button'); if(b) onPick(b.dataset.id); };
       root.classList.add('ot-menu-on');
     },

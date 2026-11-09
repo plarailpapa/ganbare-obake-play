@@ -2,6 +2,7 @@
 // 1 回目: 谷間 (0〜13 秒)。色とりどりの トタンと 板の 家 (1 軒 30〜55 m = おばけが 小人に 見える 大きさ) を コースの 左右に 何十層も 積み、上ほど 谷へ せり出して 空は 細い 隙間に。渡り廊下・洗濯物・水タンク・配管・日よけ・支え柱。谷底は 暗い 路地の 灯り・深い 所は 暗く かすむ (空の 上と 分からない)。2 回目: 抜けると 青空 (はるか 下に 雲の 海・正面に 巨大な 入道雲・遠くに 超建築の 塔)、レールは 鉄骨の 橋の 上。3 回目: 出口 = 正面の 太い 塔の 壁に 3 つの 門 (トンネル・看板・提灯、社長「イ」)
 // 座標: 輪の 入口が 原点、+Z = 進む 向き、+Y = 上、+X = 左 (root)。家の 向き = コースの 水平な 向き (箱の x = 谷を 横切る 向き・z = コースに 沿う 向き)
 import * as THREE from 'three';
+import { LANE_HEX, LANE_CSS } from '../colors.js';
 import { coursePath3, exit3, RECONV3_SEC, FORK3_W, SPREAD3_SEC, LANE_W3 } from '../stage3.js';
 import { puffTex, puffMat } from './temple.js';   // 雲 (神殿と 同じ 作り方: カメラを 向く もくもくの 板)
 
@@ -219,7 +220,7 @@ export function* build(scene, root, P, opts, out){
   // 出口 = 超建築の 塔の 門 (11/3 社長「イ」): コースの 終わりの 正面に 太い 塔、手前の 壁に 3 つの 入り口 (中は トンネル)。門ごとに 鉄の 枠・レーンの 色の 看板・赤い 提灯、行き先の ない 門は トタンの シャッター
   // 座標: EO = まん中の 門 (輪の 中心 = コースの 終わり + 上 2.2 m = index.html の RING3_UP)、X5 = 左・Y5 = 上・D5 = 進む 向き。レーン k の 門 = EO + (1 − k) × ex.w 左・−(k − 1) × ex.h 上 (deepsea.js と 同じ 決まり)。家は 門の 面より 奥だけ (門を くぐると この 世界は 描かれなく なる)
   const gateMeshes = [], exitTW = [];   // exitTW = 出口の 塔の 根もと [x, z, 半径] (出口の 道の 脚を めり込ませない、Codex 指摘 11/4)
-  if(branch){ const ex = exit3(P.def), OW = 13, OH = 15, LC = ['#4cd964', '#ffd54a', '#ff5a5a'], has = k => !opts.nextChoices || !!opts.nextChoices[k];
+  if(branch){ const ex = exit3(P.def), OW = 13, OH = 15, LC = LANE_CSS, has = k => !opts.nextChoices || !!opts.nextChoices[k];
     path.frame(path.len, v, q); const qE = q.clone(), X5 = new THREE.Vector3(1, 0, 0).applyQuaternion(qE), Y5 = new THREE.Vector3(0, 1, 0).applyQuaternion(qE), D5 = new THREE.Vector3(0, 0, 1).applyQuaternion(qE), EO = v.clone().addScaledVector(Y5, 2.2), yawE = Math.atan2(D5.x, D5.z), yC = v.y;
     const G = k => [(1 - k) * ex.w, -(k - 1) * ex.h], inGate = (x, y, mx, my) => [0, 1, 2].some(k => { const [gx, gy] = G(k); return Math.abs(x - gx) < OW + mx && Math.abs(y - gy) < OH + my; });
     const EP = (x, y, z) => EO.clone().addScaledVector(X5, x).addScaledVector(Y5, y).addScaledVector(D5, z), rel = new THREE.Vector3();

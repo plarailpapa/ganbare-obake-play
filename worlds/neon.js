@@ -2,12 +2,13 @@
 // 夜の 未来都市。コースは 大通りの 上 (道路の 4 m 上) から ゆっくり 空へ 上がり、ゆるく うねりながら 高層ビルの 間を 抜ける。ビルは 碁盤の 目の 街区に 並べ、コースに かかる ビルは 低く して よける (横は すれすれまで 立てる)。
 // 座標: 輪の 入口が 原点、+Z = 進む 向き、+Y = 上、+X = 左 (root)。コースは coursePath3 で なぞる (左右・上下に 曲がる)。ビルは root の 上向きに まっすぐ 立てる。窓は 絵を 使わず 計算で 描く (ビルを たくさん 置ける・スマホの 点々の 心配なし)
 import * as THREE from 'three';
+import { LANE_HEX, LANE_CSS } from '../colors.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { coursePath3, exit3, RECONV3_SEC, SPREAD3_SEC } from '../stage3.js';
 
 const GROUND = -4, BP = 90, ST = 26;   // 道路の 高さ (m、入口の レールの 4 m 下) / 街区の 間隔 (道路の まん中から 次の 道路の まん中まで) / 道路の 幅
 const NEON = ['#ff3fb4', '#3fd8ff', '#9a5cff', '#4f6bff', '#c8f0ff', '#ff6ae0'].map(c => new THREE.Color(c));   // ネオンの 色 (桃・水色・紫・青・白・薄桃)。レールと 加速の 輪の 色 (緑・黄・赤) は 使わない = 輪が 街に 埋もれない (10/29 社長)
-const LANE = [0x4cd964, 0xffd54a, 0xff5a5a].map(c => new THREE.Color(c));   // レールの 色 (index.html の RAIL_COLORS: 左 緑・まん中 黄・右 赤) = 出口の 看板の ふち
+const LANE = LANE_HEX.map(c => new THREE.Color(c));   // レールの 色 (index.html の RAIL_COLORS: 左 緑・まん中 黄・右 赤) = 出口の 看板の ふち
 const GLSL_HASH = 'float h1(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }';
 const ADD_FOG = '#ifdef USE_FOG\n  #ifdef FOG_EXP2\n  float fogF = 1.0 - exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);\n  #else\n  float fogF = smoothstep(fogNear, fogFar, vFogDepth);\n  #endif\n  gl_FragColor.rgb *= 1.0 - fogF;\n#endif';   // 光を 足す (加算) 描き方の もや: 遠いほど 光を 弱めて 消す (ふつうの もやは もやの 色に 置き換えて 足して しまい、遠くに 紫の 板が 残る、Codex 指摘 10/29)
 const clip = { pv:'#include <clipping_planes_pars_vertex>', v:'#include <clipping_planes_vertex>', pf:'#include <clipping_planes_pars_fragment>', f:'#include <clipping_planes_fragment>' };   // 輪の 窓の 中に 描く 時の 切り落とし (洞窟の Codex 指摘の 教訓)

@@ -2,6 +2,7 @@
 // 1 回目: 暗い 青の 海・上から 差し込む 光の 筋・マリンスノー (カメラの まわりに いつも 漂う 白い 粒)・光る クラゲの 大群 (傘は r187 の 虹色の 膜 iridescence)。生き物と 出口は 次の 回から
 // 座標: 輪の 入口が 原点、+Z = 進む 向き、+Y = 上、+X = 左 (root)。コースは coursePath3 で なぞる (はじめに ゆるく 潜って、ゆるい S 字)
 import * as THREE from 'three';
+import { LANE_HEX, LANE_CSS } from '../colors.js';
 import { coursePath3, exit3 } from '../stage3.js';
 
 const clip = { pv:'#include <clipping_planes_pars_vertex>', v:'#include <clipping_planes_vertex>', pf:'#include <clipping_planes_pars_fragment>', f:'#include <clipping_planes_fragment>' };   // 輪の 窓の 中に 描く 時の 切り落とし
@@ -286,7 +287,7 @@ export function* build(scene, root, P, opts, out){
   let runeM = null;
   if(branch){ const ex = exit3(P.def), sg = new THREE.Group(); path.frame(L, v, q); sg.quaternion.copy(q); sg.position.set(0, 2.2, 0).applyQuaternion(q).add(v); root.add(sg);
     const stoneM = rockMat(rockT, false, mob); stoneM.color.set('#8d9a90');
-    const W = 230, YB = -95, YT = 120, DH = 11, D0 = -14, D1 = 19, LC = [0x4cd964, 0xffd54a, 0xff5a5a], has = k => !opts.nextChoices || !!opts.nextChoices[k], lx = k => (1 - k) * ex.w, ly = k => -(k - 1) * ex.h;
+    const W = 230, YB = -95, YT = 120, DH = 11, D0 = -14, D1 = 19, LC = LANE_HEX, has = k => !opts.nextChoices || !!opts.nextChoices[k], lx = k => (1 - k) * ex.w, ly = k => -(k - 1) * ex.h;
     const rect = (P2, x0, y0, x1, y1) => { P2.moveTo(x0, y0); P2.lineTo(x1, y0); P2.lineTo(x1, y1); P2.lineTo(x0, y1); P2.lineTo(x0, y0); return P2; };
     { const sh = rect(new THREE.Shape(), -W, YB, W, YT); for(let k = 0; k < 3; k++) sh.holes.push(rect(new THREE.Path(), lx(k) - DH, ly(k) + D0, lx(k) + DH, ly(k) + D1));
       sg.add(new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth:14, bevelEnabled:false }).translate(0, 0, -2), stoneM)); }   // 崖の 壁 (門の 穴 3 つ)

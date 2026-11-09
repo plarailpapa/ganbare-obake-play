@@ -36,6 +36,7 @@ const CSS = `
 .rk-sp{flex:none;font-variant-numeric:tabular-nums}
 .rk-fc{display:inline-flex;align-items:center;gap:.15em;margin-left:.15em;padding:.05em .5em .05em .3em;border-radius:999px;font-size:.72em;font-weight:bold;color:#7a4a00;vertical-align:middle;white-space:nowrap;background:linear-gradient(110deg,#f5c93a 0%,#f5c93a 35%,#fff6c4 48%,#f5c93a 60%,#e2a40e 100%);background-size:260% 100%;box-shadow:inset 0 0 0 1.5px #d49a10,0 0 8px rgba(255,196,30,.65);animation:rk-gold 2.4s linear infinite}
 .rk-fc svg{width:1.3em;height:1em;flex:none}
+.rk-easy{display:inline-flex;align-items:center;margin-left:.15em;padding:.05em .55em;border-radius:999px;font-size:.72em;font-weight:bold;color:#fff;background:#5aa9e6}
 @keyframes rk-gold{from{background-position:100% 0}to{background-position:-160% 0}}
 .rk-side{opacity:0;pointer-events:none;transition:opacity .3s}
 .rk-done .rk-side{opacity:1;pointer-events:auto}
@@ -61,7 +62,7 @@ const when = r => {   // あなたの 記録の 日付と 時刻 (11/4 社長)�
   if(Number.isFinite(r.t) && r.t > 0){ const d = new Date(r.t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; }
   return typeof r.date === 'string' && r.date.length === 10 ? `${+r.date.slice(5, 7)}/${+r.date.slice(8, 10)}` : '';
 };
-const nameHtml = r => r.you ? 'あなた' + (when(r) ? ` <small>${when(r)}</small>` : '') + (r.fc ? ` <span class="rk-fc">${CROWN}フルコンボ</span>` : '') : r.kana ? rubyHtml(`{${r.name}|${r.kana}}`) : r.name;
+const nameHtml = r => r.you ? 'あなた' + (when(r) ? ` <small>${when(r)}</small>` : '') + (r.fc ? ` <span class="rk-fc">${CROWN}フルコンボ</span>` : '') + (r.easy ? ` <span class="rk-easy">ゆっくり</span>` : '') : r.kana ? rubyHtml(`{${r.name}|${r.kana}}`) : r.name;
 
 function sfx(actx, kind){   // ス (風を 切る) / シャキン (金属の きらっ) / シャキーン (長く 響く)。音が 出せない 時は 鳴らさない
   if(!actx || actx.state !== 'running') return;
@@ -100,6 +101,6 @@ export function createRanking({ stage, rows, onPick, actx }){
   return { close(){ if(open){ open = false; timers.forEach(clearTimeout); el.remove(); } } };
 }
 export function warmFont(extra = ''){   // 板を 開いた 瞬間に 細い 文字から 丸文字へ 切り替わら ない よう、使う 文字を 先に 読んで おく (丸文字は 必要な 文字の 分だけ 届く)
-  try{ if(!document.fonts) return; const s = 'ステージ の ランキング あなた フルコンボ ストーリー ありで なしで はじめる もどる 0123456789,/: km' + extra;
+  try{ if(!document.fonts) return; const s = 'ステージ の ランキング あなた フルコンボ ゆっくり ストーリー ありで なしで はじめる もどる 0123456789,/: km' + extra;
     for(const w of ['400', '700']) document.fonts.load(`${w} 20px "M PLUS Rounded 1c"`, s).catch(() => {}); }catch(_){}
 }

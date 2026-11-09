@@ -2,6 +2,7 @@
 // 本物の ダリア (写真 Annie Spratt / Unsplash、CC0、Wikimedia Commons) へ 急降下 → 白く 光って 花びらの 表面 (丸い 粒の 細胞・朝露・気孔) → 気孔へ 飛び込む → 細胞の 中 → 核へ → DNA の 二重らせん → 水の 分子の 酸素へ 飛び込む → 酸素の 原子 (原子核の 手前に 次の 世界への 3 つの 門、11/3 社長「ア」)
 // 場面は 道のりで 切り替える: FL の 地点で 白く 光り、光の 間に 次の 場面だけを 見せる (縮んで いく 感じ)。座標: 輪の 入口が 原点、+Z = 進む 向き、+Y = 上、+X = 左 (root)
 import * as THREE from 'three';
+import { LANE_HEX, LANE_CSS } from '../colors.js';
 import { coursePath3, exit3 } from '../stage3.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -394,7 +395,7 @@ export function* build(scene, root, P, opts, out){
       for(let j = 0; j < 2; j++){ o.curve.getPointAt((u + j * 0.5) % 1, v); elM.setMatrixAt(i * 2 + j, m4.compose(v, QI, ONE)); els[i * 2 + j].position.copy(v); } }); elM.instanceMatrix.needsUpdate = true; };
   placeEl(0);
   { const h = halo(0x2850c8, 0.35, 1900); h.position.copy(NC5); z5.add(h); }   // 電子の 雲 (原子核の まわりの ぼんやりした 光)
-  if(branch){ const ex = exit3(P.def), LC = [0x4cd964, 0xffd54a, 0xff5a5a], has = k => !opts.nextChoices || !!opts.nextChoices[k];   // 次の 世界への 門 (レーンの 色の 光る 輪)。行き先の ない 門は 灰色の 玉で ふさぐ
+  if(branch){ const ex = exit3(P.def), LC = LANE_HEX, has = k => !opts.nextChoices || !!opts.nextChoices[k];   // 次の 世界への 門 (レーンの 色の 光る 輪)。行き先の ない 門は 灰色の 玉で ふさぐ
     for(let k = 0; k < 3; k++){ const p = EO.clone().addScaledVector(X5, (1 - k) * ex.w).addScaledVector(Y5, -(k - 1) * ex.h);
       if(!has(k)){ const plug = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 12), new THREE.MeshBasicMaterial({ color:0x3a4250, fog:false })); plug.position.copy(p); z5.add(plug); continue; }
       const fr = new THREE.Mesh(new THREE.TorusGeometry(6.5, 0.7, 10, 48), new THREE.MeshBasicMaterial({ color:LC[k], transparent:true, opacity:0.95, blending:THREE.AdditiveBlending, depthWrite:false, fog:false })); fr.position.copy(p); fr.quaternion.copy(EQ); z5.add(fr);
