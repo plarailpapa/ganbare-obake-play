@@ -184,7 +184,7 @@ import * as RS from './result.js';   // 結果発表の画面 (10/20)
 import * as ED from './ending.js';   // エンディング (白の中の おばけの声・人影・ばあ！、10/27)
 import * as IN from './intros.js';   // 2 面・3 面のはじめ (天国の会話と 3D の説明、10/20)
 import { LANE_HEX } from './colors.js';   // レーンの 色 (11/9)
-import { tUi, tName, tLine, lang, startJaCheck, fmtSpeed, unitLabel, speedHtml, getUnit } from './i18n.js';   // ことばの 切り替え (11/9)
+import { tUi, tName, tLine, lang, startJaCheck, fmtSpeed, unitLabel, speedHtml, getUnit, needUnitAsk } from './i18n.js';   // ことばの 切り替え (11/9)
 import { createPause } from './pause.js';   // 一時停止 (11/9)
 import { createHowto } from './howto.js';   // 走り出す 前の 説明画面 (11/6)
 import { createHud3d } from './hud3d.js';   // 表示の 中の 小さな 3D (がんばる表示の 地球、11/5)
@@ -2437,6 +2437,7 @@ const EASY_TXT=[tUi('<ruby>本物<rt>ほんもの</rt></ruby>の <ruby>速<rt>�
 function modeHtml(){ return '<div class="ot-mode"><div class="ot-mode-r"><button class="ot-btn ot-small'+(easyOn ? '' : ' ot-sel')+'" data-id="m0">'+tUi('ふつう')+'</button><button class="ot-btn ot-small'+(easyOn ? ' ot-sel' : '')+'" data-id="m1">'+tUi('ゆっくり')+'</button></div><div class="ot-mode-t">'+EASY_TXT[+easyOn]+'</div></div>'; }
 function setEasy(on){ easyOn=on; REC.setEasy(on); const r=document.querySelector('.ot-mode'); if(r){ r.querySelectorAll('button').forEach((b, i)=>b.classList.toggle('ot-sel', i===+on)); r.querySelector('.ot-mode-t').innerHTML=EASY_TXT[+on]; } }   // 次の 遊びから 効く・覚えて おく
 function openTitleMenu(){   // タイトルの ボタン (10/27 社長): はじめから はじめる / オプション。夢の タイトルは ステージ 1〜3・ぜんぶ あそぶ・オプション
+  if(panelUI) return; if(needUnitAsk()){ panelUI=OPT.createUnitAsk({ onPick:()=>{ panelUI=null; $('kmhU').textContent=unitLabel(); openTitleMenu(); } }); return; }   // 日本語 以外で まだ 単位を 選んで いない 人に 最初の 1 回だけ 聞く (11/9 社長)
   const dream=opTitle.dream, items= dream ? [{html:modeHtml()}, {id:'s1', label:tUi('ステージ 1')}, {id:'s2', label:tUi('ステージ 2')}, {id:'s3', label:tUi('ステージ 3')}, {id:'start', label:tUi('ぜんぶ あそぶ'), big:true}, {id:'options', label:tUi('せってい'), small:true}] : [{html:modeHtml()}, {id:'start', label:tUi('はじめから はじめる'), big:true}, {id:'options', label:tUi('せってい')}];
   opTitle.menu(items, id=>{
     if(state!=='title' || panelUI) return;

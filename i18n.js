@@ -30,9 +30,11 @@ export function setLang(code){   // 選んだ 言語を 覚えて 開き直す�
 // はやさの 単位 (11/9 社長): せっていで km/h か マイルか を 選ぶ。変えるのは 表示だけで、中の 計算と 記録は km/h のまま
 const UNIT_KEY = 'ganbare-obake-unit';
 let curUnit = 'km';
-try{ if(localStorage.getItem(UNIT_KEY) === 'mi') curUnit = 'mi'; }catch(_){}
+let unitPicked = false;
+try{ const u = localStorage.getItem(UNIT_KEY); if(u === 'mi' || u === 'km'){ curUnit = u; unitPicked = new URLSearchParams(location.search).get('unitask') !== '1'; } }catch(_){}   // ?unitask=1 = 確かめ用 (もう 一度 聞く)
+export const needUnitAsk = () => lang !== 'ja' && !unitPicked;   // 日本語 以外で まだ 単位を 選んで いない 人に 最初の 1 回だけ 聞く (11/9 社長)
 export const getUnit = () => curUnit;
-export function setUnit(u){ curUnit = u; try{ localStorage.setItem(UNIT_KEY, u); }catch(_){} }
+export function setUnit(u){ curUnit = u; unitPicked = true; try{ localStorage.setItem(UNIT_KEY, u); }catch(_){} }
 export const fmtSpeed = kmh => Math.round(curUnit === 'mi' ? kmh * 0.621371 : kmh).toLocaleString('ja-JP');   // 時速 km の 数 → 今の 単位の 数字
 export const unitLabel = () => table ? table.units[curUnit] : curUnit === 'mi' ? 'マイル' : 'km';   // 単位の 字 (日本語 km / マイル、英語 km/h / mph)
 export const speedHtml = kmh => (table ? '' : '<ruby>時速<rt>じそく</rt></ruby> ') + fmtSpeed(kmh) + ' ' + unitLabel();   // 「時速 ○○ km」(日本語) / 「○○ km/h」(英語) の 表示
