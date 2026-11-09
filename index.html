@@ -2335,7 +2335,7 @@ let howtoHold=false, howtoT0=0, howtoOpenAt=0, howtoWait=0;   // 説明画面で
 function howtoWanted(){ return HOWTO_Q && !nursery3Run && !ENDING_Q; }   // 子ども部屋の 回・エンディングの 確かめでは 出さない
 function howtoReady(){ if(!howto.isOpen() || performance.now()-howtoT0<HOWTO_MIN*1000 || !canStart()) return false; if(stage!==3) return true; const w=views3.get(pi3), W=w && w.warm; return !W || W.ready; }   // 出発 できるか (曲・部品・3 面の 今の 世界の 描き方の 準備)
 function howtoTap(){ if(howtoHold && state==='run' && howtoReady()){ howto.peel(); goRun(); } }   // 説明と 額縁が ペロンと はがれる のと 同時に 出発 (指を 離した 時 = iPhone で 曲を 鳴らせる)
-function howtoOpen(ph){ howto.open(stage, { goalKmh:goalKmh(), touch:IS_MOBILE || matchMedia('(pointer: coarse)').matches, placeholder:ph, easy:easyOn && stage!==3 }); howtoT0=performance.now(); }   // 説明画面を 出す (ph = 景色が まだ 作れない 間の 仮の 星空)
+function howtoOpen(ph){ howto.open(stage, { goalKmh:goalKmh(), touch:IS_MOBILE || matchMedia('(pointer: coarse)').matches, placeholder:ph }); howtoT0=performance.now(); }   // 説明画面を 出す (ph = 景色が まだ 作れない 間の 仮の 星空)
 function howtoStep(){ if(!howtoHold) return; if(!howto.isOpen() && performance.now()>=howtoOpenAt) howtoOpen(false); howto.setReady(howtoReady()); }   // 毎コマ: 出す 時刻に なったら 出し、準備が できたら ボタンを「タップで しゅっぱつ！」に
 function finishRun(){ ovStop(); if(actx) for(const o of YAY_SND) loadSound(actx, o.url);   /* 結果発表の 声と 拍手を 先読み */ for(const r of rivals3){ r.active=false; r.mesh.visible=false; }   /* ゴールで ライバルを 片づける (抜いた 記録は 残す、Codex 指摘 11/4) */   // 曲の終わり 5 秒前: 結果を用意し、時速を右中央へ、レールを宇宙へ立ち上げ、カメラはその場に残って見守る。曲は最後まで鳴り、終わった瞬間 (ジャン) に ピカーン + おばけが飛び去る
   state='finish'; finishT=0;

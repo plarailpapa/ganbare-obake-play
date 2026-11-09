@@ -14,7 +14,7 @@ export const HOWTO_TEXT = {
     branch: '分かれ道は 3つの レーンの どれかを <ruby>選<rt>えら</rt></ruby>ぼう！',
     left: '◀ 左を タップ', right: '右を タップ ▶', keys: 'パソコンは ← → キーで 左右に <ruby>動<rt>うご</rt></ruby>く',
     banner: kmh => '<ruby>時速<rt>じそく</rt></ruby> ' + kmh + ' km を こえよう！',
-    wait: 'じゅんびちゅう…', go: 'タップで しゅっぱつ！', easy: 'ゆっくり',
+    wait: 'じゅんびちゅう…', go: 'タップで しゅっぱつ！',
     num: n => n.toLocaleString('ja-JP'),
   },
 };
@@ -34,7 +34,6 @@ const CSS = `
 #hwTop .cb small{display:block;font-weight:500;font-size:.78em;color:#5a4a7a}
 #hwTop .cb .ic{display:inline-flex;gap:6px;vertical-align:middle;margin-right:6px}
 #hwTop .bn{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);white-space:nowrap;background:linear-gradient(#ffe48a,#ffbf3a);color:#5a2d00;font-weight:800;font-size:clamp(20px,4.2vw,46px);padding:.18em 1em;border-radius:2em;box-shadow:0 5px 0 #8a4d00}
-#hwTop .bn .ez{display:inline-block;margin-right:.5em;padding:0 .6em;border-radius:1em;background:#5aa9e6;color:#fff;font-size:.62em;vertical-align:middle}   /* ゆっくりモードの 印 (11/9) */
 #hwTop .tp{position:absolute;bottom:17%;width:21%;height:20%;border:3px dashed rgba(255,255,255,.75);border-radius:18px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:clamp(14px,2.2vw,24px);text-shadow:0 2px 4px #000;background:rgba(255,255,255,.08)}
 #hwTop .tp.l{left:4%} #hwTop .tp.r{right:4%}
 #hwTop .ky{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);white-space:nowrap;color:#fff;font-weight:500;font-size:clamp(12px,1.5vw,17px);text-shadow:0 2px 4px #000}
@@ -63,7 +62,7 @@ export function createHowto({ anchors, lang = 'ja' }){   // anchors() = { rival,
       + cb('rival', T.rival + '<small>' + T.rivalSub + (stageNo === 1 ? '<br>' + T.rivalHit : '') + '</small>') + cb('time', T.time + '<small>' + T.timeSub + '</small>')
       + cb('speed', T.speed) + cb('boost', boost)   /* 目標の 速さは 真ん中の 帯で 言うので 吹き出しは なし (11/7 社長) */
       + (stageNo === 3 ? cb('branch', T.branch) : '')
-      + '<div class="bn">' + (o.easy ? '<span class="ez">' + T.easy + '</span>' : '') + T.banner(T.num(o.goalKmh)) + '</div>'
+      + '<div class="bn">' + T.banner(T.num(o.goalKmh)) + '</div>'
       + '<div class="tp l">' + T.left + '</div><div class="tp r">' + T.right + '</div>' + (o.touch ? '' : '<div class="ky">' + T.keys + '</div>')
       + '<div class="go wait">' + T.wait + '</div>';
   }
